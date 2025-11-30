@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image, Video, FileText } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image, Video, FileText, Images, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironme
 import { useSceneStyleLibrary, SceneStyle, StyleType } from "@/hooks/useSceneStyleLibrary";
 import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
 import { useFavoritePhotos, FavoritePhoto } from "@/hooks/useFavoritePhotos";
+import { useGeneratedImagesGallery, GeneratedImage } from "@/hooks/useGeneratedImagesGallery";
 import { EnhancedCharacter } from "@/types/prompt-builder";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,9 @@ export default function Library() {
   const { savedStyles: infographicStyles, saveStyle: saveInfographicStyle, removeStyle: removeInfographicStyle } = useSceneStyleLibrary("infographic");
   const { brands, saveBrand, updateBrand, removeBrand } = useBrandLibrary();
   const { photos, removePhoto, updatePhotoName, maxPhotos } = useFavoritePhotos();
+  const { images: generatedImages, isLoading: imagesLoading, deleteImage } = useGeneratedImagesGallery();
+
+  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
 
   const [styleTab, setStyleTab] = useState<StyleType>("video");
 
@@ -152,6 +156,36 @@ export default function Library() {
     }
   };
 
+  const handleDeleteGeneratedImage = async (id: string) => {
+    if (confirm("Delete this generated image?")) {
+      const success = await deleteImage(id);
+      if (success) {
+        toast.success("Image deleted");
+        if (selectedImage?.id === id) {
+          setSelectedImage(null);
+        }
+      }
+    }
+  };
+
+  const handleDownloadImage = async (image: GeneratedImage) => {
+    try {
+      const response = await fetch(image.image_url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `generated-${image.style_name || "image"}-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Image downloaded!");
+    } catch (error) {
+      toast.error("Failed to download image");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -176,7 +210,7 @@ export default function Library() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <Tabs defaultValue="characters" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-6">
             <TabsTrigger value="characters" className="gap-1.5">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Characters</span>
@@ -219,6 +253,15 @@ export default function Library() {
               {photos.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-600 text-xs rounded-full">
                   {photos.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="generated" className="gap-1.5">
+              <Images className="w-4 h-4" />
+              <span className="hidden sm:inline">Generated</span>
+              {generatedImages.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full">
+                  {generatedImages.length}
                 </span>
               )}
             </TabsTrigger>
@@ -409,7 +452,123 @@ export default function Library() {
               </div>
             )}
           </TabsContent>
+
+          {/* Generated Images Tab */}
+          <TabsContent value="generated" className="space-y-4">
+            {imagesLoading ? (
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div key={i} className="aspect-square bg-muted animate-pulse rounded-lg" />
+                ))}
+              </div>
+            ) : generatedImages.length === 0 ? (
+              <EmptyState
+                icon={Images}
+                title="No generated images"
+                description="Images you generate in the Image builder will be saved here automatically"
+              />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  {generatedImages.length} generated images
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  {generatedImages.map((image) => (
+                    <Card
+                      key={image.id}
+                      className="overflow-hidden group cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                      onClick={() => setSelectedImage(image)}
+                    >
+                      <div className="relative aspect-square">
+                        <img
+                          src={image.image_url}
+                          alt={image.style_name || "Generated"}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                          <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </div>
+                      <div className="p-3 space-y-1">
+                        {image.style_name && (
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {image.style_name}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(image.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
+
+        {/* Image Lightbox */}
+        {selectedImage && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div 
+              className="bg-card rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <span className="font-medium">
+                  {selectedImage.style_name || "Generated Image"}
+                </span>
+                <button
+                  onClick={() => setSelectedImage(null)}
+                  className="p-1.5 hover:bg-muted rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-4">
+                <img
+                  src={selectedImage.image_url}
+                  alt={selectedImage.style_name || "Generated"}
+                  className="w-full max-h-[60vh] object-contain rounded-lg"
+                />
+                
+                {selectedImage.prompt && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Prompt:</p>
+                    <p className="text-sm text-foreground">{selectedImage.prompt}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-border flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleDownloadImage(selectedImage)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDeleteGeneratedImage(selectedImage.id)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
