@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 
 const STORAGE_KEY = "memoable_prompt_count";
-const FREE_LIMIT = 3; // Soft UI limit for anonymous users
+const FREE_LIMIT = 5; // Soft UI limit for anonymous users
 
 export function useUsageLimit() {
   const { user, profile } = useAuth();

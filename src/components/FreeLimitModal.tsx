@@ -26,8 +26,8 @@ export function FreeLimitModal({ open, onOpenChange }: FreeLimitModalProps) {
             You've reached the free preview limit
           </DialogTitle>
           <DialogDescription className="text-center">
-            You've used your 3 free scene generations on this device. Start a 7-day
-            free trial to keep generating AI video storyboards, save your scenes,
+            You've used your 5 free generations on this device. Start a 7-day
+            free trial to keep generating AI prompts, save your creations,
             and unlock the full visual prompt pack.
           </DialogDescription>
         </DialogHeader>
