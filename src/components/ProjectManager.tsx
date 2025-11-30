@@ -10,7 +10,7 @@ import {
   Download,
   Play,
   Clock,
-  Sparkles,
+  Loader2,
   Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useProjects, Project, ProjectScene } from "@/hooks/useProjects";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { toast } from "sonner";
 
 interface ProjectManagerProps {
@@ -28,7 +30,9 @@ interface ProjectManagerProps {
 
 export function ProjectManager({ onAddSceneFromBuilder, currentPrompt }: ProjectManagerProps) {
   const { user } = useAuth();
-  const { projects, isLoading, createProject, updateProject, deleteProject, addScene, deleteScene } = useProjects();
+  const { tier } = useSubscription();
+  const videoGen = useVideoGeneration();
+  const { projects, isLoading, createProject, updateProject, deleteProject, addScene, deleteScene, fetchProjects } = useProjects();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [newProjectName, setNewProjectName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -36,6 +40,37 @@ export function ProjectManager({ onAddSceneFromBuilder, currentPrompt }: Project
   const [editName, setEditName] = useState("");
   const [addingSceneTo, setAddingSceneTo] = useState<string | null>(null);
   const [newSceneName, setNewSceneName] = useState("");
+  const [generatingSceneId, setGeneratingSceneId] = useState<string | null>(null);
+
+  const isPremium = tier === 'pro' || tier === 'studio';
+
+  const handleGenerateVideo = async (scene: ProjectScene) => {
+    if (!isPremium) {
+      toast.error("Video generation requires Pro or Studio subscription");
+      return;
+    }
+
+    if (!scene.scene_prompt) {
+      toast.error("Scene needs a prompt to generate video");
+      return;
+    }
+
+    setGeneratingSceneId(scene.id);
+    try {
+      await videoGen.generateVideo({
+        prompt: scene.scene_prompt,
+        duration: scene.duration_seconds || 5,
+        aspectRatio: '16:9',
+        sceneId: scene.id,
+      });
+      // Refetch projects to update scene status
+      setTimeout(() => fetchProjects(), 1000);
+    } catch (error) {
+      console.error("Video generation failed:", error);
+    } finally {
+      setGeneratingSceneId(null);
+    }
+  };
 
   const toggleExpand = (projectId: string) => {
     setExpandedProjects(prev => {
@@ -275,21 +310,43 @@ export function ProjectManager({ onAddSceneFromBuilder, currentPrompt }: Project
                             <div className="flex items-center gap-1">
                               {scene.video_url ? (
                                 <>
-                                  <Button variant="ghost" size="icon-sm" title="Play">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon-sm" 
+                                    title="Play"
+                                    onClick={() => window.open(scene.video_url!, '_blank')}
+                                  >
                                     <Play className="w-3.5 h-3.5" />
                                   </Button>
-                                  <Button variant="ghost" size="icon-sm" title="Download">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon-sm" 
+                                    title="Download"
+                                    onClick={() => window.open(scene.video_url!, '_blank')}
+                                  >
                                     <Download className="w-3.5 h-3.5" />
                                   </Button>
                                 </>
-                              ) : (
+                              ) : scene.video_status === 'processing' || generatingSceneId === scene.id ? (
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
                                   className="h-7 text-xs gap-1"
-                                  title="Generate video (Premium)"
+                                  disabled
                                 >
-                                  <Crown className="w-3 h-3 text-amber-500" />
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  Generating...
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  className="h-7 text-xs gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                                  title={isPremium ? "Generate video" : "Upgrade to generate videos"}
+                                  onClick={() => handleGenerateVideo(scene)}
+                                  disabled={!scene.scene_prompt}
+                                >
+                                  <Crown className="w-3 h-3" />
                                   Generate
                                 </Button>
                               )}
