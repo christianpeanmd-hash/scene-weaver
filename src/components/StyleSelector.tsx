@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target, Save } from "lucide-react";
+import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target, Save, Scale } from "lucide-react";
 import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
 import { useSceneStyleLibrary } from "@/hooks/useSceneStyleLibrary";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ILLUSTRATION_STYLES, STYLE_CATEGORIES, IllustrationStyle, StyleCategory } from "@/data/illustration-styles";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { StyleComparisonPanel } from "./StyleComparisonPanel";
 
 // Import style preview images
 import editorialCollagePreview from "@/assets/style-previews/editorial-collage-preview.jpg";
@@ -124,8 +125,29 @@ export function StyleSelector({
   const [previewStyle, setPreviewStyle] = useState<IllustrationStyle | null>(null);
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [styleName, setStyleName] = useState("");
+  const [comparisonStyles, setComparisonStyles] = useState<IllustrationStyle[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
   const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
   const { savedStyles, saveStyle } = useSceneStyleLibrary("image");
+
+  const isInComparison = (styleId: string) => comparisonStyles.some(s => s.id === styleId);
+
+  const toggleComparison = (style: IllustrationStyle, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isInComparison(style.id)) {
+      setComparisonStyles(prev => prev.filter(s => s.id !== style.id));
+    } else if (comparisonStyles.length < 3) {
+      setComparisonStyles(prev => [...prev, style]);
+    } else {
+      toast.error("Maximum 3 styles for comparison");
+    }
+  };
+
+  const handleComparisonSelect = (style: IllustrationStyle) => {
+    handlePresetSelect(style);
+    setComparisonStyles([]);
+    setShowComparison(false);
+  };
 
   const favoriteStyles = ILLUSTRATION_STYLES.filter((s) => favorites.illustration.includes(s.id));
 
@@ -151,11 +173,24 @@ export function StyleSelector({
   return (
     <Card className="overflow-hidden">
       <div className="p-4 border-b border-border/50">
-        <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Palette className="w-4 h-4 text-purple-500" />
-          Illustration Style
-          <span className="text-rose-500 text-xs">required</span>
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Palette className="w-4 h-4 text-purple-500" />
+            Illustration Style
+            <span className="text-rose-500 text-xs">required</span>
+          </label>
+          {comparisonStyles.length > 0 && (
+            <Button
+              variant="soft"
+              size="sm"
+              onClick={() => setShowComparison(true)}
+              className="text-xs"
+            >
+              <Scale className="w-3 h-3 mr-1" />
+              Compare ({comparisonStyles.length})
+            </Button>
+          )}
+        </div>
         {selectedStyle && (
           <p className="text-sm text-purple-600 mt-1">Selected: {selectedStyle.name}</p>
         )}
@@ -210,15 +245,32 @@ export function StyleSelector({
                             : "bg-card border border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
                         )}
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite("illustration", style.id);
-                          }}
-                          className="absolute top-1 right-1 z-10 p-1 rounded-full bg-card/80 hover:bg-card"
-                        >
-                          <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                        </button>
+                        <div className="absolute top-1 right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => toggleComparison(style, e)}
+                            className={cn(
+                              "p-1 rounded-full bg-card/80 hover:bg-card",
+                              isInComparison(style.id) && "bg-blue-100 dark:bg-blue-900/50"
+                            )}
+                            title={isInComparison(style.id) ? "Remove from comparison" : "Add to compare"}
+                          >
+                            <Scale className={cn(
+                              "w-3 h-3",
+                              isInComparison(style.id) 
+                                ? "text-blue-500" 
+                                : "text-muted-foreground"
+                            )} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite("illustration", style.id);
+                            }}
+                            className="p-1 rounded-full bg-card/80 hover:bg-card"
+                          >
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                          </button>
+                        </div>
                         <div className="w-full h-16 rounded-md mb-2 overflow-hidden bg-muted">
                           {previewImage ? (
                             <img src={previewImage} alt={style.name} className="w-full h-full object-cover" />
@@ -457,21 +509,38 @@ export function StyleSelector({
                               : "bg-card border border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
                           )}
                         >
-                          {/* Favorite toggle */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite("illustration", style.id);
-                            }}
-                            className="absolute top-1 right-1 z-10 p-1 rounded-full bg-card/80 hover:bg-card opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Star className={cn(
-                              "w-3 h-3",
-                              isFavorite("illustration", style.id) 
-                                ? "text-amber-500 fill-amber-500" 
-                                : "text-muted-foreground"
-                            )} />
-                          </button>
+                          {/* Action buttons */}
+                          <div className="absolute top-1 right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={(e) => toggleComparison(style, e)}
+                              className={cn(
+                                "p-1 rounded-full bg-card/80 hover:bg-card",
+                                isInComparison(style.id) && "bg-blue-100 dark:bg-blue-900/50"
+                              )}
+                              title={isInComparison(style.id) ? "Remove from comparison" : "Add to compare"}
+                            >
+                              <Scale className={cn(
+                                "w-3 h-3",
+                                isInComparison(style.id) 
+                                  ? "text-blue-500" 
+                                  : "text-muted-foreground"
+                              )} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite("illustration", style.id);
+                              }}
+                              className="p-1 rounded-full bg-card/80 hover:bg-card"
+                            >
+                              <Star className={cn(
+                                "w-3 h-3",
+                                isFavorite("illustration", style.id) 
+                                  ? "text-amber-500 fill-amber-500" 
+                                  : "text-muted-foreground"
+                              )} />
+                            </button>
+                          </div>
 
                           {/* Style preview thumbnail */}
                           <div className="w-full h-16 rounded-md mb-2 overflow-hidden bg-muted">
@@ -524,6 +593,17 @@ export function StyleSelector({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Style Comparison Panel */}
+      {showComparison && comparisonStyles.length > 0 && (
+        <StyleComparisonPanel
+          styles={comparisonStyles}
+          previewImages={STYLE_PREVIEWS}
+          onSelect={handleComparisonSelect}
+          onRemove={(styleId) => setComparisonStyles(prev => prev.filter(s => s.id !== styleId))}
+          onClose={() => setShowComparison(false)}
+        />
       )}
     </Card>
   );
