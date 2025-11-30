@@ -165,7 +165,7 @@ serve(async (req) => {
       }
 
       payload = {
-        model: 'gen3a_turbo',
+        model: 'gen4.5',
         promptImage: promptImage,
         promptText: prompt.slice(0, 512), // Max 512 characters
         duration: duration || 5, // 5 or 10 seconds
@@ -177,7 +177,7 @@ serve(async (req) => {
       endpoint = `${RUNWAY_API_URL}/text_to_video`;
       
       payload = {
-        model: 'gen3a_turbo',
+        model: 'gen4.5',
         promptText: prompt.slice(0, 512),
         duration: duration || 5,
         ratio: aspectRatio || '16:9',
