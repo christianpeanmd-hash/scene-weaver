@@ -1,5 +1,6 @@
-import { Copy, Check, CheckCircle, Film, Loader2, Download, Crown } from "lucide-react";
+import { Copy, Check, CheckCircle, Film, Loader2, Download, Crown, History } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -186,6 +187,15 @@ export function TemplateStep({ template, copied, onCopy, onEdit, onApprove }: Te
           </p>
         </div>
       )}
+
+      {/* Video Gallery Link */}
+      <Link 
+        to="/videos" 
+        className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg border border-border/50 hover:border-border hover:bg-muted/50"
+      >
+        <History className="w-4 h-4" />
+        View your video history
+      </Link>
 
       <div className="flex gap-3">
         <Button variant="secondary" className="flex-1" onClick={onEdit}>
