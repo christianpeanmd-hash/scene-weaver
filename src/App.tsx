@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Library from "./pages/Library";
 import Auth from "./pages/Auth";
 import VideoGallery from "./pages/VideoGallery";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import "@fontsource/plus-jakarta-sans/400.css";
 import "@fontsource/plus-jakarta-sans/500.css";
@@ -30,6 +32,8 @@ const App = () => (
               <Route path="/library" element={<Library />} />
               <Route path="/videos" element={<VideoGallery />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
