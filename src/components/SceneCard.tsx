@@ -1,6 +1,7 @@
 import { Clapperboard, Copy, Check, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Scene } from "@/types/prompt-builder";
+import { Scene, EnhancedCharacter } from "@/types/prompt-builder";
+import { CharacterPicker } from "./CharacterPicker";
 import { cn } from "@/lib/utils";
 
 interface SceneCardProps {
@@ -8,7 +9,10 @@ interface SceneCardProps {
   index: number;
   copied: boolean;
   isGenerating?: boolean;
+  savedCharacters: EnhancedCharacter[];
   onUpdate: (field: keyof Scene, value: string) => void;
+  onSelectCharacter: (character: EnhancedCharacter) => void;
+  onDeselectCharacter: (id: number) => void;
   onGenerate: () => void;
   onCopy: () => void;
   onRemove: () => void;
@@ -19,7 +23,10 @@ export function SceneCard({
   index,
   copied,
   isGenerating = false,
+  savedCharacters,
   onUpdate,
+  onSelectCharacter,
+  onDeselectCharacter,
   onGenerate,
   onCopy,
   onRemove,
@@ -68,6 +75,15 @@ export function SceneCard({
               className="mt-1 w-full px-3 py-2 bg-slate-50 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-all"
             />
           </div>
+
+          {/* Character Picker */}
+          <CharacterPicker
+            savedCharacters={savedCharacters}
+            selectedIds={scene.selectedCharacterIds || []}
+            onSelect={onSelectCharacter}
+            onDeselect={onDeselectCharacter}
+          />
+
           <div>
             <label className="text-xs text-muted-foreground font-medium">What Happens</label>
             <textarea
