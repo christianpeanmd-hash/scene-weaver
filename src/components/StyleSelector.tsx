@@ -35,6 +35,17 @@ import glassmorphism from "@/assets/style-previews/glassmorphism.jpg";
 import duotoneImpact from "@/assets/style-previews/duotone-impact.jpg";
 import abstract3d from "@/assets/style-previews/3d-abstract.jpg";
 import photoCutout from "@/assets/style-previews/photo-cutout.jpg";
+// New style previews
+import stickFigure from "@/assets/style-previews/stick-figure.jpg";
+import darkHumor from "@/assets/style-previews/dark-humor.jpg";
+import impressionist from "@/assets/style-previews/impressionist.jpg";
+import classicPortrait from "@/assets/style-previews/classic-portrait.jpg";
+import editorialGravitas from "@/assets/style-previews/editorial-gravitas.jpg";
+import strategyDiagram from "@/assets/style-previews/strategy-diagram.jpg";
+import infographicComic from "@/assets/style-previews/infographic-comic.jpg";
+import digitalFuturism from "@/assets/style-previews/digital-futurism.jpg";
+import whiteboardSketch from "@/assets/style-previews/whiteboard-sketch.jpg";
+import timelineJourney from "@/assets/style-previews/timeline-journey.jpg";
 
 const CATEGORY_ICONS = {
   Target,
@@ -61,27 +72,36 @@ const STYLE_PREVIEWS: Record<string, string> = {
   "watercolor-minimalism": watercolorMinimalism,
   "ink-wash": inkWash,
   "surrealist-editorial": surrealistEditorial,
+  "editorial-gravitas": editorialGravitas,
   // Explainer styles
   "modern-flat-vector": modernFlatVector,
   "isometric-blueprint": isometricBlueprint,
-  "infographic-comic": modernFlatVector,
+  "infographic-comic": infographicComic,
   "scientific-diagram": scientificDiagram,
+  "strategy-diagram": strategyDiagram,
+  "whiteboard-sketch": whiteboardSketch,
+  "timeline-journey": timelineJourney,
   // Humor styles
   "satirical-caricature": satiricalCaricature,
   "line-drawing-xkcd": lineDrawingXkcd,
   "pop-art": popArt,
   "3d-claymation": claymation,
   "childrens-book": childrensBook,
+  "stick-figure": stickFigure,
+  "dark-humor": darkHumor,
   // Futurism styles
   "retro-futurist": retroFuturist,
   "futuristic-neon": futuristicNeon,
   "brutalist-poster": retroFuturist,
   "minimal-gradient": minimalGradient,
+  "digital-futurism": digitalFuturism,
   // Artistic styles
   "japanese-woodblock": japaneseWoodblock,
   "vintage-engraving": vintageEngraving,
   "painterly-concept": surrealistEditorial,
   "newspaper-halftone": editorialCollagePreview,
+  "classic-portrait": classicPortrait,
+  "impressionist": impressionist,
 };
 
 interface StyleSelectorProps {
