@@ -89,16 +89,32 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             </Link>
             
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    {tier !== "free" ? (
-                      <Crown className="w-4 h-4 text-amber-500" />
-                    ) : (
-                      <User className="w-4 h-4" />
-                    )}
-                    <span className="hidden sm:inline">{profile?.full_name || user.email?.split("@")[0]}</span>
-                  </Button>
+              <>
+                {/* Visible Tier Badge */}
+                <Badge 
+                  variant="secondary" 
+                  className={cn(
+                    "text-xs capitalize font-medium hidden sm:flex items-center gap-1",
+                    tier === "studio" && "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30",
+                    tier === "pro" && "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30",
+                    tier === "creator" && "bg-gradient-to-r from-teal-500/20 to-emerald-500/20 text-teal-600 dark:text-teal-400 border-teal-500/30",
+                    tier === "free" && "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {tier !== "free" && <Crown className="w-3 h-3" />}
+                  {tier}
+                </Badge>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      {tier !== "free" ? (
+                        <Crown className="w-4 h-4 text-amber-500" />
+                      ) : (
+                        <User className="w-4 h-4" />
+                      )}
+                      <span className="hidden sm:inline">{profile?.full_name || user.email?.split("@")[0]}</span>
+                    </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 bg-popover">
                   <DropdownMenuLabel className="font-normal">
@@ -177,6 +193,7 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <Button variant="outline" size="sm" asChild>
                 <Link to="/auth" className="gap-2">
