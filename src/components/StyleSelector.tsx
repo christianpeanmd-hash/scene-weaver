@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star } from "lucide-react";
+import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target } from "lucide-react";
 import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
 import { Card } from "@/components/ui/card";
 import { ILLUSTRATION_STYLES, STYLE_CATEGORIES, IllustrationStyle, StyleCategory } from "@/data/illustration-styles";
@@ -23,8 +23,18 @@ import futuristicNeon from "@/assets/style-previews/futuristic-neon.jpg";
 import minimalGradient from "@/assets/style-previews/minimal-gradient.jpg";
 import japaneseWoodblock from "@/assets/style-previews/japanese-woodblock.jpg";
 import vintageEngraving from "@/assets/style-previews/vintage-engraving.jpg";
+// Marketing style previews
+import corporateGradient from "@/assets/style-previews/corporate-gradient.jpg";
+import lifestyleBrand from "@/assets/style-previews/lifestyle-brand.jpg";
+import techProduct from "@/assets/style-previews/tech-product.jpg";
+import boldTypography from "@/assets/style-previews/bold-typography.jpg";
+import glassmorphism from "@/assets/style-previews/glassmorphism.jpg";
+import duotoneImpact from "@/assets/style-previews/duotone-impact.jpg";
+import abstract3d from "@/assets/style-previews/3d-abstract.jpg";
+import photoCutout from "@/assets/style-previews/photo-cutout.jpg";
 
 const CATEGORY_ICONS = {
+  Target,
   Newspaper,
   BarChart3,
   Smile,
@@ -34,27 +44,41 @@ const CATEGORY_ICONS = {
 
 // Map style IDs to their preview images
 const STYLE_PREVIEWS: Record<string, string> = {
+  // Marketing styles
+  "corporate-gradient": corporateGradient,
+  "lifestyle-brand": lifestyleBrand,
+  "tech-product": techProduct,
+  "bold-typography": boldTypography,
+  "glassmorphism": glassmorphism,
+  "duotone-impact": duotoneImpact,
+  "3d-abstract": abstract3d,
+  "photo-cutout": photoCutout,
+  // Editorial styles
   "editorial-collage": editorialCollagePreview,
   "watercolor-minimalism": watercolorMinimalism,
   "ink-wash": inkWash,
   "surrealist-editorial": surrealistEditorial,
+  // Explainer styles
   "modern-flat-vector": modernFlatVector,
   "isometric-blueprint": isometricBlueprint,
-  "infographic-comic": modernFlatVector, // Reuse similar style
+  "infographic-comic": modernFlatVector,
   "scientific-diagram": scientificDiagram,
+  // Humor styles
   "satirical-caricature": satiricalCaricature,
   "line-drawing-xkcd": lineDrawingXkcd,
   "pop-art": popArt,
   "3d-claymation": claymation,
   "childrens-book": childrensBook,
+  // Futurism styles
   "retro-futurist": retroFuturist,
   "futuristic-neon": futuristicNeon,
-  "brutalist-poster": retroFuturist, // Reuse similar style
+  "brutalist-poster": retroFuturist,
   "minimal-gradient": minimalGradient,
+  // Artistic styles
   "japanese-woodblock": japaneseWoodblock,
   "vintage-engraving": vintageEngraving,
-  "painterly-concept": surrealistEditorial, // Reuse similar style
-  "newspaper-halftone": editorialCollagePreview, // Reuse similar style
+  "painterly-concept": surrealistEditorial,
+  "newspaper-halftone": editorialCollagePreview,
 };
 
 interface StyleSelectorProps {
