@@ -1,4 +1,4 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -8,6 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { BillingHistoryDialog } from "./BillingHistoryDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,6 +134,12 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
                         <Settings className="w-4 h-4 mr-2" />
                         Manage Subscription
                       </DropdownMenuItem>
+                      <BillingHistoryDialog>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                          <Receipt className="w-4 h-4 mr-2" />
+                          Billing History
+                        </DropdownMenuItem>
+                      </BillingHistoryDialog>
                       <DropdownMenuSeparator />
                     </>
                   )}
