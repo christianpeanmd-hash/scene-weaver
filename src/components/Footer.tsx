@@ -1,4 +1,4 @@
-import { MemoableLogo } from "./MemoableLogo";
+import { TechyMemoLogo } from "./MemoableLogo";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { RequestInviteModal } from "./RequestInviteModal";
@@ -10,7 +10,7 @@ export function Footer() {
     <footer className="border-t border-border bg-card/50">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <MemoableLogo size="sm" />
+          <TechyMemoLogo size="sm" />
 
           <nav className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             <a href="#pricing" className="hover:text-foreground transition-colors">
@@ -35,7 +35,7 @@ export function Footer() {
         </div>
 
         <div className="mt-6 pt-6 border-t border-border text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Memoable Scenes. All rights reserved.
+          © {new Date().getFullYear()} Techy Memo. All rights reserved.
         </div>
       </div>
 

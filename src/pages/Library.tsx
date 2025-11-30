@@ -4,7 +4,7 @@ import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Spark
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MemoableLogo } from "@/components/MemoableLogo";
+import { TechyMemoLogo } from "@/components/MemoableLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCharacterLibrary } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironmentLibrary";
@@ -132,7 +132,7 @@ export default function Library() {
                 Back
               </Button>
             </Link>
-            <MemoableLogo size="sm" />
+            <TechyMemoLogo size="sm" />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />

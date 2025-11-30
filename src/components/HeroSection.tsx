@@ -1,6 +1,6 @@
 import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { MemoableLogo } from "./MemoableLogo";
+import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +34,7 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
       <div className="relative max-w-6xl mx-auto px-4 pt-4 pb-8 md:pt-6 md:pb-10">
         {/* Sticky Navigation */}
         <nav className="flex items-center justify-between mb-8 animate-fade-in">
-          <MemoableLogo size="md" />
+          <TechyMemoLogo size="md" />
           
           <div className="hidden md:flex items-center gap-6 text-sm">
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
