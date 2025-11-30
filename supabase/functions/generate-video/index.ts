@@ -135,34 +135,48 @@ serve(async (req) => {
       );
     }
 
+    // Determine the API endpoint and payload based on input type
+    const hasImage = !!(imageBase64 || imageUrl);
+    
     // Map user-friendly aspect ratios to Runway's resolution format
-    const ratioMap: Record<string, string> = {
+    // image_to_video supports: 1280:720, 720:1280, 1104:832, 832:1104, 960:960, 1584:672
+    // text_to_video supports: 1280:720, 720:1280, 1080:1920, 1920:1080
+    const imageRatioMap: Record<string, string> = {
       '16:9': '1280:720',
       '9:16': '720:1280',
       '1:1': '960:960',
     };
-    const mappedRatio = ratioMap[aspectRatio] || '1280:720';
+    const textRatioMap: Record<string, string> = {
+      '16:9': '1280:720',
+      '9:16': '720:1280',
+      '1:1': '1280:720', // 1:1 not supported for text_to_video, fallback to 16:9
+    };
+    
+    // text_to_video duration must be 4, 6, or 8; image_to_video supports 2-10
+    const validTextDurations = [4, 6, 8];
+    const requestedDuration = duration || 5;
+    const textDuration = validTextDurations.includes(requestedDuration) 
+      ? requestedDuration 
+      : (requestedDuration <= 5 ? 4 : 8);
 
     logStep('Processing video generation request', { 
-      hasImage: !!(imageBase64 || imageUrl), 
-      duration: duration || 5,
-      aspectRatio: aspectRatio || '16:9',
-      mappedRatio
+      hasImage, 
+      duration: requestedDuration,
+      aspectRatio: aspectRatio || '16:9'
     });
 
-    // Determine the API endpoint and payload based on input type
     let endpoint: string;
     let payload: any;
 
-    if (imageBase64 || imageUrl) {
-      // Image-to-video generation
+    if (hasImage) {
+      // Image-to-video generation - supports gen3a_turbo, gen4_turbo, veo models
       endpoint = `${RUNWAY_API_URL}/image_to_video`;
+      const mappedRatio = imageRatioMap[aspectRatio] || '1280:720';
       
       let promptImage: string;
       if (imageUrl) {
         promptImage = imageUrl;
       } else if (imageBase64) {
-        // If base64, we need to format it as a data URI if not already
         promptImage = imageBase64.startsWith('data:') 
           ? imageBase64 
           : `data:image/png;base64,${imageBase64}`;
@@ -176,21 +190,21 @@ serve(async (req) => {
       payload = {
         model: 'gen3a_turbo',
         promptImage: promptImage,
-        promptText: prompt.slice(0, 512),
-        duration: duration || 5,
+        promptText: prompt.slice(0, 1000),
+        duration: Math.min(Math.max(requestedDuration, 2), 10),
         ratio: mappedRatio,
-        watermark: false,
       };
     } else {
-      // Text-to-video generation
+      // Text-to-video generation - ONLY supports veo3.1, veo3.1_fast, veo3
       endpoint = `${RUNWAY_API_URL}/text_to_video`;
+      const mappedRatio = textRatioMap[aspectRatio] || '1280:720';
       
       payload = {
-        model: 'gen3a_turbo',
-        promptText: prompt.slice(0, 512),
-        duration: duration || 5,
+        model: 'veo3.1',
+        promptText: prompt.slice(0, 1000),
+        duration: textDuration,
         ratio: mappedRatio,
-        watermark: false,
+        audio: false,
       };
     }
 
