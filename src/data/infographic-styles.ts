@@ -26,6 +26,22 @@ export const INFOGRAPHIC_STYLES: InfographicStyle[] = [
     category: "educational",
   },
   {
+    id: "whiteboard",
+    name: "Whiteboard Style",
+    description: "Hand-drawn marker diagrams on white background like a teaching presentation",
+    promptTemplate: `Create a whiteboard-style infographic explaining {topic}. Use a hand-drawn marker aesthetic with blue, red, and black marker colors on a white background. Include arrows connecting concepts, simple boxed sections, doodle-style icons, and organic hand-lettered text. The layout should feel like a professor explaining something on a whiteboard with connecting ideas, underlines for emphasis, and quick sketches.`,
+    useCase: "Teaching presentations, brainstorm summaries, concept maps",
+    category: "educational",
+  },
+  {
+    id: "visual-abstract",
+    name: "Visual Abstract",
+    description: "Abstract geometric shapes and flowing forms representing concepts artistically",
+    promptTemplate: `Create a visual abstract infographic for {topic}. Use abstract geometric shapes, flowing organic forms, and gradient colors (purple, blue, teal) to represent concepts artistically. Combine data visualization elements with modern abstract art aesthetics. Include subtle line graphs or node connections woven into the abstract composition. Focus on evoking the essence and relationships of the topic through artistic visual metaphor rather than literal representation.`,
+    useCase: "Research abstracts, concept art, creative data visualization",
+    category: "educational",
+  },
+  {
     id: "step-by-step",
     name: "Step-by-Step Tutorial",
     description: "Numbered steps in rounded boxes with minimal vector illustrations",
