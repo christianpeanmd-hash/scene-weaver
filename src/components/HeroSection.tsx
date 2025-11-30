@@ -1,4 +1,4 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { BillingHistoryDialog } from "./BillingHistoryDialog";
+import { UsageAnalyticsDialog } from "./UsageAnalyticsDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -126,7 +127,6 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
                           Upgrade Plan
                         </a>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                     </>
                   ) : (
                     <>
@@ -140,9 +140,17 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
                           Billing History
                         </DropdownMenuItem>
                       </BillingHistoryDialog>
-                      <DropdownMenuSeparator />
                     </>
                   )}
+                  
+                  <UsageAnalyticsDialog>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Usage Analytics
+                    </DropdownMenuItem>
+                  </UsageAnalyticsDialog>
+                  
+                  <DropdownMenuSeparator />
                   
                   {isAdmin && (
                     <>

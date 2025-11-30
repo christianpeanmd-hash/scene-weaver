@@ -100,7 +100,7 @@ async function checkUserLimit(req: Request): Promise<{ allowed: boolean; error?:
   return { allowed: true };
 }
 
-async function incrementUsage(req: Request, userId?: string): Promise<void> {
+async function incrementUsage(req: Request, userId?: string, generationType: string = 'image'): Promise<void> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -116,6 +116,15 @@ async function incrementUsage(req: Request, userId?: string): Promise<void> {
       .from('profiles')
       .update({ monthly_generations: (profile?.monthly_generations || 0) + 1 })
       .eq('user_id', userId);
+    
+    // Log the generation for analytics
+    await supabaseAdmin
+      .from('generation_logs')
+      .insert({
+        user_id: userId,
+        generation_type: generationType
+      });
+    
     return;
   }
   
