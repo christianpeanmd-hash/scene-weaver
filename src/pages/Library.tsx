@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image, Video, FileText, Images, Download, Eye } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image, Video, FileText, Images, Download, Eye, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,10 +13,22 @@ import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
 import { useFavoritePhotos, FavoritePhoto } from "@/hooks/useFavoritePhotos";
 import { useGeneratedImagesGallery, GeneratedImage } from "@/hooks/useGeneratedImagesGallery";
 import { EnhancedCharacter } from "@/types/prompt-builder";
+import { ILLUSTRATION_STYLES } from "@/data/illustration-styles";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// Quick apply style presets (popular styles for one-click application)
+const QUICK_APPLY_STYLES = [
+  { id: "pop-art", name: "Pop Art", color: "bg-pink-500" },
+  { id: "3d-claymation", name: "Claymation", color: "bg-amber-500" },
+  { id: "watercolor-minimalism", name: "Watercolor", color: "bg-sky-500" },
+  { id: "futuristic-neon", name: "Neon", color: "bg-purple-500" },
+  { id: "childrens-book", name: "Storybook", color: "bg-green-500" },
+  { id: "vintage-engraving", name: "Vintage", color: "bg-stone-500" },
+];
+
 export default function Library() {
+  const navigate = useNavigate();
   const { savedCharacters, saveCharacter, removeCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment, removeEnvironment } = useEnvironmentLibrary();
   const { savedStyles: videoStyles, saveStyle: saveVideoStyle, removeStyle: removeVideoStyle } = useSceneStyleLibrary("video");
@@ -27,6 +39,7 @@ export default function Library() {
   const { images: generatedImages, isLoading: imagesLoading, deleteImage } = useGeneratedImagesGallery();
 
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+  const [showStylePicker, setShowStylePicker] = useState(false);
 
   const [styleTab, setStyleTab] = useState<StyleType>("video");
 
@@ -184,6 +197,22 @@ export default function Library() {
     } catch (error) {
       toast.error("Failed to download image");
     }
+  };
+
+  const handleQuickApply = (image: GeneratedImage, styleId: string) => {
+    const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
+    if (style) {
+      // Store the image URL and style in sessionStorage so the Image builder can pick it up
+      sessionStorage.setItem("quickApplyImage", image.image_url);
+      sessionStorage.setItem("quickApplyStyle", styleId);
+      toast.success(`Applying ${style.name} style...`);
+      navigate("/?tab=image");
+    }
+  };
+
+  const handleOpenInImageBuilder = (image: GeneratedImage) => {
+    sessionStorage.setItem("quickApplyImage", image.image_url);
+    navigate("/?tab=image");
   };
 
   return (
@@ -515,10 +544,13 @@ export default function Library() {
         {selectedImage && (
           <div 
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setSelectedImage(null)}
+            onClick={() => {
+              setSelectedImage(null);
+              setShowStylePicker(false);
+            }}
           >
             <div 
-              className="bg-card rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-card rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
               onClick={e => e.stopPropagation()}
             >
               <div className="p-4 border-b border-border flex items-center justify-between">
@@ -526,44 +558,108 @@ export default function Library() {
                   {selectedImage.style_name || "Generated Image"}
                 </span>
                 <button
-                  onClick={() => setSelectedImage(null)}
+                  onClick={() => {
+                    setSelectedImage(null);
+                    setShowStylePicker(false);
+                  }}
                   className="p-1.5 hover:bg-muted rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
-              <div className="p-4">
+              <div className="p-4 overflow-y-auto flex-1">
                 <img
                   src={selectedImage.image_url}
                   alt={selectedImage.style_name || "Generated"}
-                  className="w-full max-h-[60vh] object-contain rounded-lg"
+                  className="w-full max-h-[50vh] object-contain rounded-lg"
                 />
+                
+                {/* Quick Apply Section */}
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Wand2 className="w-4 h-4 text-purple-500" />
+                      Quick Apply New Style
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowStylePicker(!showStylePicker)}
+                      className="text-xs"
+                    >
+                      {showStylePicker ? "Hide All" : "More Styles"}
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {QUICK_APPLY_STYLES.map((style) => (
+                      <Button
+                        key={style.id}
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "text-xs border-2 hover:border-purple-400 transition-all",
+                          "hover:shadow-md"
+                        )}
+                        onClick={() => handleQuickApply(selectedImage, style.id)}
+                      >
+                        <span className={cn("w-2 h-2 rounded-full mr-1.5", style.color)} />
+                        {style.name}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* Expanded Style Picker */}
+                  {showStylePicker && (
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg max-h-[200px] overflow-y-auto">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {ILLUSTRATION_STYLES.filter(
+                          s => !QUICK_APPLY_STYLES.some(qs => qs.id === s.id)
+                        ).map((style) => (
+                          <button
+                            key={style.id}
+                            onClick={() => handleQuickApply(selectedImage, style.id)}
+                            className="text-left p-2 rounded-lg hover:bg-background transition-colors text-xs"
+                          >
+                            <p className="font-medium text-foreground truncate">{style.name}</p>
+                            <p className="text-muted-foreground truncate">{style.category}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
                 {selectedImage.prompt && (
                   <div className="mt-4 p-3 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Prompt:</p>
-                    <p className="text-sm text-foreground">{selectedImage.prompt}</p>
+                    <p className="text-sm text-foreground line-clamp-3">{selectedImage.prompt}</p>
                   </div>
                 )}
               </div>
               
               <div className="p-4 border-t border-border flex gap-3">
                 <Button
-                  variant="outline"
+                  variant="default"
                   className="flex-1"
+                  onClick={() => handleOpenInImageBuilder(selectedImage)}
+                >
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Open in Builder
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => handleDownloadImage(selectedImage)}
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
+                  <Download className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleDeleteGeneratedImage(selectedImage.id)}
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>

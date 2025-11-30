@@ -48,6 +48,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [pendingQuickApplyStyle, setPendingQuickApplyStyle] = useState<string | null>(null);
   
   const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
   const { images: galleryImages, isLoading: galleryLoading, addImage: addToGallery, deleteImage: deleteFromGallery } = useGeneratedImagesGallery();
@@ -98,6 +99,22 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
+
+  // Check for quick apply from Library page on mount
+  useEffect(() => {
+    const quickApplyImage = sessionStorage.getItem("quickApplyImage");
+    const quickApplyStyle = sessionStorage.getItem("quickApplyStyle");
+    
+    if (quickApplyImage) {
+      setUploadedImage(quickApplyImage);
+      sessionStorage.removeItem("quickApplyImage");
+      
+      if (quickApplyStyle) {
+        sessionStorage.removeItem("quickApplyStyle");
+        setPendingQuickApplyStyle(quickApplyStyle);
+      }
+    }
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -324,6 +341,14 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       setApplyingStyleId(null);
     }
   };
+
+  // Trigger pending quick apply from Library navigation
+  useEffect(() => {
+    if (pendingQuickApplyStyle && uploadedImage) {
+      handleQuickApply(pendingQuickApplyStyle);
+      setPendingQuickApplyStyle(null);
+    }
+  }, [pendingQuickApplyStyle, uploadedImage]);
 
   return (
     <>
