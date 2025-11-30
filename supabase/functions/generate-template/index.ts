@@ -29,6 +29,7 @@ interface GenerateRequest {
   type: 'template' | 'scene';
   sceneTitle?: string;
   sceneDescription?: string;
+  styleTemplate?: string;
 }
 
 const SYSTEM_PROMPT = `You are an expert video production template writer optimized for AI video generators (Veo 3, Sora). Your job is to create highly specific, structured prompts that produce consistent, high-quality video output.
@@ -180,6 +181,11 @@ const getScenePrompt = (req: GenerateRequest) => {
     ? '10 seconds (Sora) - 5 beats: 0-2s, 2-4s, 4-6s, 6-8s, 8-10s'
     : '15 seconds (Sora) - 5 beats: 0-3s, 3-6s, 6-9s, 9-12s, 12-15s';
 
+  // Include style template instructions if provided
+  const styleInstructions = req.styleTemplate
+    ? `\n\n**SCENE STYLE TEMPLATE (follow this structure closely):**\n${req.styleTemplate}`
+    : '';
+
   return `Generate a COMPLETE scene template for this scene within the larger concept.
 
 **Overall Concept**: ${req.concept}
@@ -190,9 +196,9 @@ const getScenePrompt = (req: GenerateRequest) => {
 **Characters**:
 ${charDesc}
 **Environment**:
-${envDesc}
+${envDesc}${styleInstructions}
 
-Generate the scene in the same detailed format as the main template. Include:
+Generate the scene following ${req.styleTemplate ? 'the SCENE STYLE TEMPLATE above' : 'the standard detailed format'}. Include:
 - Scene title and logline
 - Character blocks (if using characters)
 - Environment block with detailed setting, lighting, audio atmosphere, and props

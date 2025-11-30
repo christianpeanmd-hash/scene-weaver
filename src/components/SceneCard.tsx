@@ -2,6 +2,9 @@ import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { CharacterPicker } from "./CharacterPicker";
+import { SceneStylePicker } from "./SceneStylePicker";
+import { SceneStylePreset, SCENE_STYLE_PRESETS } from "@/data/scene-style-presets";
+import { SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { cn } from "@/lib/utils";
 
 interface SceneCardProps {
@@ -11,10 +14,13 @@ interface SceneCardProps {
   isGenerating?: boolean;
   savedCharacters: EnhancedCharacter[];
   savedEnvironments: EnhancedEnvironment[];
+  savedSceneStyles: SceneStyle[];
   onUpdate: (field: keyof Scene, value: string | number[] | number | undefined) => void;
   onSelectCharacter: (character: EnhancedCharacter) => void;
   onDeselectCharacter: (id: number) => void;
   onSelectEnvironment: (envId: number) => void;
+  onSelectStyle: (styleId: string, template: string) => void;
+  onSaveStyle: (style: Omit<SceneStyle, "id" | "createdAt">) => void;
   onGenerate: () => void;
   onCopy: () => void;
   onRemove: () => void;
@@ -27,15 +33,37 @@ export function SceneCard({
   isGenerating = false,
   savedCharacters,
   savedEnvironments,
+  savedSceneStyles,
   onUpdate,
   onSelectCharacter,
   onDeselectCharacter,
   onSelectEnvironment,
+  onSelectStyle,
+  onSaveStyle,
   onGenerate,
   onCopy,
   onRemove,
 }: SceneCardProps) {
   const selectedEnv = savedEnvironments.find(e => e.id === scene.selectedEnvironmentId);
+
+  const handleSelectPreset = (preset: SceneStylePreset) => {
+    onSelectStyle(preset.id, preset.template);
+  };
+
+  const handleSelectSaved = (style: SceneStyle) => {
+    onSelectStyle(style.id, style.template);
+  };
+
+  const handleSaveCurrentAsStyle = () => {
+    if (scene.description.trim().length > 20) {
+      const styleName = scene.title || `Scene Style ${new Date().toLocaleDateString()}`;
+      onSaveStyle({
+        name: styleName,
+        description: scene.description.slice(0, 100),
+        template: scene.description,
+      });
+    }
+  };
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden animate-slide-up">
@@ -115,6 +143,16 @@ export function SceneCard({
               </div>
             </div>
           )}
+
+          {/* Scene Style Picker */}
+          <SceneStylePicker
+            selectedStyleId={scene.selectedStyleId}
+            savedStyles={savedSceneStyles}
+            onSelectPreset={handleSelectPreset}
+            onSelectSaved={handleSelectSaved}
+            onSaveCurrentAsStyle={handleSaveCurrentAsStyle}
+            currentDescription={scene.description}
+          />
 
           <div>
             <label className="text-xs text-muted-foreground font-medium">What Happens</label>

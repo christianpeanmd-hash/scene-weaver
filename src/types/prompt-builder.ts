@@ -40,6 +40,8 @@ export interface Scene {
   content: string;
   selectedCharacterIds?: number[];
   selectedEnvironmentId?: number;
+  selectedStyleId?: string;
+  styleTemplate?: string;
 }
 
 export interface Duration {

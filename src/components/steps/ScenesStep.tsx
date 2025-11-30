@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SceneCard } from "@/components/SceneCard";
 import { Character, Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
+import { SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { isCharacterComplete } from "@/lib/template-generator";
 
 interface ScenesStepProps {
@@ -10,6 +11,7 @@ interface ScenesStepProps {
   characters: Character[];
   savedCharacters: EnhancedCharacter[];
   savedEnvironments: EnhancedEnvironment[];
+  savedSceneStyles: SceneStyle[];
   scenes: Scene[];
   copiedId: number | null;
   generatingSceneId: number | null;
@@ -19,6 +21,7 @@ interface ScenesStepProps {
   onCopyScene: (id: number, content: string) => void;
   onRemoveScene: (id: number) => void;
   onAddScene: () => void;
+  onSaveSceneStyle: (style: Omit<SceneStyle, "id" | "createdAt">) => void;
 }
 
 export function ScenesStep({
@@ -27,6 +30,7 @@ export function ScenesStep({
   characters,
   savedCharacters,
   savedEnvironments,
+  savedSceneStyles,
   scenes,
   copiedId,
   generatingSceneId,
@@ -36,6 +40,7 @@ export function ScenesStep({
   onCopyScene,
   onRemoveScene,
   onAddScene,
+  onSaveSceneStyle,
 }: ScenesStepProps) {
   const filledChars = characters.filter(isCharacterComplete);
 
@@ -57,6 +62,11 @@ export function ScenesStep({
 
   const handleSelectEnvironment = (sceneId: number, envId: number) => {
     onUpdateScene(sceneId, "selectedEnvironmentId", envId);
+  };
+
+  const handleSelectStyle = (sceneId: number, styleId: string, template: string) => {
+    onUpdateScene(sceneId, "selectedStyleId", styleId);
+    onUpdateScene(sceneId, "styleTemplate", template);
   };
 
   return (
@@ -113,10 +123,13 @@ export function ScenesStep({
             isGenerating={generatingSceneId === scene.id}
             savedCharacters={savedCharacters}
             savedEnvironments={savedEnvironments}
+            savedSceneStyles={savedSceneStyles}
             onUpdate={(field, value) => onUpdateScene(scene.id, field, value)}
             onSelectCharacter={(char) => handleSelectCharacter(scene.id, char)}
             onDeselectCharacter={(charId) => handleDeselectCharacter(scene.id, charId)}
             onSelectEnvironment={(envId) => handleSelectEnvironment(scene.id, envId)}
+            onSelectStyle={(styleId, template) => handleSelectStyle(scene.id, styleId, template)}
+            onSaveStyle={onSaveSceneStyle}
             onGenerate={() => onGenerateScene(scene.id)}
             onCopy={() => onCopyScene(scene.id, scene.content)}
             onRemove={() => onRemoveScene(scene.id)}

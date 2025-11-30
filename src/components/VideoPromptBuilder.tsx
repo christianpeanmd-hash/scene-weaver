@@ -11,6 +11,7 @@ import { generateAITemplate, generateAIScene } from "@/lib/ai-template-generator
 import { isCharacterComplete } from "@/lib/template-generator";
 import { useCharacterLibrary, parseCharactersFromTemplate } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, parseEnvironmentFromTemplate } from "@/hooks/useEnvironmentLibrary";
+import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { PresetAnchor } from "@/data/preset-anchors";
 
 interface VideoPromptBuilderProps {
@@ -34,6 +35,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
 
   const { savedCharacters, saveCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment } = useEnvironmentLibrary();
+  const { savedStyles: savedSceneStyles, saveStyle: saveSceneStyle } = useSceneStyleLibrary();
 
   // Character handlers
   const addCharacter = () => {
@@ -322,6 +324,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
         }] : environments,
         sceneTitle: scene.title,
         sceneDescription: scene.description,
+        styleTemplate: scene.styleTemplate,
       });
 
       setScenes(
@@ -436,6 +439,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
             characters={characters}
             savedCharacters={savedCharacters}
             savedEnvironments={savedEnvironments}
+            savedSceneStyles={savedSceneStyles}
             scenes={scenes}
             copiedId={typeof copiedId === "number" ? copiedId : null}
             generatingSceneId={generatingSceneId}
@@ -445,6 +449,10 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
             onCopyScene={(id, content) => handleCopy(content, id)}
             onRemoveScene={removeScene}
             onAddScene={addScene}
+            onSaveSceneStyle={(style) => {
+              saveSceneStyle(style);
+              toast.success(`Saved "${style.name}" to your style library`);
+            }}
           />
         )}
       </div>
