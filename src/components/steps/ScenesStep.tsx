@@ -10,6 +10,7 @@ interface ScenesStepProps {
   characters: Character[];
   scenes: Scene[];
   copiedId: number | null;
+  generatingSceneId: number | null;
   onViewTemplate: () => void;
   onUpdateScene: (id: number, field: keyof Scene, value: string) => void;
   onGenerateScene: (id: number) => void;
@@ -24,6 +25,7 @@ export function ScenesStep({
   characters,
   scenes,
   copiedId,
+  generatingSceneId,
   onViewTemplate,
   onUpdateScene,
   onGenerateScene,
@@ -72,6 +74,7 @@ export function ScenesStep({
             scene={scene}
             index={index}
             copied={copiedId === scene.id}
+            isGenerating={generatingSceneId === scene.id}
             onUpdate={(field, value) => onUpdateScene(scene.id, field, value)}
             onGenerate={() => onGenerateScene(scene.id)}
             onCopy={() => onCopyScene(scene.id, scene.content)}

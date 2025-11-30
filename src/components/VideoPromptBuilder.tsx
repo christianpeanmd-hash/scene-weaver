@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { MemoableLogo } from "./MemoableLogo";
 import { ProgressSteps, StepKey } from "./ProgressSteps";
 import { SetupStep } from "./steps/SetupStep";
 import { TemplateStep } from "./steps/TemplateStep";
 import { ScenesStep } from "./steps/ScenesStep";
 import { Character, Scene } from "@/types/prompt-builder";
-import { generateProductionTemplate, generateSceneContent, isCharacterComplete } from "@/lib/template-generator";
+import { generateAITemplate, generateAIScene } from "@/lib/ai-template-generator";
+import { isCharacterComplete } from "@/lib/template-generator";
 
 export function VideoPromptBuilder() {
   const [step, setStep] = useState<StepKey>("setup");
@@ -19,6 +21,7 @@ export function VideoPromptBuilder() {
   const [copiedId, setCopiedId] = useState<number | string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [expandedChar, setExpandedChar] = useState<number | null>(null);
+  const [generatingSceneId, setGeneratingSceneId] = useState<number | null>(null);
 
   const addCharacter = () => {
     const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
@@ -36,13 +39,24 @@ export function VideoPromptBuilder() {
     setCharacters(characters.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
   };
 
-  const handleGenerateTemplate = () => {
+  const handleGenerateTemplate = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      setTemplate(generateProductionTemplate(concept, duration, videoStyle, characters));
+    try {
+      const generatedTemplate = await generateAITemplate({
+        concept,
+        duration,
+        videoStyle,
+        characters,
+      });
+      setTemplate(generatedTemplate);
       setStep("template");
+      toast.success("Template generated successfully!");
+    } catch (error) {
+      console.error("Error generating template:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate template");
+    } finally {
       setIsGenerating(false);
-    }, 800);
+    }
   };
 
   const handleApproveTemplate = () => {
@@ -64,21 +78,39 @@ export function VideoPromptBuilder() {
     setScenes(scenes.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
-  const handleGenerateScene = (id: number) => {
+  const handleGenerateScene = async (id: number) => {
     const scene = scenes.find((s) => s.id === id);
     if (!scene || !scene.description.trim()) return;
 
-    setScenes(
-      scenes.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              generated: true,
-              content: generateSceneContent(s, duration, videoStyle, characters),
-            }
-          : s
-      )
-    );
+    setGeneratingSceneId(id);
+    try {
+      const generatedContent = await generateAIScene({
+        concept,
+        duration,
+        videoStyle,
+        characters,
+        sceneTitle: scene.title,
+        sceneDescription: scene.description,
+      });
+
+      setScenes(
+        scenes.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                generated: true,
+                content: generatedContent,
+              }
+            : s
+        )
+      );
+      toast.success("Scene generated successfully!");
+    } catch (error) {
+      console.error("Error generating scene:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate scene");
+    } finally {
+      setGeneratingSceneId(null);
+    }
   };
 
   const removeScene = (id: number) => {
@@ -88,6 +120,7 @@ export function VideoPromptBuilder() {
   const handleCopy = (text: string, id: number | string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
+    toast.success("Copied to clipboard!");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -147,6 +180,7 @@ export function VideoPromptBuilder() {
             characters={characters}
             scenes={scenes}
             copiedId={typeof copiedId === "number" ? copiedId : null}
+            generatingSceneId={generatingSceneId}
             onViewTemplate={() => setStep("template")}
             onUpdateScene={updateScene}
             onGenerateScene={handleGenerateScene}
