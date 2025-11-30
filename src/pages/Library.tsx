@@ -633,7 +633,22 @@ export default function Library() {
                 
                 {selectedImage.prompt && (
                   <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Prompt:</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs text-muted-foreground">Prompt:</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs text-purple-600 hover:text-purple-700"
+                        onClick={() => {
+                          sessionStorage.setItem("editPrompt", selectedImage.prompt || "");
+                          navigate("/?tab=image");
+                          toast.success("Prompt loaded in builder!");
+                        }}
+                      >
+                        <Edit2 className="w-3 h-3 mr-1" />
+                        Edit Prompt
+                      </Button>
+                    </div>
                     <p className="text-sm text-foreground line-clamp-3">{selectedImage.prompt}</p>
                   </div>
                 )}
