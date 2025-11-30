@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
@@ -60,9 +60,38 @@ const USE_CASES = [
 ];
 
 const BRAND_STYLES = [
-  { value: "techy-surgeon", label: "Techy Surgeon – editorial, clinical, modern", colors: { primary: "#0B2545", secondary: "#3B82F6", accent: "#F59E0B" } },
-  { value: "revelai", label: "RevelAi – gradient, health tech SaaS", colors: { primary: "#6366F1", secondary: "#8B5CF6", accent: "#EC4899" } },
-  { value: "minimal-saas", label: "Minimal SaaS – neutral, clean, deck-friendly", colors: { primary: "#1F2937", secondary: "#6B7280", accent: "#10B981" } },
+  // Healthcare & Clinical
+  { value: "techy-surgeon", label: "Techy Surgeon – editorial, clinical, modern", colors: { primary: "#0B2545", secondary: "#3B82F6", accent: "#F59E0B" }, font: "SF Pro / Inter" },
+  { value: "clinical-trust", label: "Clinical Trust – calming, professional healthcare", colors: { primary: "#1E3A5F", secondary: "#4A90A4", accent: "#7BC67E" }, font: "Merriweather / Open Sans" },
+  { value: "medical-modern", label: "Medical Modern – bright, approachable care", colors: { primary: "#0077B6", secondary: "#00B4D8", accent: "#90E0EF" }, font: "Nunito / Lato" },
+  
+  // Tech & SaaS
+  { value: "revelai", label: "RevelAi – gradient, health tech SaaS", colors: { primary: "#6366F1", secondary: "#8B5CF6", accent: "#EC4899" }, font: "Plus Jakarta Sans" },
+  { value: "minimal-saas", label: "Minimal SaaS – neutral, clean, deck-friendly", colors: { primary: "#1F2937", secondary: "#6B7280", accent: "#10B981" }, font: "Inter / System" },
+  { value: "startup-bold", label: "Startup Bold – energetic, venture-ready", colors: { primary: "#7C3AED", secondary: "#A78BFA", accent: "#FBBF24" }, font: "Outfit / DM Sans" },
+  { value: "enterprise-pro", label: "Enterprise Pro – corporate, trustworthy", colors: { primary: "#1E40AF", secondary: "#3B82F6", accent: "#F97316" }, font: "IBM Plex Sans" },
+  
+  // Finance & Consulting
+  { value: "finance-classic", label: "Finance Classic – navy, gold, prestigious", colors: { primary: "#1A2744", secondary: "#334155", accent: "#D4AF37" }, font: "Playfair Display / Roboto" },
+  { value: "consulting-elite", label: "Consulting Elite – BCG/McKinsey style", colors: { primary: "#0F172A", secondary: "#475569", accent: "#22C55E" }, font: "Georgia / Helvetica Neue" },
+  
+  // Creative & Marketing
+  { value: "creative-agency", label: "Creative Agency – bold, artistic, standout", colors: { primary: "#18181B", secondary: "#EC4899", accent: "#8B5CF6" }, font: "Space Grotesk / Manrope" },
+  { value: "lifestyle-brand", label: "Lifestyle Brand – warm, inviting, human", colors: { primary: "#78350F", secondary: "#D97706", accent: "#FDE68A" }, font: "Libre Baskerville / Source Sans" },
+  { value: "eco-friendly", label: "Eco Friendly – sustainable, natural, green", colors: { primary: "#14532D", secondary: "#22C55E", accent: "#A7F3D0" }, font: "Poppins / Quicksand" },
+  
+  // Education & Research
+  { value: "academic", label: "Academic – scholarly, authoritative, classic", colors: { primary: "#7C2D12", secondary: "#B45309", accent: "#1E3A8A" }, font: "Crimson Text / Lora" },
+  { value: "edtech-fresh", label: "EdTech Fresh – modern learning, engaging", colors: { primary: "#4338CA", secondary: "#6366F1", accent: "#06B6D4" }, font: "Lexend / Inter" },
+  
+  // Government & Non-profit
+  { value: "gov-official", label: "Government Official – formal, accessible", colors: { primary: "#1E3A5F", secondary: "#4B5563", accent: "#DC2626" }, font: "Source Serif Pro / Public Sans" },
+  { value: "nonprofit", label: "Non-Profit Impact – warm, mission-driven", colors: { primary: "#7C3AED", secondary: "#A855F7", accent: "#F59E0B" }, font: "Nunito Sans / Open Sans" },
+  
+  // Dark themes
+  { value: "dark-executive", label: "Dark Executive – sleek, premium, noir", colors: { primary: "#18181B", secondary: "#27272A", accent: "#FAFAFA" }, font: "SF Pro Display / Inter" },
+  { value: "midnight-tech", label: "Midnight Tech – dark mode, developer-friendly", colors: { primary: "#0F172A", secondary: "#1E293B", accent: "#38BDF8" }, font: "JetBrains Mono / Inter" },
+  
   { value: "custom", label: "Custom" },
 ];
 
@@ -117,7 +146,7 @@ export function OnePageExplainerBuilder() {
       const brandTokens = brandStyle === "custom" 
         ? customBrandTokens 
         : selectedBrand?.colors 
-          ? `Primary: ${selectedBrand.colors.primary}, Secondary: ${selectedBrand.colors.secondary}, Accent: ${selectedBrand.colors.accent}` 
+          ? `Primary: ${selectedBrand.colors.primary}, Secondary: ${selectedBrand.colors.secondary}, Accent: ${selectedBrand.colors.accent}${selectedBrand.font ? `, Font: ${selectedBrand.font}` : ""}` 
           : "";
 
       const { data, error } = await supabase.functions.invoke("generate-explainer", {
@@ -202,6 +231,10 @@ export function OnePageExplainerBuilder() {
 
     const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
     const colors = selectedBrand?.colors || { primary: "#1a365d", secondary: "#3B82F6", accent: "#F59E0B" };
+    const fontFamily = selectedBrand?.font || "'Segoe UI', system-ui, sans-serif";
+    const primaryFont = fontFamily.split('/')[0].trim();
+    const googleFontName = primaryFont.replace(/'/g, '').trim();
+    const googleFontUrl = `https://fonts.googleapis.com/css2?family=${googleFontName.replace(/\s+/g, '+')}:wght@400;600;700&display=swap`;
 
     let html = `<!DOCTYPE html>
 <html lang="en">
@@ -209,17 +242,19 @@ export function OnePageExplainerBuilder() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${result.title}</title>
+    <link rel="stylesheet" href="${googleFontUrl}">
     <style>
         :root {
             --primary: ${colors.primary};
             --secondary: ${colors.secondary};
             --accent: ${colors.accent};
+            --font-family: ${fontFamily};
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11pt; line-height: 1.5; color: #1f2937; background: #fff; }
+        body { font-family: var(--font-family); font-size: 11pt; line-height: 1.5; color: #1f2937; background: #fff; }
         .page { max-width: 8.5in; margin: 0 auto; padding: 0.5in; }
         .header { background: var(--primary); color: white; padding: 1.5rem 2rem; margin: -0.5in -0.5in 1.5rem; }
-        .header h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+        .header h1 { font-size: 1.75rem; margin-bottom: 0.25rem; font-weight: 700; }
         .header .tagline { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
         .section { margin-bottom: 1.25rem; }
         .section h2 { font-size: 1rem; font-weight: 600; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.25rem; margin-bottom: 0.5rem; }
@@ -443,12 +478,50 @@ export function OnePageExplainerBuilder() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select brand style" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {BRAND_STYLES.map((style) => (
-                          <SelectItem key={style.value} value={style.value}>
-                            {style.label}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="max-h-80">
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Healthcare & Clinical</SelectLabel>
+                          <SelectItem value="techy-surgeon">Techy Surgeon – editorial, clinical</SelectItem>
+                          <SelectItem value="clinical-trust">Clinical Trust – calming, professional</SelectItem>
+                          <SelectItem value="medical-modern">Medical Modern – bright, approachable</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Tech & SaaS</SelectLabel>
+                          <SelectItem value="revelai">RevelAi – gradient, health tech</SelectItem>
+                          <SelectItem value="minimal-saas">Minimal SaaS – clean, deck-friendly</SelectItem>
+                          <SelectItem value="startup-bold">Startup Bold – energetic, venture-ready</SelectItem>
+                          <SelectItem value="enterprise-pro">Enterprise Pro – corporate, trustworthy</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Finance & Consulting</SelectLabel>
+                          <SelectItem value="finance-classic">Finance Classic – navy, gold, prestigious</SelectItem>
+                          <SelectItem value="consulting-elite">Consulting Elite – BCG/McKinsey style</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Creative & Marketing</SelectLabel>
+                          <SelectItem value="creative-agency">Creative Agency – bold, artistic</SelectItem>
+                          <SelectItem value="lifestyle-brand">Lifestyle Brand – warm, inviting</SelectItem>
+                          <SelectItem value="eco-friendly">Eco Friendly – sustainable, natural</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Education & Research</SelectLabel>
+                          <SelectItem value="academic">Academic – scholarly, authoritative</SelectItem>
+                          <SelectItem value="edtech-fresh">EdTech Fresh – modern learning</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Government & Non-profit</SelectLabel>
+                          <SelectItem value="gov-official">Government Official – formal, accessible</SelectItem>
+                          <SelectItem value="nonprofit">Non-Profit Impact – mission-driven</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Dark Themes</SelectLabel>
+                          <SelectItem value="dark-executive">Dark Executive – sleek, premium</SelectItem>
+                          <SelectItem value="midnight-tech">Midnight Tech – developer-friendly</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs text-muted-foreground">Custom</SelectLabel>
+                          <SelectItem value="custom">Custom – define your own</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
