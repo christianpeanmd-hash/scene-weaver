@@ -17,7 +17,7 @@ const TIER_LIMITS: Record<string, number> = {
 };
 
 interface ImagePromptRequest {
-  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload' | 'extract-colors';
+  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload' | 'extract-colors' | 'extract-style-from-photo';
   mode?: 'extract-colors';
   styleName?: string;
   stylePromptTemplate?: string;
@@ -251,6 +251,27 @@ RULES:
 4. Suggest a font style that would complement the visual aesthetic
 5. Return ONLY the JSON, no explanation`;
 
+const STYLE_EXTRACTION_SYSTEM = `You are an expert at analyzing illustration and artistic styles from reference images.
+
+When given a style reference image, analyze it and create a detailed, reusable style prompt that can be applied to other subjects.
+
+OUTPUT FORMAT (JSON):
+{
+  "name": "Short evocative style name (e.g., 'Vintage Polaroid', 'Soft Watercolor Dreams', 'Bold Pop Vector')",
+  "description": "Brief description of when to use this style (2-3 sentences)",
+  "stylePrompt": "A detailed, ready-to-use style prompt (80-150 words) that describes the visual style WITHOUT any subject matter. Include: color palette, rendering technique, texture, lighting style, mood, artistic influences, and any distinctive visual elements. This prompt should be reusable for any subject."
+}
+
+RULES:
+1. Focus ONLY on the artistic style, NOT the content/subject of the image
+2. Be specific about rendering technique (watercolor, vector, oil paint, digital, etc.)
+3. Include color palette descriptions
+4. Describe texture and finish (smooth, grainy, textured paper, glossy, etc.)
+5. Mention lighting characteristics
+6. Include any distinctive artistic elements or influences
+7. The stylePrompt should work when appended to any subject description
+8. ALL OUTPUT IN ENGLISH ONLY`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -285,6 +306,11 @@ serve(async (req) => {
       // Quick color extraction from image
       systemPrompt = COLOR_EXTRACTION_SYSTEM;
       userPrompt = "Extract the dominant colors from this image as a color palette.";
+      responseFormat = 'json';
+    } else if (body.type === 'extract-style-from-photo') {
+      // Extract reusable style prompt from reference image
+      systemPrompt = STYLE_EXTRACTION_SYSTEM;
+      userPrompt = "Analyze this image and extract a detailed, reusable style description that can be applied to any subject. Focus on the artistic technique, colors, textures, and visual feel - NOT the content.";
       responseFormat = 'json';
     } else if (body.type === 'brand-from-upload') {
       systemPrompt = BRAND_EXTRACTION_SYSTEM;

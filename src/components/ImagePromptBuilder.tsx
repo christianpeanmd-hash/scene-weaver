@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Palette } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Palette, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,11 +8,21 @@ import { BrandSelector } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
-import { IllustrationStyle } from "@/data/illustration-styles";
+import { IllustrationStyle, ILLUSTRATION_STYLES } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+
+// Popular styles for quick apply
+const QUICK_STYLES = [
+  "watercolor-minimalism",
+  "pop-art",
+  "line-drawing-xkcd",
+  "3d-claymation",
+  "vintage-engraving",
+  "futuristic-neon",
+];
 
 interface ImagePromptBuilderProps {
   onSwitchToVideo: () => void;
@@ -227,6 +237,51 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     setGeneratedImageUrl(null);
   };
 
+  const handleQuickApply = async (styleId: string) => {
+    const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
+    if (!style) return;
+    
+    setSelectedStyle(style);
+    
+    // Immediately trigger apply
+    if (!uploadedImage) {
+      toast.error("Please upload an image first");
+      return;
+    }
+
+    setIsApplyingStyle(true);
+    setGeneratedImageUrl(null);
+    
+    try {
+      const styleInstruction = `Transform this photo into the "${style.name}" style: ${style.look}. ${style.useCase ? `This style is best for: ${style.useCase}.` : ''}`;
+      const brandContext = getBrandContext();
+      const fullPrompt = brandContext ? `${styleInstruction} ${brandContext}` : styleInstruction;
+      
+      setGeneratedPrompt(fullPrompt);
+      
+      const { data, error } = await supabase.functions.invoke("generate-ai-image", {
+        body: { 
+          prompt: fullPrompt, 
+          editMode: true,
+          sourceImageBase64: uploadedImage,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.imageUrl) {
+        setGeneratedImageUrl(data.imageUrl);
+        toast.success(`${style.name} style applied!`);
+      } else {
+        throw new Error("No image returned");
+      }
+    } catch (error) {
+      console.error("Error applying style:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to apply style");
+    } finally {
+      setIsApplyingStyle(false);
+    }
+  };
+
   return (
     <div className="pb-8 md:pb-12">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
@@ -292,6 +347,37 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Quick Apply Styles - only show when image is uploaded */}
+              {uploadedImage && (
+                <div className="p-3 border-t border-border/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="text-xs font-medium text-muted-foreground">Quick Apply</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_STYLES.map((styleId) => {
+                      const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
+                      if (!style) return null;
+                      return (
+                        <button
+                          key={styleId}
+                          onClick={() => handleQuickApply(styleId)}
+                          disabled={isApplyingStyle || isGenerating || isGeneratingImage}
+                          className={cn(
+                            "px-2.5 py-1 text-xs rounded-full border transition-all",
+                            selectedStyle?.id === styleId
+                              ? "bg-purple-100 dark:bg-purple-900/30 border-purple-400 text-purple-700 dark:text-purple-300"
+                              : "bg-card border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-foreground"
+                          )}
+                        >
+                          {style.name.split(' ')[0]}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

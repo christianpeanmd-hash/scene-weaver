@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target, Save, Scale } from "lucide-react";
+import { useState, useCallback } from "react";
+import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target, Save, Scale, Upload, Wand2, Image } from "lucide-react";
 import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
 import { useSceneStyleLibrary } from "@/hooks/useSceneStyleLibrary";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { ILLUSTRATION_STYLES, STYLE_CATEGORIES, IllustrationStyle, StyleCategory
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { StyleComparisonPanel } from "./StyleComparisonPanel";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import style preview images
 import editorialCollagePreview from "@/assets/style-previews/editorial-collage-preview.jpg";
@@ -127,8 +128,56 @@ export function StyleSelector({
   const [styleName, setStyleName] = useState("");
   const [comparisonStyles, setComparisonStyles] = useState<IllustrationStyle[]>([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [isExtractingStyle, setIsExtractingStyle] = useState(false);
+  const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
   const { savedStyles, saveStyle } = useSceneStyleLibrary("image");
+
+  const handleStyleImageUpload = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setStyleReferenceImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleExtractStyle = async () => {
+    if (!styleReferenceImage) {
+      toast.error("Please upload a style reference image first");
+      return;
+    }
+
+    setIsExtractingStyle(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image-prompt", {
+        body: { 
+          type: 'extract-style-from-photo',
+          imageBase64: styleReferenceImage,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.name && data?.stylePrompt) {
+        onCustomStyleChange?.(data.stylePrompt);
+        setStyleName(data.name);
+        setIsCustomMode(true);
+        onSelectStyle(null);
+        toast.success(`Style "${data.name}" extracted! You can now save it.`);
+      } else {
+        throw new Error("Failed to extract style");
+      }
+    } catch (error) {
+      console.error("Error extracting style:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to extract style");
+    } finally {
+      setIsExtractingStyle(false);
+    }
+  };
 
   const isInComparison = (styleId: string) => comparisonStyles.some(s => s.id === styleId);
 
@@ -326,7 +375,81 @@ export function StyleSelector({
           </button>
 
           {expandedCategory === "custom" && (
-            <div className="p-4 pt-0 bg-purple-50/30 animate-fade-in space-y-3">
+            <div className="p-4 pt-0 bg-purple-50/30 dark:bg-purple-950/10 animate-fade-in space-y-3">
+              {/* Photo to Style */}
+              <div className="p-3 bg-card border border-dashed border-border rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Image className="w-4 h-4 text-purple-500" />
+                  <span className="text-xs font-medium text-foreground">Create from Reference Image</span>
+                </div>
+                
+                {!styleReferenceImage ? (
+                  <label className="cursor-pointer block">
+                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors">
+                      <Upload className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Upload style reference</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleStyleImageUpload(file);
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <img 
+                        src={styleReferenceImage} 
+                        alt="Style reference" 
+                        className="w-full h-24 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => setStyleReferenceImage(null)}
+                        className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full"
+                      >
+                        <span className="sr-only">Remove</span>
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <Button
+                      variant="soft"
+                      size="sm"
+                      className="w-full"
+                      disabled={isExtractingStyle}
+                      onClick={handleExtractStyle}
+                    >
+                      {isExtractingStyle ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin mr-2" />
+                          Extracting...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-3 h-3 mr-2" />
+                          Extract Style Prompt
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Upload any image to extract its artistic style as a reusable prompt
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-x-0 top-1/2 border-t border-border" />
+                <div className="relative flex justify-center">
+                  <span className="bg-purple-50/30 dark:bg-purple-950/10 px-2 text-xs text-muted-foreground">or describe manually</span>
+                </div>
+              </div>
+
               <textarea
                 value={customStyleText}
                 onChange={(e) => {
@@ -338,7 +461,7 @@ export function StyleSelector({
                 }}
                 placeholder="Describe your illustration style... e.g., 'Minimalist line art with muted earth tones, inspired by Japanese design principles'"
                 rows={3}
-                className="w-full px-4 py-3 bg-white border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none text-sm"
+                className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none text-sm"
               />
               
               {/* Save custom style */}
@@ -349,7 +472,7 @@ export function StyleSelector({
                     value={styleName}
                     onChange={(e) => setStyleName(e.target.value)}
                     placeholder="Style name..."
-                    className="flex-1 px-3 py-2 bg-white border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400"
+                    className="flex-1 px-3 py-2 bg-card border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400"
                   />
                   <Button
                     variant="soft"
@@ -363,6 +486,7 @@ export function StyleSelector({
                       });
                       toast.success(`Saved "${styleName}" to your style library`);
                       setStyleName("");
+                      setStyleReferenceImage(null);
                     }}
                   >
                     <Save className="w-4 h-4 mr-1" />
