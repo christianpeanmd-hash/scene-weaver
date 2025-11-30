@@ -6,7 +6,7 @@ import { InfographicPromptBuilder } from "@/components/InfographicPromptBuilder"
 import { OnePageExplainerBuilder } from "@/components/OnePageExplainerBuilder";
 import { HeroSection, BuilderType } from "@/components/HeroSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
-import { PricingSection } from "@/components/PricingSection";
+import { NewsletterSection } from "@/components/NewsletterSection";
 import { Footer } from "@/components/Footer";
 import { FreeLimitModal } from "@/components/FreeLimitModal";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
@@ -45,8 +45,8 @@ const Index = () => {
       {/* How it Works Section */}
       <HowItWorksSection />
 
-      {/* Pricing Section */}
-      <PricingSection />
+      {/* Newsletter Section */}
+      <NewsletterSection />
 
       {/* Footer */}
       <Footer />
