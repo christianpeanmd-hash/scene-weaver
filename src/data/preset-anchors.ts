@@ -1,4 +1,4 @@
-import { Ghost, Building2, Rocket, Crown, Sparkles, TreePine, Home, Mountain, Palmtree, Factory } from "lucide-react";
+import { Ghost, Building2, Rocket, Crown, Sparkles, TreePine, Home, Mountain, Palmtree, Factory, Coffee, Warehouse, Castle, Train, Tent, ShoppingBag, Plane, UtensilsCrossed } from "lucide-react";
 
 export interface PresetAnchor {
   id: string;
@@ -117,6 +117,94 @@ export const ENVIRONMENT_PRESETS: PresetAnchor[] = [
 **Audio Atmosphere**: Gentle waves lapping, seagulls calling, palm fronds rustling, steel drum music from distance, occasional boat motor.
 **Props**: Woven beach chair, colorful cocktail with umbrella, snorkel gear, sunscreen bottle, flip-flops, beach towel, seashells.`,
   },
+  {
+    id: "coffee-shop",
+    name: "Cozy Coffee Shop",
+    icon: "Coffee",
+    category: "environment",
+    template: `**Environment Anchor — Artisan Café**
+**Setting**: Intimate indie coffee shop with exposed brick walls, reclaimed wood tables. Chalkboard menu behind counter with handwritten specials. Vintage pendant lights hanging low. Mismatched chairs, overstuffed leather armchair by window. Plants on every surface, books stacked casually.
+**Lighting**: Warm tungsten glow from Edison bulbs, natural light streaming through large front windows, soft shadows.
+**Audio Atmosphere**: Espresso machine hissing, acoustic indie playlist, quiet laptop typing, muffled conversations, door chime.
+**Props**: Ceramic pour-over setup, latte art in progress, croissants under glass dome, worn paperback books, succulents in mason jars.`,
+  },
+  {
+    id: "warehouse",
+    name: "Industrial Warehouse",
+    icon: "Warehouse",
+    category: "environment",
+    template: `**Environment Anchor — Urban Loft Space**
+**Setting**: Converted warehouse with 30-foot ceilings, exposed steel beams and ductwork. Polished concrete floors, massive factory windows. Graffiti art on brick walls, vintage industrial cart as coffee table. Sectional sofa on Persian rug creating living island.
+**Lighting**: Harsh daylight from oversized windows, warm spot lights on art pieces, neon sign accent ("DREAM" in pink), shadows from beams.
+**Audio Atmosphere**: Echo of footsteps, distant city sounds through windows, HVAC system hum, occasional freight elevator rumble.
+**Props**: Vintage typewriter, stacked art canvases, industrial fan, leather punching bag, record player with vinyl collection.`,
+  },
+  {
+    id: "medieval-castle",
+    name: "Medieval Castle",
+    icon: "Castle",
+    category: "environment",
+    template: `**Environment Anchor — Gothic Fortress**
+**Setting**: Grand stone hall with vaulted ceilings, massive fireplace crackling. Tapestries depicting battles hanging on walls. Long oak banquet table with pewter candlesticks. Suits of armor flanking doorways, heraldic banners overhead. Arrow-slit windows letting in thin light.
+**Lighting**: Flickering firelight creating dancing shadows, candle glow on faces, cold blue moonlight through windows at night.
+**Audio Atmosphere**: Fire crackling, wind howling through stones, distant raven caw, armor clinking, torch flames guttering.
+**Props**: Goblets and flagons, iron chandelier, hunting trophies, ancient weapons on wall, fur pelts on chairs, wooden trenchers.`,
+  },
+  {
+    id: "tokyo-train",
+    name: "Tokyo Train Station",
+    icon: "Train",
+    category: "environment",
+    template: `**Environment Anchor — Shinjuku Station**
+**Setting**: Bustling underground platform during rush hour. Crowds in business suits moving in synchronized waves. Digital signage with Japanese characters, platform edge barriers, vending machines glowing. Train arriving with precision timing, doors sliding open.
+**Lighting**: Harsh fluorescent overhead, warm glow from vending machines, LED screens casting color shifts, train headlights approaching.
+**Audio Atmosphere**: Station jingles playing, announcements in Japanese, shuffling feet, train pneumatic doors, distant rumble, beeping ticket gates.
+**Props**: Briefcases, umbrellas, face masks, bento boxes, smartphone screens glowing, IC card wallets, coffee cans from vending machine.`,
+  },
+  {
+    id: "camping",
+    name: "Mountain Campsite",
+    icon: "Tent",
+    category: "environment",
+    template: `**Environment Anchor — Alpine Wilderness**
+**Setting**: Tent pitched in clearing surrounded by pine trees, snow-capped peaks visible. Campfire ring with stones, folding chairs around it. Crystal-clear stream nearby, wildflowers dotting meadow. Hiking gear scattered purposefully, cooler and camp stove setup.
+**Lighting**: Golden sunset painting peaks pink, warm firelight on faces, deep blue twilight approaching, first stars emerging.
+**Audio Atmosphere**: Fire popping, stream babbling, wind through pines, distant eagle cry, tent fabric flapping, crickets starting.
+**Props**: Cast iron skillet, enamel mugs, headlamp, hiking boots by tent, fishing rod, s'mores supplies, camp lantern.`,
+  },
+  {
+    id: "luxury-mall",
+    name: "Luxury Shopping Mall",
+    icon: "ShoppingBag",
+    category: "environment",
+    template: `**Environment Anchor — High-End Galleria**
+**Setting**: Multi-level atrium with marble floors and glass ceiling. Designer storefronts with minimal displays, gold and black signage. Central fountain sculpture, escalators with glass balustrades. Well-dressed shoppers carrying branded bags, security in suits.
+**Lighting**: Bright natural light from skylight, warm spotlights on displays, cool accent lighting in stores, reflections on polished surfaces.
+**Audio Atmosphere**: Heels clicking on marble, distant piano music, fountains splashing, hushed conversations, shopping bags rustling.
+**Props**: Designer shopping bags, champagne flutes, minimalist display pedestals, orchid arrangements, velvet rope barriers.`,
+  },
+  {
+    id: "airplane-cabin",
+    name: "Airplane Cabin",
+    icon: "Plane",
+    category: "environment",
+    template: `**Environment Anchor — Commercial Flight**
+**Setting**: Economy class cabin mid-flight, rows of blue seats with passengers. Overhead bins closed, seatback screens glowing. Flight attendants in aisle with cart. Window shades mixed open/closed, clouds visible outside. Cramped personal space, elbow neighbors.
+**Lighting**: Dim cabin lighting for night flight, individual reading lights, blue accent strips along aisle, harsh sunlight through open shades.
+**Audio Atmosphere**: Engine drone constant, cabin announcements, drink cart rattling, baby crying somewhere, air conditioning hiss.
+**Props**: Tray table with airline meal, neck pillow, noise-canceling headphones, in-flight magazine, tiny liquor bottles, boarding pass.`,
+  },
+  {
+    id: "food-truck",
+    name: "Food Truck Festival",
+    icon: "UtensilsCrossed",
+    category: "environment",
+    template: `**Environment Anchor — Street Food Scene**
+**Setting**: Parking lot transformed with colorful food trucks in row. String lights crisscrossing overhead, picnic tables scattered. Crowds gathering around serving windows, menu boards hand-painted. Smoke rising from grills, aromas mixing.
+**Lighting**: Late afternoon sun, warm string light glow emerging, neon signs on trucks, fire from visible cooking.
+**Audio Atmosphere**: Sizzling grills, orders being called, Latin music from one truck, laughter, cash registers, truck generators humming.
+**Props**: Paper food boats, plastic forks, napkin dispensers, condiment bottles, hand-written specials signs, tip jars, QR code payment signs.`,
+  },
 ];
 
 export const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -130,4 +218,12 @@ export const ICON_MAP: Record<string, React.ComponentType<{ className?: string }
   Mountain,
   Palmtree,
   Factory,
+  Coffee,
+  Warehouse,
+  Castle,
+  Train,
+  Tent,
+  ShoppingBag,
+  Plane,
+  UtensilsCrossed,
 };
