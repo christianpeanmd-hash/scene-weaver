@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, Loader2, Palette, ImageIcon, X } from "lucide-react";
+import { Upload, Loader2, Palette, ImageIcon, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -98,63 +98,118 @@ export function BrandPreviewPanel({
 
   if (!colors && !onColorsExtracted) return null;
 
+  // Determine if we should use light or dark text based on primary color luminance
+  const getLuminance = (hex: string) => {
+    const rgb = hex.replace('#', '').match(/.{2}/g)?.map(x => parseInt(x, 16)) || [0, 0, 0];
+    return (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+  };
+  
+  const primaryLuminance = colors ? getLuminance(colors.primary) : 0.5;
+  const headerTextColor = primaryLuminance > 0.5 ? '#1f2937' : '#ffffff';
+
   return (
     <div className="space-y-3">
-      {/* Live Preview */}
+      {/* Mini One-Pager Document Preview */}
       {colors && (
-        <div className="rounded-lg border border-border overflow-hidden">
-          <div 
-            className="p-4 text-white"
-            style={{ backgroundColor: colors.primary }}
-          >
-            <div className="text-sm font-semibold mb-1" style={{ fontFamily: font }}>
-              {brandName || "Brand Preview"}
-            </div>
-            <div className="text-xs opacity-80">Header / Primary color</div>
-          </div>
-          <div className="p-3 bg-card">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div 
-                    className="w-5 h-5 rounded border border-border"
-                    style={{ backgroundColor: colors.primary }}
-                    title="Primary"
-                  />
-                  <span className="text-xs text-muted-foreground">Primary</span>
-                  <code className="text-[10px] bg-muted px-1 rounded">{colors.primary}</code>
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div 
-                    className="w-5 h-5 rounded border border-border"
-                    style={{ backgroundColor: colors.secondary }}
-                    title="Secondary"
-                  />
-                  <span className="text-xs text-muted-foreground">Secondary</span>
-                  <code className="text-[10px] bg-muted px-1 rounded">{colors.secondary}</code>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-5 h-5 rounded border border-border"
-                    style={{ backgroundColor: colors.accent }}
-                    title="Accent"
-                  />
-                  <span className="text-xs text-muted-foreground">Accent</span>
-                  <code className="text-[10px] bg-muted px-1 rounded">{colors.accent}</code>
-                </div>
-              </div>
+        <div className="space-y-2">
+          <Label className="text-xs flex items-center gap-1">
+            <Eye className="w-3 h-3" />
+            Style Preview
+          </Label>
+          <div className="rounded-lg border border-border overflow-hidden shadow-sm bg-white">
+            {/* Mini Document */}
+            <div className="scale-100 origin-top">
+              {/* Header */}
               <div 
-                className="px-3 py-1.5 rounded text-xs font-medium text-white"
-                style={{ backgroundColor: colors.accent }}
+                className="px-3 py-2"
+                style={{ backgroundColor: colors.primary, color: headerTextColor }}
               >
-                CTA Button
+                <div className="text-[10px] font-bold leading-tight" style={{ fontFamily: font }}>
+                  {brandName || "One-Pager Title"}
+                </div>
+                <div className="text-[8px] opacity-80">Subtitle goes here</div>
               </div>
+              
+              {/* Content Area */}
+              <div className="px-3 py-2 space-y-2">
+                {/* Section 1 */}
+                <div>
+                  <div 
+                    className="text-[8px] font-semibold mb-0.5 pb-0.5"
+                    style={{ 
+                      color: colors.primary, 
+                      borderBottom: `1px solid ${colors.accent}`,
+                      fontFamily: font 
+                    }}
+                  >
+                    Key Section Heading
+                  </div>
+                  <div className="text-[7px] text-gray-600 leading-relaxed">
+                    Sample body text demonstrating how your content will appear with this brand style applied.
+                  </div>
+                  <div className="mt-1 space-y-0.5">
+                    <div className="flex items-start gap-1 text-[7px] text-gray-600">
+                      <span style={{ color: colors.secondary }}>•</span>
+                      <span>Bullet point example</span>
+                    </div>
+                    <div className="flex items-start gap-1 text-[7px] text-gray-600">
+                      <span style={{ color: colors.secondary }}>•</span>
+                      <span>Another key insight</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Callout Box */}
+                <div 
+                  className="px-2 py-1.5 rounded text-[7px]"
+                  style={{ 
+                    backgroundColor: `${colors.accent}15`,
+                    borderLeft: `2px solid ${colors.accent}` 
+                  }}
+                >
+                  <div className="font-semibold mb-0.5" style={{ color: colors.primary }}>
+                    Callout Box
+                  </div>
+                  <div className="text-gray-600">Important highlight or key metric.</div>
+                </div>
+                
+                {/* CTA */}
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                  <div className="text-[7px] text-gray-500">Ready to learn more?</div>
+                  <div 
+                    className="px-2 py-0.5 rounded text-[7px] font-medium text-white"
+                    style={{ backgroundColor: colors.accent }}
+                  >
+                    Get Started
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Color Palette Strip */}
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex items-center gap-1">
+              <div 
+                className="w-4 h-4 rounded border border-border/50 shadow-sm"
+                style={{ backgroundColor: colors.primary }}
+                title={`Primary: ${colors.primary}`}
+              />
+              <div 
+                className="w-4 h-4 rounded border border-border/50 shadow-sm"
+                style={{ backgroundColor: colors.secondary }}
+                title={`Secondary: ${colors.secondary}`}
+              />
+              <div 
+                className="w-4 h-4 rounded border border-border/50 shadow-sm"
+                style={{ backgroundColor: colors.accent }}
+                title={`Accent: ${colors.accent}`}
+              />
             </div>
             {font && (
-              <div className="text-xs text-muted-foreground border-t border-border pt-2">
-                <Palette className="w-3 h-3 inline mr-1" />
-                Font: {font}
-              </div>
+              <span className="text-[10px] text-muted-foreground truncate">
+                {font.split('/')[0].trim()}
+              </span>
             )}
           </div>
         </div>
