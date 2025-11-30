@@ -1,8 +1,17 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MemoableLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type BuilderType = "video" | "image" | "infographic";
 
@@ -12,6 +21,8 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps) {
+  const { user, profile, signOut, isAdmin } = useAuth();
+
   return (
     <div className="relative overflow-hidden">
       {/* Gradient orbs */}
@@ -20,12 +31,24 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-emerald-500/15 to-teal-500/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
       </div>
 
-      <div className="relative max-w-4xl mx-auto px-4 pt-8 pb-8 md:pt-12 md:pb-10">
-        {/* Top Bar with Logo and Library Link */}
-        <div className="flex items-center justify-between mb-6 animate-fade-in">
-          <div className="flex-1" />
-          <MemoableLogo size="lg" showSubtitle />
-          <div className="flex-1 flex justify-end items-center gap-1">
+      <div className="relative max-w-6xl mx-auto px-4 pt-4 pb-8 md:pt-6 md:pb-10">
+        {/* Sticky Navigation */}
+        <nav className="flex items-center justify-between mb-8 animate-fade-in">
+          <MemoableLogo size="md" />
+          
+          <div className="hidden md:flex items-center gap-6 text-sm">
+            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+              How it works
+            </a>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              Pricing
+            </a>
+            <Link to="/library" className="text-muted-foreground hover:text-foreground transition-colors">
+              Tutorials
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
               to="/library"
@@ -34,8 +57,40 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
               <Library className="w-4 h-4" />
               <span className="hidden sm:inline">My Library</span>
             </Link>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">{profile?.full_name || user.email?.split("@")[0]}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                    {user.email}
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/auth" className="gap-2">
+                  <LogIn className="w-4 h-4" />
+                  <span>Log in</span>
+                </Link>
+              </Button>
+            )}
           </div>
-        </div>
+        </nav>
 
         {/* Tagline */}
         <div className="text-center mb-8">
