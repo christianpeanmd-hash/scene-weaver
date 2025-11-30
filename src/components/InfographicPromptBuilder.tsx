@@ -1,17 +1,19 @@
-import { useState, useCallback } from "react";
-import { FileText, Sparkles, Upload, Copy, Check, X, Wand2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AIToolLinks } from "./AIToolLinks";
 import { InfographicStyleSelector } from "./InfographicStyleSelector";
 import { BrandSelector } from "./BrandSelector";
+import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { INFOGRAPHIC_STYLES, InfographicStyle } from "@/data/infographic-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { supabase } from "@/integrations/supabase/client";
 
 export function InfographicPromptBuilder() {
   const [uploadedDocument, setUploadedDocument] = useState<{ name: string; content: string } | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<InfographicStyle | null>(null);
   const [topicDescription, setTopicDescription] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
@@ -21,7 +23,28 @@ export function InfographicPromptBuilder() {
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Handle image upload
+  const handleImageUpload = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      return false;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setUploadedImage(e.target?.result as string);
+      toast.success("Image uploaded!");
+    };
+    reader.readAsDataURL(file);
+    return true;
+  }, []);
+
   const handleDocumentUpload = useCallback(async (file: File) => {
+    // Check if it's an image first
+    if (file.type.startsWith("image/")) {
+      handleImageUpload(file);
+      return;
+    }
+
     const validTypes = [
       'application/pdf',
       'text/plain',
@@ -30,7 +53,7 @@ export function InfographicPromptBuilder() {
     ];
     
     if (!validTypes.includes(file.type) && !file.name.endsWith('.md') && !file.name.endsWith('.txt')) {
-      toast.error("Please upload a PDF, Word doc, or text file");
+      toast.error("Please upload a PDF, Word doc, text file, or image");
       return;
     }
 
@@ -44,7 +67,30 @@ export function InfographicPromptBuilder() {
       setUploadedDocument({ name: file.name, content: `[Content from: ${file.name}]` });
       toast.success("Document uploaded! Describe what it contains in the topic field.");
     }
-  }, []);
+  }, [handleImageUpload]);
+
+  // Handle paste from clipboard
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          handleImageUpload(file);
+        }
+        break;
+      }
+    }
+  }, [handleImageUpload]);
+
+  // Listen for paste events
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -121,18 +167,49 @@ export function InfographicPromptBuilder() {
     setGeneratedPrompt("");
   };
 
+  const clearImage = () => {
+    setUploadedImage(null);
+  };
+
   return (
     <div className="pb-8 md:pb-12">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Column - Upload & Style */}
           <div className="space-y-5">
+            {/* Image Upload (for reference images) */}
+            {uploadedImage ? (
+              <Card className="overflow-hidden">
+                <div className="p-4 border-b border-border/50">
+                  <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Image className="w-4 h-4 text-amber-500" />
+                    Reference Image
+                  </label>
+                </div>
+                <div className="p-4 bg-muted/30">
+                  <div className="relative">
+                    <img
+                      src={uploadedImage}
+                      alt="Reference"
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={clearImage}
+                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
+
             {/* Document Upload */}
             <Card className="overflow-hidden">
               <div className="p-4 border-b border-border/50">
                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Upload className="w-4 h-4 text-amber-500" />
-                  Source Document
+                  Source Document or Image
                   <span className="text-muted-foreground text-xs font-normal">optional</span>
                 </label>
               </div>
@@ -144,36 +221,37 @@ export function InfographicPromptBuilder() {
                   onDragLeave={handleDragLeave}
                   className={`p-8 transition-all ${
                     isDragging 
-                      ? "bg-amber-50 border-2 border-dashed border-amber-300" 
-                      : "bg-slate-50"
+                      ? "bg-amber-50 dark:bg-amber-950/20 border-2 border-dashed border-amber-300" 
+                      : "bg-muted/30"
                   }`}
                 >
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
                       <FileText className="w-8 h-8 text-amber-500" />
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Drop a PDF, Word doc, or text file
+                      Drop a document, image, or paste from clipboard
                     </p>
                     <label className="cursor-pointer">
-                      <span className="px-4 py-2 bg-white border border-border rounded-lg text-sm font-medium text-foreground hover:bg-slate-50 transition-colors">
+                      <span className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted/50 transition-colors">
                         Browse Files
                       </span>
                       <input
                         type="file"
-                        accept=".pdf,.doc,.docx,.txt,.md"
+                        accept=".pdf,.doc,.docx,.txt,.md,image/*"
                         onChange={handleFileInput}
                         className="hidden"
                       />
                     </label>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      Or describe your topic manually below
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
+                      <Clipboard className="w-3 h-3" />
+                      <span>Ctrl/Cmd+V to paste screenshots</span>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-slate-50">
-                  <div className="relative flex items-center gap-3 p-3 bg-white rounded-lg border border-border">
+                <div className="p-4 bg-muted/30">
+                  <div className="relative flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
                     <FileText className="w-8 h-8 text-amber-500" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground truncate">{uploadedDocument.name}</p>
@@ -181,7 +259,7 @@ export function InfographicPromptBuilder() {
                     </div>
                     <button
                       onClick={clearDocument}
-                      className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
+                      className="p-1.5 hover:bg-muted rounded-full transition-colors"
                     >
                       <X className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -265,13 +343,21 @@ export function InfographicPromptBuilder() {
                 )}
               </div>
               
-              <div className="flex-1 p-4 bg-slate-50">
+              <div className="flex-1 p-4 bg-muted/30">
                 {generatedPrompt ? (
                   <div className="space-y-4">
-                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-white p-4 rounded-lg border border-border">
+                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
                       {generatedPrompt}
                     </pre>
-                    <AIToolLinks type="infographic" />
+                    
+                    {/* Generate Image Directly */}
+                    <GeneratedImageDisplay prompt={generatedPrompt} type="infographic" />
+                    
+                    {/* Or Use External Tools */}
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2">Or copy prompt to use in:</p>
+                      <AIToolLinks type="infographic" />
+                    </div>
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-center">

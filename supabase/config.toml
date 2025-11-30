@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-image-prompt]
 verify_jwt = false
+
+[functions.generate-ai-image]
+verify_jwt = false
