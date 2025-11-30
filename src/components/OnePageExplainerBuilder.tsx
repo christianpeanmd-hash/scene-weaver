@@ -978,47 +978,132 @@ export function OnePageExplainerBuilder() {
                           </SelectGroup>
                         )}
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Healthcare & Clinical</SelectLabel>
-                          <SelectItem value="techy-surgeon">Techy Surgeon – editorial, clinical</SelectItem>
-                          <SelectItem value="clinical-trust">Clinical Trust – calming, professional</SelectItem>
-                          <SelectItem value="medical-modern">Medical Modern – bright, approachable</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Healthcare & Clinical</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["techy-surgeon", "clinical-trust", "medical-modern"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Tech & SaaS</SelectLabel>
-                          <SelectItem value="revelai">RevelAi – gradient, health tech</SelectItem>
-                          <SelectItem value="minimal-saas">Minimal SaaS – clean, deck-friendly</SelectItem>
-                          <SelectItem value="startup-bold">Startup Bold – energetic, venture-ready</SelectItem>
-                          <SelectItem value="enterprise-pro">Enterprise Pro – corporate, trustworthy</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Tech & SaaS</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["revelai", "minimal-saas", "startup-bold", "enterprise-pro"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Finance & Consulting</SelectLabel>
-                          <SelectItem value="finance-classic">Finance Classic – navy, gold, prestigious</SelectItem>
-                          <SelectItem value="consulting-elite">Consulting Elite – BCG/McKinsey style</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Finance & Consulting</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["finance-classic", "consulting-elite"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Creative & Marketing</SelectLabel>
-                          <SelectItem value="creative-agency">Creative Agency – bold, artistic</SelectItem>
-                          <SelectItem value="lifestyle-brand">Lifestyle Brand – warm, inviting</SelectItem>
-                          <SelectItem value="eco-friendly">Eco Friendly – sustainable, natural</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Creative & Marketing</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["creative-agency", "lifestyle-brand", "eco-friendly"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Education & Research</SelectLabel>
-                          <SelectItem value="academic">Academic – scholarly, authoritative</SelectItem>
-                          <SelectItem value="edtech-fresh">EdTech Fresh – modern learning</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Education & Research</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["academic", "edtech-fresh", "academic-journal", "research-poster", "grant-proposal", "scientific-modern", "clinical-research"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Government & Non-profit</SelectLabel>
-                          <SelectItem value="gov-official">Government Official – formal, accessible</SelectItem>
-                          <SelectItem value="nonprofit">Non-Profit Impact – mission-driven</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Government & Non-profit</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["gov-official", "nonprofit"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Dark Themes</SelectLabel>
-                          <SelectItem value="dark-executive">Dark Executive – sleek, premium</SelectItem>
-                          <SelectItem value="midnight-tech">Midnight Tech – developer-friendly</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Dark Themes</SelectLabel>
+                          {BRAND_STYLES.filter(s => ["dark-executive", "midnight-tech"].includes(s.value)).map(style => (
+                            <SelectItem key={style.value} value={style.value}>
+                              <span className="flex items-center gap-2">
+                                {style.colors && (
+                                  <span className="flex gap-0.5">
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.primary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.secondary }} />
+                                    <span className="w-3 h-3 rounded-full border border-border/50" style={{ backgroundColor: style.colors.accent }} />
+                                  </span>
+                                )}
+                                <span className="truncate">{style.label.split(" – ")[0]} – <span className="text-muted-foreground">{style.label.split(" – ")[1]}</span></span>
+                              </span>
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                         <SelectGroup>
-                          <SelectLabel className="text-xs text-muted-foreground">Custom</SelectLabel>
-                          <SelectItem value="custom">Custom – define your own</SelectItem>
+                          <SelectLabel className="text-xs font-semibold text-primary/70 uppercase tracking-wide py-2">Custom</SelectLabel>
+                          <SelectItem value="custom">
+                            <span className="flex items-center gap-2">
+                              <Palette className="w-4 h-4 text-muted-foreground" />
+                              <span>Custom – <span className="text-muted-foreground">define your own</span></span>
+                            </span>
+                          </SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
