@@ -197,65 +197,65 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
 
         {/* Builder Toggle */}
         <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="inline-flex p-1 bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg">
+          <div className="inline-flex flex-wrap justify-center gap-1 p-1 bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg max-w-[calc(100vw-2rem)]">
             <button
               onClick={() => onSelectBuilder("video")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
                 activeBuilder === "video"
                   ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <Video className="w-4 h-4" />
+              <Video className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Video</span>
             </button>
             <button
               onClick={() => onSelectBuilder("animate")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
                 activeBuilder === "animate"
                   ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <Play className="w-4 h-4" />
+              <Play className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Animate</span>
             </button>
             <button
               onClick={() => onSelectBuilder("image")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
                 activeBuilder === "image"
                   ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <Image className="w-4 h-4" />
+              <Image className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Image</span>
             </button>
             <button
               onClick={() => onSelectBuilder("infographic")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
                 activeBuilder === "infographic"
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Infographic</span>
             </button>
             <button
               onClick={() => onSelectBuilder("explainer")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
                 activeBuilder === "explainer"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>1-Pager</span>
             </button>
           </div>
