@@ -202,18 +202,6 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <div className="inline-flex flex-wrap justify-center gap-1 p-1 bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg max-w-[calc(100vw-2rem)]">
             <button
-              onClick={() => onSelectBuilder("image")}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
-                activeBuilder === "image"
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-            >
-              <Image className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              <span>Image</span>
-            </button>
-            <button
               onClick={() => onSelectBuilder("video")}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
@@ -236,6 +224,18 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             >
               <Play className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Animate</span>
+            </button>
+            <button
+              onClick={() => onSelectBuilder("image")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs md:text-sm transition-all duration-300",
+                activeBuilder === "image"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <Image className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span>Image</span>
             </button>
             <button
               onClick={() => onSelectBuilder("infographic")}
