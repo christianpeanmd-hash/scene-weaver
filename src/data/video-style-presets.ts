@@ -1,4 +1,4 @@
-import { Video, Camera, Tv, Film, Clapperboard, Sparkles, Zap, Heart } from "lucide-react";
+import { Video, Camera, Tv, Film, Clapperboard, Sparkles, Zap, Heart, GraduationCap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface VideoStylePreset {
@@ -65,5 +65,12 @@ export const VIDEO_STYLE_PRESETS: VideoStylePreset[] = [
     icon: Heart,
     description: "Warm, emotional storytelling",
     prompt: "Heartfelt style with warm golden hour lighting, intimate close-ups, soft focus backgrounds, emotional beats, genuine performances, subtle score underneath",
+  },
+  {
+    id: "educational",
+    name: "Educational",
+    icon: GraduationCap,
+    description: "Clear, informative explainer style",
+    prompt: "Educational style with clean well-lit framing, presenter-facing camera, clear visual hierarchy, animated graphics overlay areas, steady tripod shots, talking-head with B-roll cutaways, neutral background, professional but approachable tone",
   },
 ];
