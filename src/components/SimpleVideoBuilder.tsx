@@ -244,27 +244,31 @@ export function SimpleVideoBuilder() {
       const characters = [];
       if (selectedCharacter) {
         if ('template' in selectedCharacter) {
-          // It's a preset
-          const lookMatch = selectedCharacter.template.match(/\*\*Look\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
-          const demeanorMatch = selectedCharacter.template.match(/\*\*Demeanor\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
-          const roleMatch = selectedCharacter.template.match(/\*\*Role\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
-          characters.push({
+          // It's a preset - extract from template using multi-line matching
+          const lookMatch = selectedCharacter.template.match(/\*\*Look\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/s);
+          const demeanorMatch = selectedCharacter.template.match(/\*\*Demeanor\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/s);
+          const roleMatch = selectedCharacter.template.match(/\*\*Role\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/s);
+          const charData = {
             id: 1,
             name: selectedCharacter.name,
-            look: lookMatch?.[1]?.trim() || "",
+            look: lookMatch?.[1]?.trim() || selectedCharacter.template,
             demeanor: demeanorMatch?.[1]?.trim() || "",
             role: roleMatch?.[1]?.trim() || "",
-          });
+          };
+          console.log('Character data from preset:', charData);
+          characters.push(charData);
         } else {
-          // It's from library
+          // It's from library - use enhanced fields or fallback to base fields
           const libChar = selectedCharacter as EnhancedCharacter;
-          characters.push({
+          const charData = {
             id: 1,
             name: libChar.name,
-            look: libChar.enhancedLook || libChar.look,
-            demeanor: libChar.enhancedDemeanor || libChar.demeanor,
-            role: libChar.enhancedRole || libChar.role,
-          });
+            look: libChar.enhancedLook || libChar.look || "",
+            demeanor: libChar.enhancedDemeanor || libChar.demeanor || "",
+            role: libChar.enhancedRole || libChar.role || "",
+          };
+          console.log('Character data from library:', charData);
+          characters.push(charData);
         }
       }
 
@@ -351,6 +355,8 @@ export function SimpleVideoBuilder() {
     } catch (e) {
       console.warn('Failed to save scenes:', e);
     }
+    // Auto-expand the storyline panel so users can see the saved scene
+    setShowSavedScenes(true);
     toast.success("Scene added to storyline!");
   };
   

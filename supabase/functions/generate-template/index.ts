@@ -243,8 +243,15 @@ CRITICAL: ALL OUTPUT MUST BE IN ENGLISH ONLY. Do not use Chinese, Japanese, Kore
 When generating, INVENT all details based on the concept. Every bracketed placeholder must be filled with specific, visual, filmable content. ALL IN ENGLISH.`;
 
 const getTemplatePrompt = (req: GenerateRequest) => {
+  // Log the exact character data received
+  console.log('Characters received for template:', JSON.stringify(req.characters, null, 2));
+  
   const charDesc = req.characters.length > 0
-    ? req.characters.map(c => `- ${c.name}: Look="${c.look}", Demeanor="${c.demeanor}", Role="${c.role || 'unspecified'}"`).join('\n')
+    ? req.characters.map(c => `
+CHARACTER "${c.name}":
+  - Look: ${c.look}
+  - Demeanor: ${c.demeanor}
+  - Role: ${c.role || 'unspecified'}`).join('\n')
     : 'No characters specified - invent 1-2 appropriate characters based on the concept.';
 
   const envDesc = req.environments && req.environments.length > 0
@@ -269,7 +276,11 @@ ${charDesc}
 ## PROVIDED ENVIRONMENT ANCHORS (USE THESE EXACT DESCRIPTIONS):
 ${envDesc}
 
-CRITICAL: You MUST copy the character Look, Demeanor, and Role descriptions EXACTLY as provided above into the Character Anchor sections. Do NOT invent new character descriptions - use the EXACT text given. If no characters are specified, then invent appropriate ones.
+## CRITICAL INSTRUCTION - CHARACTER ANCHORS:
+You MUST use the EXACT character descriptions provided above. DO NOT modify, paraphrase, or invent new character details. 
+Copy the Look, Demeanor, and Role text WORD-FOR-WORD into the output.
+If a character is named "Dr. Arjun" with Look "Mid-30s, athletic build...", your output MUST include exactly "Mid-30s, athletic build..." for that character's Look.
+The user has carefully crafted these character anchors - DO NOT change them.
 
 Generate the template in this EXACT format:
 
