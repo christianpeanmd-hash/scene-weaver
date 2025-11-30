@@ -62,9 +62,9 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
               How it works
             </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
-            </a>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -129,10 +129,10 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
                   {tier === "free" ? (
                     <>
                       <DropdownMenuItem asChild className="cursor-pointer">
-                        <a href="#pricing" className="flex items-center gap-2 text-primary">
+                        <Link to="/pricing" className="flex items-center gap-2 text-primary">
                           <Crown className="w-4 h-4" />
                           Upgrade Plan
-                        </a>
+                        </Link>
                       </DropdownMenuItem>
                     </>
                   ) : (
@@ -188,10 +188,10 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight animate-slide-up">
             Turn any idea into{" "}
-            <span className="gradient-text">AI videos, images, infographics, and 1-pagers</span>
+            <span className="gradient-text">AI videos, images, and infographics</span>
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Paste a script, deck, or memo once. TechyMemo builds scene-by-scene storyboards, finished visuals, and copy-and-paste prompts you can render in-app or drop into Sora, Veo, Runway, and Midjourney—no prompt engineering required.
+          <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            Paste your content once. Get production-ready prompts for Sora, Veo, Runway, and Midjourney—no prompt engineering required.
           </p>
         </div>
 

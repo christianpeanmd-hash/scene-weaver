@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Library from "./pages/Library";
 import Auth from "./pages/Auth";
 import VideoGallery from "./pages/VideoGallery";
+import Pricing from "./pages/Pricing";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
@@ -31,12 +32,13 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/videos" element={<VideoGallery />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/videos" element={<VideoGallery />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -18,9 +18,9 @@ export function Footer() {
             <Link to="/videos" className="hover:text-foreground transition-colors">
               Videos
             </Link>
-            <a href="#pricing" className="hover:text-foreground transition-colors">
+            <Link to="/pricing" className="hover:text-foreground transition-colors">
               Pricing
-            </a>
+            </Link>
             <button
               onClick={() => setIsContactOpen(true)}
               className="hover:text-foreground transition-colors"
