@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type BuilderType = "video" | "image" | "animate" | "infographic";
+export type BuilderType = "video" | "image" | "animate" | "infographic" | "explainer";
 
 interface HeroSectionProps {
   activeBuilder: BuilderType;
@@ -245,6 +245,18 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             >
               <FileText className="w-4 h-4" />
               <span>Infographic</span>
+            </button>
+            <button
+              onClick={() => onSelectBuilder("explainer")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                activeBuilder === "explainer"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>1-Pager</span>
             </button>
           </div>
         </div>

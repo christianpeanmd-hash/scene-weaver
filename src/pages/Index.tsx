@@ -3,6 +3,7 @@ import { VideoPromptBuilder } from "@/components/VideoPromptBuilder";
 import { ImagePromptBuilder } from "@/components/ImagePromptBuilder";
 import { AnimatePhotoBuilder } from "@/components/AnimatePhotoBuilder";
 import { InfographicPromptBuilder } from "@/components/InfographicPromptBuilder";
+import { OnePageExplainerBuilder } from "@/components/OnePageExplainerBuilder";
 import { HeroSection, BuilderType } from "@/components/HeroSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { PricingSection } from "@/components/PricingSection";
@@ -35,6 +36,9 @@ const Index = () => {
         )}
         {activeBuilder === "infographic" && (
           <InfographicPromptBuilder />
+        )}
+        {activeBuilder === "explainer" && (
+          <OnePageExplainerBuilder />
         )}
       </div>
 
