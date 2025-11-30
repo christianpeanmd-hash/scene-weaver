@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -31,21 +32,50 @@ const forgotSchema = z.object({
   email: z.string().email("Please enter a valid email"),
 });
 
+const updatePasswordSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
 type ForgotFormData = z.infer<typeof forgotSchema>;
+type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 
 export default function Auth() {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "update-password">("login");
   const [isLoading, setIsLoading] = useState(false);
-  const { user, signInWithEmail, signUpWithEmail, signInWithGoogle, resetPassword } = useAuth();
+  const { user, signInWithEmail, signUpWithEmail, signInWithGoogle, resetPassword, updatePassword } = useAuth();
   const navigate = useNavigate();
 
+  // Check for password recovery token in URL
   useEffect(() => {
-    if (user) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get("type");
+    
+    if (type === "recovery") {
+      setMode("update-password");
+    }
+
+    // Also listen for PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("update-password");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Don't redirect if in update-password mode (user needs to set new password)
+    if (user && mode !== "update-password") {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, navigate, mode]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -60,6 +90,11 @@ export default function Auth() {
   const forgotForm = useForm<ForgotFormData>({
     resolver: zodResolver(forgotSchema),
     defaultValues: { email: "" },
+  });
+
+  const updatePasswordForm = useForm<UpdatePasswordFormData>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
   });
 
   const handleLogin = async (data: LoginFormData) => {
@@ -119,6 +154,37 @@ export default function Auth() {
     }
   };
 
+  const handleUpdatePassword = async (data: UpdatePasswordFormData) => {
+    setIsLoading(true);
+    const { error } = await updatePassword(data.password);
+    setIsLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password updated successfully!");
+      navigate("/");
+    }
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case "login": return "Welcome back";
+      case "signup": return "Create your account";
+      case "forgot": return "Reset your password";
+      case "update-password": return "Set new password";
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (mode) {
+      case "login": return "Sign in to access your saved scenes and templates";
+      case "signup": return "Start building reusable AI prompts today";
+      case "forgot": return "Enter your email and we'll send you a reset link";
+      case "update-password": return "Enter your new password below";
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
       {/* Background */}
@@ -143,19 +209,11 @@ export default function Auth() {
             <TechyMemoLogo size="lg" showSubtitle />
           </div>
 
-          <h1 className="text-2xl font-bold text-center mb-2">
-            {mode === "login" && "Welcome back"}
-            {mode === "signup" && "Create your account"}
-            {mode === "forgot" && "Reset your password"}
-          </h1>
-          <p className="text-muted-foreground text-center mb-6 text-sm">
-            {mode === "login" && "Sign in to access your saved scenes and templates"}
-            {mode === "signup" && "Start building reusable AI prompts today"}
-            {mode === "forgot" && "Enter your email and we'll send you a reset link"}
-          </p>
+          <h1 className="text-2xl font-bold text-center mb-2">{getTitle()}</h1>
+          <p className="text-muted-foreground text-center mb-6 text-sm">{getSubtitle()}</p>
 
-          {/* Google Sign In - hide on forgot password */}
-          {mode !== "forgot" && (
+          {/* Google Sign In - only show on login/signup */}
+          {(mode === "login" || mode === "signup") && (
             <>
               <Button
                 variant="outline"
@@ -195,8 +253,8 @@ export default function Auth() {
             </>
           )}
 
-          {/* Forms */}
-          {mode === "login" ? (
+          {/* Login Form */}
+          {mode === "login" && (
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -253,7 +311,10 @@ export default function Auth() {
                 )}
               </Button>
             </form>
-          ) : (
+          )}
+
+          {/* Signup Form */}
+          {mode === "signup" && (
             <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full name</Label>
@@ -303,6 +364,37 @@ export default function Auth() {
                 </div>
                 {signupForm.formState.errors.password && (
                   <p className="text-sm text-destructive">{signupForm.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    {...signupForm.register("confirmPassword")}
+                  />
+                </div>
+                {signupForm.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
+              </Button>
+            </form>
           )}
 
           {/* Forgot Password Form */}
@@ -337,22 +429,41 @@ export default function Auth() {
               </Button>
             </form>
           )}
-              </div>
 
+          {/* Update Password Form */}
+          {mode === "update-password" && (
+            <form onSubmit={updatePasswordForm.handleSubmit(handleUpdatePassword)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Label htmlFor="new-password">New password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="confirmPassword"
+                    id="new-password"
                     type="password"
                     placeholder="••••••••"
                     className="pl-10"
-                    {...signupForm.register("confirmPassword")}
+                    {...updatePasswordForm.register("password")}
                   />
                 </div>
-                {signupForm.formState.errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
+                {updatePasswordForm.formState.errors.password && (
+                  <p className="text-sm text-destructive">{updatePasswordForm.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-new-password">Confirm new password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="confirm-new-password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    {...updatePasswordForm.register("confirmPassword")}
+                  />
+                </div>
+                {updatePasswordForm.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{updatePasswordForm.formState.errors.confirmPassword.message}</p>
                 )}
               </div>
 
@@ -360,15 +471,16 @@ export default function Auth() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating account...
+                    Updating...
                   </>
                 ) : (
-                  "Create account"
+                  "Update password"
                 )}
               </Button>
             </form>
           )}
 
+          {/* Footer links */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             {mode === "login" && (
               <>
@@ -390,7 +502,7 @@ export default function Auth() {
                   onClick={() => setMode("login")}
                   className="text-primary hover:underline font-medium"
                 >
-                  Back to sign in
+                  Sign in
                 </button>
               </>
             )}
@@ -402,7 +514,19 @@ export default function Auth() {
                   onClick={() => setMode("login")}
                   className="text-primary hover:underline font-medium"
                 >
-                  Sign in
+                  Back to sign in
+                </button>
+              </>
+            )}
+            {mode === "update-password" && (
+              <>
+                Changed your mind?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Back to sign in
                 </button>
               </>
             )}
