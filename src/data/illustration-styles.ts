@@ -1,7 +1,7 @@
 export interface IllustrationStyle {
   id: string;
   name: string;
-  category: "editorial" | "explainer" | "humor" | "futurism" | "artistic";
+  category: "editorial" | "explainer" | "humor" | "futurism" | "artistic" | "marketing";
   look: string;
   feel: string;
   useCase: string;
@@ -11,6 +11,88 @@ export interface IllustrationStyle {
 }
 
 export const ILLUSTRATION_STYLES: IllustrationStyle[] = [
+  // Professional Marketing
+  {
+    id: "corporate-gradient",
+    name: "Corporate Gradient",
+    category: "marketing",
+    look: "Sleek gradients, professional photography composites, subtle glows and reflections",
+    feel: "Premium, trustworthy, enterprise-ready",
+    useCase: "SaaS marketing, B2B content, corporate presentations",
+    promptTemplate: "Premium corporate marketing illustration, sleek gradient backgrounds (deep blue to purple), professional lighting, subtle lens flares, enterprise aesthetic. {subject}",
+    previewPrompt: "Corporate gradient marketing image, sleek blue to purple gradient, professional lighting, premium enterprise aesthetic",
+  },
+  {
+    id: "lifestyle-brand",
+    name: "Lifestyle Brand",
+    category: "marketing",
+    look: "Warm natural lighting, authentic lifestyle photography style, subtle film grain",
+    feel: "Aspirational, authentic, human-centered",
+    useCase: "D2C brands, wellness, lifestyle products",
+    promptTemplate: "Lifestyle brand marketing illustration, warm golden hour lighting, authentic human moments, subtle film grain, aspirational yet relatable. {subject}",
+    previewPrompt: "Lifestyle brand image, warm golden lighting, authentic feel, subtle film grain, aspirational",
+  },
+  {
+    id: "tech-product",
+    name: "Tech Product Hero",
+    category: "marketing",
+    look: "Clean product renders, dramatic lighting, floating UI elements, glass reflections",
+    feel: "Innovative, cutting-edge, Apple-inspired polish",
+    useCase: "Product launches, feature announcements, tech marketing",
+    promptTemplate: "Tech product hero illustration, dramatic studio lighting, floating interface elements, glass and metal textures, innovative and polished. {subject}",
+    previewPrompt: "Tech product hero shot, dramatic lighting, floating UI, glass reflections, Apple-style polish",
+  },
+  {
+    id: "bold-typography",
+    name: "Bold Typography Hero",
+    category: "marketing",
+    look: "Oversized typography, dynamic compositions, high contrast, motion blur accents",
+    feel: "Impactful, modern, attention-commanding",
+    useCase: "Headlines, social ads, brand campaigns",
+    promptTemplate: "Bold typographic marketing illustration, oversized sans-serif elements, high contrast colors, dynamic angles, motion blur accents. {subject}",
+    previewPrompt: "Bold typography hero image, oversized text elements, high contrast, dynamic composition, modern",
+  },
+  {
+    id: "glassmorphism",
+    name: "Glassmorphism UI",
+    category: "marketing",
+    look: "Frosted glass panels, soft blur effects, colorful gradients behind translucent surfaces",
+    feel: "Modern, sophisticated, premium digital aesthetic",
+    useCase: "App marketing, fintech, modern SaaS",
+    promptTemplate: "Glassmorphism marketing illustration, frosted glass panels with soft blur, vibrant gradient backgrounds, floating UI cards, premium digital aesthetic. {subject}",
+    previewPrompt: "Glassmorphism UI image, frosted glass panels, colorful gradient background, floating cards, modern",
+  },
+  {
+    id: "duotone-impact",
+    name: "Duotone Impact",
+    category: "marketing",
+    look: "Two-color overlays on photography, bold contrast, Spotify-inspired",
+    feel: "Bold, memorable, instantly recognizable",
+    useCase: "Social campaigns, brand awareness, event marketing",
+    promptTemplate: "Duotone marketing illustration, bold two-color overlay (magenta and cyan or orange and teal), high contrast photography base, impactful and memorable. {subject}",
+    previewPrompt: "Duotone image, magenta and cyan overlay, high contrast, bold Spotify-style aesthetic",
+  },
+  {
+    id: "3d-abstract",
+    name: "3D Abstract Shapes",
+    category: "marketing",
+    look: "Soft 3D rendered shapes, pastel gradients, floating geometric forms",
+    feel: "Playful yet professional, fresh, contemporary",
+    useCase: "Startup branding, creative agencies, modern apps",
+    promptTemplate: "3D abstract marketing illustration, soft rendered geometric shapes floating in space, pastel gradients, gentle shadows, fresh contemporary feel. {subject}",
+    previewPrompt: "3D abstract shapes, soft pastel gradients, floating spheres and torus, gentle shadows, modern",
+  },
+  {
+    id: "photo-cutout",
+    name: "Photo Cutout Collage",
+    category: "marketing",
+    look: "Cut-out photography layered with bold shapes, stickers, and hand-drawn elements",
+    feel: "Gen-Z friendly, energetic, social-native",
+    useCase: "Youth marketing, social media, trendy brands",
+    promptTemplate: "Photo cutout collage style, layered photography with bold geometric shapes, hand-drawn doodles, sticker aesthetic, energetic and social-native. {subject}",
+    previewPrompt: "Photo cutout collage, bold shapes, sticker elements, hand-drawn doodles, Gen-Z aesthetic",
+  },
+
   // Editorial / Gravitas
   {
     id: "editorial-collage",
@@ -233,6 +315,7 @@ export const ILLUSTRATION_STYLES: IllustrationStyle[] = [
 ];
 
 export const STYLE_CATEGORIES = [
+  { id: "marketing", name: "Professional Marketing", icon: "Target" },
   { id: "editorial", name: "Editorial & Gravitas", icon: "Newspaper" },
   { id: "explainer", name: "Explainers & Strategy", icon: "BarChart3" },
   { id: "humor", name: "Humor & Satire", icon: "Smile" },
