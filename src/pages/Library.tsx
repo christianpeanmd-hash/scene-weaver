@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MemoableLogo } from "@/components/MemoableLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCharacterLibrary } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironmentLibrary";
 import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
@@ -79,7 +80,7 @@ export default function Library() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-teal-50/30 to-emerald-50/20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -92,7 +93,10 @@ export default function Library() {
             </Link>
             <MemoableLogo size="sm" />
           </div>
-          <h1 className="text-lg font-semibold text-foreground">Library</h1>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <h1 className="text-lg font-semibold text-foreground">Library</h1>
+          </div>
         </div>
       </header>
 
