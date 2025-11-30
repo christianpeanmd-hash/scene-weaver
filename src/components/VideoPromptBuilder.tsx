@@ -75,6 +75,34 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     toast.success(`Added ${preset.name} preset`);
   };
 
+  const addCharacterFromPhoto = (charData: { name: string; look: string; demeanor: string; role: string }) => {
+    const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
+    const newChar: Character = {
+      id: newId,
+      name: charData.name,
+      look: charData.look,
+      demeanor: charData.demeanor,
+      role: charData.role,
+    };
+    setCharacters([...characters, newChar]);
+    setExpandedChar(newId);
+
+    // Also save to library
+    const enhanced: EnhancedCharacter = {
+      id: Date.now() + Math.random(),
+      name: charData.name,
+      look: charData.look,
+      demeanor: charData.demeanor,
+      role: charData.role,
+      enhancedLook: charData.look,
+      enhancedDemeanor: charData.demeanor,
+      enhancedRole: charData.role,
+      sourceTemplate: "Generated from photo",
+      createdAt: Date.now(),
+    };
+    saveCharacter(enhanced);
+  };
+
   const removeCharacter = (id: number) => {
     setCharacters(characters.filter((c) => c.id !== id));
     if (expandedChar === id) setExpandedChar(null);
@@ -125,6 +153,37 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     setEnvironments([...environments, newEnv]);
     setExpandedEnv(newId);
     toast.success(`Added ${preset.name} preset`);
+  };
+
+  const addEnvironmentFromPhoto = (envData: { name: string; setting: string; lighting: string; audio: string; props: string }) => {
+    const newId = environments.length > 0 ? Math.max(...environments.map((e) => e.id)) + 1 : 1;
+    const newEnv: Environment = {
+      id: newId,
+      name: envData.name,
+      setting: envData.setting,
+      lighting: envData.lighting,
+      audio: envData.audio,
+      props: envData.props,
+    };
+    setEnvironments([...environments, newEnv]);
+    setExpandedEnv(newId);
+
+    // Also save to library
+    const enhanced: EnhancedEnvironment = {
+      id: Date.now() + Math.random(),
+      name: envData.name,
+      setting: envData.setting,
+      lighting: envData.lighting,
+      audio: envData.audio,
+      props: envData.props,
+      enhancedSetting: envData.setting,
+      enhancedLighting: envData.lighting,
+      enhancedAudio: envData.audio,
+      enhancedProps: envData.props,
+      sourceTemplate: "Generated from photo",
+      createdAt: Date.now(),
+    };
+    saveEnvironment(enhanced);
   };
 
   const removeEnvironment = (id: number) => {
@@ -344,11 +403,13 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
             onAddCharacter={addCharacter}
             onAddCharacterFromLibrary={addCharacterFromLibrary}
             onAddCharacterFromPreset={addCharacterFromPreset}
+            onAddCharacterFromPhoto={addCharacterFromPhoto}
             onUpdateCharacter={updateCharacter}
             onRemoveCharacter={removeCharacter}
             onAddEnvironment={addEnvironment}
             onAddEnvironmentFromLibrary={addEnvironmentFromLibrary}
             onAddEnvironmentFromPreset={addEnvironmentFromPreset}
+            onAddEnvironmentFromPhoto={addEnvironmentFromPhoto}
             onUpdateEnvironment={updateEnvironment}
             onRemoveEnvironment={removeEnvironment}
             onGenerate={handleGenerateTemplate}

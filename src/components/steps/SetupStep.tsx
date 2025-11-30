@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { CharacterCard } from "@/components/CharacterCard";
 import { EnvironmentCard } from "@/components/EnvironmentCard";
 import { PresetPicker } from "@/components/PresetPicker";
+import { PhotoToAnchor } from "@/components/PhotoToAnchor";
 import { Character, EnhancedCharacter, Environment, EnhancedEnvironment, DURATIONS } from "@/types/prompt-builder";
 import { CHARACTER_PRESETS, ENVIRONMENT_PRESETS, PresetAnchor } from "@/data/preset-anchors";
 import { isCharacterComplete } from "@/lib/template-generator";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 interface SetupStepProps {
   concept: string;
@@ -26,11 +26,13 @@ interface SetupStepProps {
   onAddCharacter: () => void;
   onAddCharacterFromLibrary: (character: EnhancedCharacter) => void;
   onAddCharacterFromPreset: (preset: PresetAnchor) => void;
+  onAddCharacterFromPhoto: (charData: { name: string; look: string; demeanor: string; role: string }) => void;
   onUpdateCharacter: (id: number, field: keyof Character, value: string) => void;
   onRemoveCharacter: (id: number) => void;
   onAddEnvironment: () => void;
   onAddEnvironmentFromLibrary: (environment: EnhancedEnvironment) => void;
   onAddEnvironmentFromPreset: (preset: PresetAnchor) => void;
+  onAddEnvironmentFromPhoto: (envData: { name: string; setting: string; lighting: string; audio: string; props: string }) => void;
   onUpdateEnvironment: (id: number, field: keyof Environment, value: string) => void;
   onRemoveEnvironment: (id: number) => void;
   onGenerate: () => void;
@@ -55,11 +57,13 @@ export function SetupStep({
   onAddCharacter,
   onAddCharacterFromLibrary,
   onAddCharacterFromPreset,
+  onAddCharacterFromPhoto,
   onUpdateCharacter,
   onRemoveCharacter,
   onAddEnvironment,
   onAddEnvironmentFromLibrary,
   onAddEnvironmentFromPreset,
+  onAddEnvironmentFromPhoto,
   onUpdateEnvironment,
   onRemoveEnvironment,
   onGenerate,
@@ -200,6 +204,12 @@ export function SetupStep({
             </button>
           </div>
 
+          {/* Generate from Photo */}
+          <PhotoToAnchor
+            type="character"
+            onGenerated={onAddCharacterFromPhoto}
+          />
+
           {/* Character Presets */}
           <PresetPicker
             presets={CHARACTER_PRESETS}
@@ -289,6 +299,12 @@ export function SetupStep({
               Add new environment
             </button>
           </div>
+
+          {/* Generate from Photo */}
+          <PhotoToAnchor
+            type="environment"
+            onGenerated={onAddEnvironmentFromPhoto}
+          />
 
           {/* Environment Presets */}
           <PresetPicker
