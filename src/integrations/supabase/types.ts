@@ -317,6 +317,100 @@ export type Database = {
         }
         Relationships: []
       }
+      project_scenes: {
+        Row: {
+          character_ids: string[] | null
+          created_at: string
+          duration_seconds: number | null
+          environment_id: string | null
+          id: string
+          order_index: number
+          project_id: string
+          scene_name: string
+          scene_prompt: string | null
+          style_id: string | null
+          updated_at: string
+          video_status: string | null
+          video_url: string | null
+        }
+        Insert: {
+          character_ids?: string[] | null
+          created_at?: string
+          duration_seconds?: number | null
+          environment_id?: string | null
+          id?: string
+          order_index?: number
+          project_id: string
+          scene_name: string
+          scene_prompt?: string | null
+          style_id?: string | null
+          updated_at?: string
+          video_status?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          character_ids?: string[] | null
+          created_at?: string
+          duration_seconds?: number | null
+          environment_id?: string | null
+          id?: string
+          order_index?: number
+          project_id?: string
+          scene_name?: string
+          scene_prompt?: string | null
+          style_id?: string | null
+          updated_at?: string
+          video_status?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_scenes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string

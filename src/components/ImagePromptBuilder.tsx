@@ -343,12 +343,12 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
 
           {/* Right Column - Result */}
           <div className="space-y-5">
-            {/* Generated Prompt */}
+            {/* Generated Prompt / Image */}
             <Card className="h-full flex flex-col">
               <div className="p-4 border-b border-border/50 flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Sparkles className="w-4 h-4 text-purple-500" />
-                  Generated Prompt
+                  Generated Prompt / Image
                 </label>
                 {generatedPrompt && (
                   <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
@@ -401,7 +401,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                         <Sparkles className="w-8 h-8 text-slate-400" />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Your generated prompt will appear here
+                        Your generated prompt or image will appear here
                       </p>
                       <p className="text-xs text-muted-foreground/70 mt-1">
                         Select a style and click Generate

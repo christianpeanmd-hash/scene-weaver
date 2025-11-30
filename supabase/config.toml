@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.generate-motion-prompt]
 verify_jwt = false
 
+[functions.generate-video]
+verify_jwt = true
+
 [functions.send-invite-request]
 verify_jwt = false
 

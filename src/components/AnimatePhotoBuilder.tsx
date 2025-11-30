@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
-import { Play, Upload, Copy, Check, X, Wand2, Clipboard, Sparkles, Image, ArrowRight, Zap, Film } from "lucide-react";
+import { Play, Upload, Copy, Check, X, Wand2, Clipboard, Sparkles, Image, ArrowRight, Zap, Film, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AIToolLinks } from "./AIToolLinks";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
+import { ProjectManager } from "./ProjectManager";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -404,6 +405,24 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
                 </li>
               </ul>
             </Card>
+
+            {/* Premium Video Generation Banner */}
+            <Card className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/50 dark:border-amber-800/50">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 flex items-center justify-center flex-shrink-0">
+                  <Crown className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-foreground">Generate Videos Directly</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Pro and Studio members can generate videos directly in Memoable and organize them into projects.
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Project Manager */}
+            <ProjectManager currentPrompt={generatedPrompt} />
           </div>
         </div>
       </div>
