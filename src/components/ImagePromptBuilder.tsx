@@ -237,14 +237,14 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     setGeneratedImageUrl(null);
     
     try {
-      // Build the style instruction
+      // Build the style instruction - be VERY explicit about preserving the subject
       const styleInstruction = selectedStyle 
-        ? `Transform this photo into the "${selectedStyle.name}" style: ${selectedStyle.look}. ${selectedStyle.useCase ? `This style is best for: ${selectedStyle.useCase}.` : ''}`
-        : `Transform this photo using this style: ${customStyleText}`;
+        ? `IMPORTANT: You must transform THIS EXACT PERSON/SUBJECT from the attached photo into the "${selectedStyle.name}" artistic style. Keep their exact face, pose, expression, and features - only change the visual rendering style to: ${selectedStyle.look}. Do NOT generate a different person or new characters. Recreate THIS specific person in the new style.`
+        : `IMPORTANT: You must transform THIS EXACT PERSON/SUBJECT from the attached photo using this style: ${customStyleText}. Keep their exact face, pose, expression, and features - only change the visual rendering style. Do NOT generate a different person or new characters.`;
       
       // Include scene context if provided (e.g., "make it a professional headshot", "put them in a coffee shop")
       const contextPart = sceneContext.trim() 
-        ? ` Scene context: ${sceneContext.trim()}.`
+        ? ` Additional context: ${sceneContext.trim()}.`
         : '';
       
       const brandContext = getBrandContext();
@@ -313,8 +313,9 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     setGeneratedImageUrl(null);
     
     try {
-      const styleInstruction = `Transform this photo into the "${style.name}" style: ${style.look}. ${style.useCase ? `This style is best for: ${style.useCase}.` : ''}`;
-      const contextPart = sceneContext.trim() ? ` Scene context: ${sceneContext.trim()}.` : '';
+      // Be VERY explicit about preserving the subject
+      const styleInstruction = `IMPORTANT: You must transform THIS EXACT PERSON/SUBJECT from the attached photo into the "${style.name}" artistic style. Keep their exact face, pose, expression, and features - only change the visual rendering style to: ${style.look}. Do NOT generate a different person or new characters. Recreate THIS specific person in the new style.`;
+      const contextPart = sceneContext.trim() ? ` Additional context: ${sceneContext.trim()}.` : '';
       const brandContext = getBrandContext();
       const fullPrompt = `${styleInstruction}${contextPart}${brandContext ? ` ${brandContext}` : ''}`;
       
