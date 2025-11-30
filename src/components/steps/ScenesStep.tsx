@@ -1,6 +1,7 @@
-import { Plus } from "lucide-react";
+import { Plus, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SceneCard } from "@/components/SceneCard";
+import { ProjectManager } from "@/components/ProjectManager";
 import { Character, Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { isCharacterComplete } from "@/lib/template-generator";
@@ -142,6 +143,13 @@ export function ScenesStep({
         <Plus className="w-5 h-5" />
         Add Scene
       </Button>
+
+      {/* Project Manager */}
+      <div className="mt-6">
+        <ProjectManager 
+          currentPrompt={scenes.find(s => s.generated && s.content)?.content}
+        />
+      </div>
     </div>
   );
 }
