@@ -2,23 +2,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { IllustrationStyle } from "@/data/illustration-styles";
 
 interface GenerateImagePromptParams {
-  style: IllustrationStyle;
+  style: IllustrationStyle | null;
+  customStyle?: string;
   imageBase64?: string | null;
   subjectDescription?: string;
 }
 
 export async function generateImagePrompt(params: GenerateImagePromptParams): Promise<string> {
-  const { style, imageBase64, subjectDescription } = params;
+  const { style, customStyle, imageBase64, subjectDescription } = params;
+
+  // Build the request body based on whether we have a preset style or custom style
+  const body: Record<string, unknown> = {
+    imageBase64: imageBase64,
+    subjectDescription: subjectDescription || "",
+  };
+
+  if (customStyle) {
+    // User provided their own style description
+    body.customStyle = customStyle;
+  } else if (style) {
+    // User selected a preset style
+    body.styleName = style.name;
+    body.stylePromptTemplate = style.promptTemplate;
+    body.styleLook = style.look;
+    body.styleFeel = style.feel;
+  }
 
   const { data, error } = await supabase.functions.invoke('generate-image-prompt', {
-    body: {
-      styleName: style.name,
-      stylePromptTemplate: style.promptTemplate,
-      styleLook: style.look,
-      styleFeel: style.feel,
-      imageBase64: imageBase64,
-      subjectDescription: subjectDescription || "",
-    },
+    body,
   });
 
   if (error) {

@@ -11,6 +11,7 @@ interface ImagePromptRequest {
   stylePromptTemplate?: string;
   styleLook?: string;
   styleFeel?: string;
+  customStyle?: string;
   imageBase64?: string;
   subjectDescription?: string;
 }
@@ -86,8 +87,28 @@ serve(async (req) => {
       systemPrompt = IMAGE_PROMPT_SYSTEM;
       
       const hasImage = body.imageBase64 && body.imageBase64.startsWith('data:image');
+      const hasCustomStyle = body.customStyle && body.customStyle.trim();
       
-      userPrompt = `Create a detailed image generation prompt in the "${body.styleName}" style.
+      if (hasCustomStyle) {
+        // User provided their own style description
+        userPrompt = `Create a detailed image generation prompt using this custom style:
+
+STYLE DESCRIPTION: ${body.customStyle}
+
+${hasImage ? 'I\'ve uploaded a reference photo. Describe the subject in the photo and incorporate it into the prompt.' : ''}
+${body.subjectDescription ? `Subject description: ${body.subjectDescription}` : ''}
+
+Generate a complete, ready-to-use prompt that:
+1. Faithfully captures the user's custom style description
+2. ${hasImage ? 'Describes the subject from the photo accurately' : 'Incorporates the subject description'}
+3. Includes specific style keywords and modifiers based on the custom description
+4. Suggests appropriate aspect ratio
+5. Is ready to paste directly into Midjourney, DALL-E, or similar tools
+
+Return ONLY the prompt text, nothing else.`;
+      } else {
+        // User selected a preset style
+        userPrompt = `Create a detailed image generation prompt in the "${body.styleName}" style.
 
 STYLE CHARACTERISTICS:
 - Look: ${body.styleLook}
@@ -105,6 +126,7 @@ Generate a complete, ready-to-use prompt that:
 5. Is ready to paste directly into Midjourney, DALL-E, or similar tools
 
 Return ONLY the prompt text, nothing else.`;
+      }
     }
 
     // Build messages array

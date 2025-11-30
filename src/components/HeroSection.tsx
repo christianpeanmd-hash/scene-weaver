@@ -1,5 +1,4 @@
 import { Sparkles, Video, Image, Wand2, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { MemoableLogo } from "./MemoableLogo";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +19,7 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
       <div className="relative max-w-4xl mx-auto px-4 pt-8 pb-10 md:pt-12 md:pb-14">
         {/* Logo */}
         <div className="flex justify-center mb-6 md:mb-8 animate-fade-in">
-          <MemoableLogo size="lg" />
+          <MemoableLogo size="lg" showSubtitle />
         </div>
 
         {/* Tagline */}
@@ -30,8 +29,7 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             <span className="block gradient-text">AI-generated media</span>
           </h1>
           <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            From idea to production-ready prompt in minutes. Build consistent characters, 
-            environments, and scenes for Veo, Sora, Midjourney, and more.
+            Build consistent characters, environments, and scenes for Veo, Sora, Midjourney, and more.
           </p>
         </div>
 

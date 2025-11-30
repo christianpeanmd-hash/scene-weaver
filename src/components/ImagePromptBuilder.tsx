@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StyleSelector } from "./StyleSelector";
-import { ILLUSTRATION_STYLES, IllustrationStyle } from "@/data/illustration-styles";
+import { AIToolLinks } from "./AIToolLinks";
+import { IllustrationStyle } from "@/data/illustration-styles";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
 
 interface ImagePromptBuilderProps {
@@ -14,6 +15,7 @@ interface ImagePromptBuilderProps {
 export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<IllustrationStyle | null>(null);
+  const [customStyleText, setCustomStyleText] = useState("");
   const [subjectDescription, setSubjectDescription] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -56,8 +58,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   }, [handleImageUpload]);
 
   const handleGenerate = async () => {
-    if (!selectedStyle) {
-      toast.error("Please select a style first");
+    if (!selectedStyle && !customStyleText.trim()) {
+      toast.error("Please select a style or describe your own");
       return;
     }
 
@@ -65,6 +67,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     try {
       const prompt = await generateImagePrompt({
         style: selectedStyle,
+        customStyle: customStyleText.trim() || undefined,
         imageBase64: uploadedImage,
         subjectDescription,
       });
@@ -182,6 +185,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
             <StyleSelector
               selectedStyle={selectedStyle}
               onSelectStyle={setSelectedStyle}
+              customStyleText={customStyleText}
+              onCustomStyleChange={setCustomStyleText}
             />
 
             {/* Generate Button */}
@@ -189,7 +194,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               variant="hero"
               size="xl"
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-              disabled={(!uploadedImage && !subjectDescription.trim()) || !selectedStyle || isGenerating}
+              disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating}
               onClick={handleGenerate}
             >
               {isGenerating ? (
@@ -232,16 +237,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                     <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-white p-4 rounded-lg border border-border">
                       {generatedPrompt}
                     </pre>
-                    <div className="text-xs text-muted-foreground">
-                      <p className="font-medium mb-1">Use this prompt with:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {["Midjourney", "DALL-E", "Stable Diffusion", "Firefly", "Ideogram"].map((tool) => (
-                          <span key={tool} className="px-2 py-1 bg-white border border-border rounded text-xs">
-                            {tool}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    <AIToolLinks type="image" />
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-center">
