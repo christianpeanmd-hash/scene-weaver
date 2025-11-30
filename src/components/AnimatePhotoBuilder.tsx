@@ -1,13 +1,16 @@
 import { useState, useCallback, useEffect } from "react";
-import { Play, Upload, Copy, Check, X, Wand2, Clipboard, Sparkles, Image, ArrowRight, Zap, Film, Crown } from "lucide-react";
+import { Play, Upload, Copy, Check, X, Wand2, Clipboard, Sparkles, Image, ArrowRight, Zap, Film, Crown, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { AIToolLinks } from "./AIToolLinks";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
 import { ProjectManager } from "./ProjectManager";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import { useSubscription } from "@/hooks/useSubscription";
 
 // Motion style presets
 const MOTION_PRESETS = [
@@ -32,6 +35,28 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  const { tier } = useSubscription();
+  const videoGen = useVideoGeneration();
+  const isPremium = tier === 'pro' || tier === 'studio';
+
+  const handleGenerateVideo = async () => {
+    if (!uploadedImage || !generatedPrompt) {
+      toast.error("Please generate a motion prompt first");
+      return;
+    }
+
+    try {
+      await videoGen.generateVideo({
+        prompt: generatedPrompt,
+        imageBase64: uploadedImage,
+        duration: 5,
+        aspectRatio: '16:9',
+      });
+    } catch (error) {
+      // Error already handled by hook
+    }
+  };
 
   const handleImageUpload = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -317,14 +342,14 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
 
           {/* Right Column - Result */}
           <div className="space-y-5">
-            {/* Generated Prompt */}
-            <Card className="h-full flex flex-col">
+            {/* Generated Prompt / Video */}
+            <Card className="flex flex-col">
               <div className="p-4 border-b border-border/50 flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Play className="w-4 h-4 text-blue-500" />
-                  Motion Prompt for Your Image
+                  {videoGen.videoUrl ? "Generated Video" : "Motion Prompt / Video"}
                 </label>
-                {generatedPrompt && (
+                {generatedPrompt && !videoGen.videoUrl && (
                   <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
                     {copied ? (
                       <Check className="w-4 h-4 text-emerald-500" />
@@ -336,34 +361,116 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
               </div>
               
               <div className="flex-1 p-4 bg-muted/30">
-                {generatedPrompt ? (
+                {/* Video Generation Progress */}
+                {videoGen.isGenerating && (
+                  <div className="mb-4 p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 rounded-lg border border-purple-200/50 dark:border-purple-800/50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Generating video with Runway ML...
+                        </p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          Status: {videoGen.status}
+                        </p>
+                      </div>
+                    </div>
+                    {videoGen.progress > 0 && (
+                      <Progress value={videoGen.progress} className="h-2" />
+                    )}
+                  </div>
+                )}
+
+                {/* Generated Video */}
+                {videoGen.videoUrl && (
                   <div className="space-y-4">
-                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-64 overflow-y-auto">
+                    <div className="relative rounded-lg overflow-hidden bg-black">
+                      <video 
+                        src={videoGen.videoUrl} 
+                        controls 
+                        autoPlay 
+                        loop
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = videoGen.videoUrl!;
+                          link.download = 'generated-video.mp4';
+                          link.click();
+                        }}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Video
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => videoGen.reset()}
+                      >
+                        Generate Another
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Prompt Display */}
+                {generatedPrompt && !videoGen.videoUrl && !videoGen.isGenerating && (
+                  <div className="space-y-4">
+                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
                       {generatedPrompt}
                     </pre>
+                    
+                    {/* Direct Video Generation for Premium */}
+                    {isPremium && (
+                      <Button
+                        variant="default"
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        onClick={handleGenerateVideo}
+                        disabled={videoGen.isGenerating}
+                      >
+                        <Film className="w-5 h-5 mr-2" />
+                        Generate Video with Runway ML
+                      </Button>
+                    )}
                     
                     {/* Instructions */}
                     <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                       <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-1">
                         <ArrowRight className="w-3 h-3" />
-                        How to use this prompt:
+                        {isPremium ? "Or copy prompt and use in:" : "How to use this prompt:"}
                       </p>
-                      <ol className="text-xs text-blue-600 dark:text-blue-400 space-y-1 list-decimal list-inside">
-                        <li>Open Sora, Veo, or your preferred image-to-video tool</li>
-                        <li>Upload your image (the same one you used here)</li>
-                        <li>Paste this motion prompt in the description field</li>
-                        <li>Generate your animated video!</li>
-                      </ol>
+                      {!isPremium && (
+                        <ol className="text-xs text-blue-600 dark:text-blue-400 space-y-1 list-decimal list-inside mb-2">
+                          <li>Open Sora, Veo, or your preferred image-to-video tool</li>
+                          <li>Upload your image (the same one you used here)</li>
+                          <li>Paste this motion prompt in the description field</li>
+                          <li>Generate your animated video!</li>
+                        </ol>
+                      )}
                     </div>
                     
                     {/* Tool Links */}
                     <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-2">Copy prompt and use in:</p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        {isPremium ? "Or use externally:" : "Copy prompt and use in:"}
+                      </p>
                       <AIToolLinks type="video" />
                     </div>
                   </div>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-center">
+                )}
+
+                {/* Empty State */}
+                {!generatedPrompt && !videoGen.isGenerating && !videoGen.videoUrl && (
+                  <div className="h-full flex items-center justify-center text-center py-8">
                     <div>
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
                         <Play className="w-8 h-8 text-blue-400" />
@@ -407,19 +514,37 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
             </Card>
 
             {/* Premium Video Generation Banner */}
-            <Card className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/50 dark:border-amber-800/50">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 flex items-center justify-center flex-shrink-0">
-                  <Crown className="w-5 h-5 text-amber-600" />
+            {!isPremium && (
+              <Card className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/50 dark:border-amber-800/50">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 flex items-center justify-center flex-shrink-0">
+                    <Crown className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">Generate Videos Directly</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Upgrade to Pro or Studio to generate videos directly with Runway ML's Gen-3 Alpha Turbo.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium text-foreground">Generate Videos Directly</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Pro and Studio members can generate videos directly in Memoable and organize them into projects.
-                  </p>
+              </Card>
+            )}
+            
+            {isPremium && (
+              <Card className="p-4 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200/50 dark:border-purple-800/50">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 flex items-center justify-center flex-shrink-0">
+                    <Film className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">Video Generation Enabled</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      You can generate videos directly using Runway ML. Generate a prompt above, then click the purple button.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            )}
 
             {/* Project Manager */}
             <ProjectManager currentPrompt={generatedPrompt} />
