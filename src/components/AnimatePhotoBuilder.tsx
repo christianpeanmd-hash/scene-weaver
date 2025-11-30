@@ -7,10 +7,12 @@ import { Progress } from "@/components/ui/progress";
 import { AIToolLinks } from "./AIToolLinks";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
 import { ProjectManager } from "./ProjectManager";
+import { FreeLimitModal } from "./FreeLimitModal";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 // Motion style presets
 const MOTION_PRESETS = [
@@ -40,6 +42,7 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
   
   const { tier } = useSubscription();
   const videoGen = useVideoGeneration();
+  const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
   const isPremium = tier === 'pro' || tier === 'studio';
 
   const handleGenerateVideo = async () => {
@@ -151,7 +154,11 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
       }
     } catch (error) {
       console.error("Error generating motion prompt:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate motion prompt");
+      if (error instanceof Error && (error.message.includes("limit") || error.message.includes("RATE_LIMIT"))) {
+        handleRateLimitError();
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to generate motion prompt");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -165,6 +172,7 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
   };
 
   return (
+    <>
     <div className="pb-8 md:pb-12">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-6">
@@ -609,5 +617,7 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
         </div>
       </div>
     </div>
+    <FreeLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt, BarChart3, Play, Film } from "lucide-react";
+import { UsageCounter } from "./UsageCounter";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -274,6 +275,9 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             <span className="text-sm text-muted-foreground">or copy prompts to Midjourney, Sora & more</span>
           </div>
         </div>
+
+        {/* Usage Counter for Anonymous Users */}
+        <UsageCounter />
       </div>
     </div>
   );

@@ -15,6 +15,14 @@ interface GenerateSceneParams extends GenerateTemplateParams {
   styleTemplate?: string;
 }
 
+// Custom error class for rate limit errors
+export class RateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
 export async function generateAITemplate(params: GenerateTemplateParams): Promise<string> {
   const { data, error } = await supabase.functions.invoke('generate-template', {
     body: {
@@ -33,6 +41,10 @@ export async function generateAITemplate(params: GenerateTemplateParams): Promis
   }
 
   if (data?.error) {
+    // Check for rate limit error
+    if (data.errorCode === 'RATE_LIMIT_EXCEEDED' || data.error.includes('limit')) {
+      throw new RateLimitError(data.error);
+    }
     throw new Error(data.error);
   }
 
@@ -60,6 +72,10 @@ export async function generateAIScene(params: GenerateSceneParams): Promise<stri
   }
 
   if (data?.error) {
+    // Check for rate limit error
+    if (data.errorCode === 'RATE_LIMIT_EXCEEDED' || data.error.includes('limit')) {
+      throw new RateLimitError(data.error);
+    }
     throw new Error(data.error);
   }
 
