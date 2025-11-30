@@ -37,6 +37,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [subjectDescription, setSubjectDescription] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [customBrandText, setCustomBrandText] = useState("");
+  const [sceneContext, setSceneContext] = useState(""); // For Apply Style workflow
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -209,10 +210,13 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
         ? `Transform this photo into the "${selectedStyle.name}" style: ${selectedStyle.look}. ${selectedStyle.useCase ? `This style is best for: ${selectedStyle.useCase}.` : ''}`
         : `Transform this photo using this style: ${customStyleText}`;
       
+      // Include scene context if provided (e.g., "make it a professional headshot", "put them in a coffee shop")
+      const contextPart = sceneContext.trim() 
+        ? ` Scene context: ${sceneContext.trim()}.`
+        : '';
+      
       const brandContext = getBrandContext();
-      const fullPrompt = brandContext 
-        ? `${styleInstruction} ${brandContext}` 
-        : styleInstruction;
+      const fullPrompt = `${styleInstruction}${contextPart}${brandContext ? ` ${brandContext}` : ''}`;
       
       setGeneratedPrompt(fullPrompt);
       
@@ -274,8 +278,9 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     
     try {
       const styleInstruction = `Transform this photo into the "${style.name}" style: ${style.look}. ${style.useCase ? `This style is best for: ${style.useCase}.` : ''}`;
+      const contextPart = sceneContext.trim() ? ` Scene context: ${sceneContext.trim()}.` : '';
       const brandContext = getBrandContext();
-      const fullPrompt = brandContext ? `${styleInstruction} ${brandContext}` : styleInstruction;
+      const fullPrompt = `${styleInstruction}${contextPart}${brandContext ? ` ${brandContext}` : ''}`;
       
       setGeneratedPrompt(fullPrompt);
       
@@ -321,6 +326,17 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   Your Photo
                   <span className="text-muted-foreground text-xs font-normal">optional</span>
                 </label>
+              </div>
+              
+              {/* Favorite Photos - shown first for quick access */}
+              <div className="p-3 bg-gradient-to-r from-rose-50/50 to-pink-50/50 dark:from-rose-950/20 dark:to-pink-950/20 border-b border-border/50">
+                <FavoritePhotosPicker
+                  currentImage={uploadedImage}
+                  onSelectPhoto={(img) => {
+                    setUploadedImage(img);
+                    toast.success("Photo selected!");
+                  }}
+                />
               </div>
               
               {!uploadedImage ? (
@@ -406,35 +422,45 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   </div>
                 </div>
               )}
-              
-              {/* Favorite Photos */}
-              <div className="p-3 border-t border-border/50">
-                <FavoritePhotosPicker
-                  currentImage={uploadedImage}
-                  onSelectPhoto={(img) => {
-                    setUploadedImage(img);
-                    toast.success("Photo selected!");
-                  }}
-                />
-              </div>
             </Card>
 
-            {/* Subject Description */}
+            {/* Scene Context - for Apply Style workflow */}
+            {uploadedImage && (
+              <Card className="p-5 border-purple-200 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                  <Wand2 className="w-4 h-4 text-purple-500" />
+                  Scene Context
+                  <span className="text-muted-foreground text-xs font-normal">optional</span>
+                </label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Describe how you want the style applied — setting, mood, purpose
+                </p>
+                <textarea
+                  value={sceneContext}
+                  onChange={(e) => setSceneContext(e.target.value)}
+                  placeholder="e.g., Make it a professional LinkedIn headshot in a modern office, warm lighting, confident pose"
+                  rows={2}
+                  className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none text-sm"
+                />
+              </Card>
+            )}
+
+            {/* Subject Description - for Generate Image workflow */}
             <Card className="p-5">
               <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
                 <Sparkles className="w-4 h-4 text-primary" />
-                Subject Description
+                {uploadedImage ? "Additional Details" : "Subject Description"}
                 {!uploadedImage && <span className="text-rose-500 text-xs">required</span>}
               </label>
               <textarea
                 value={subjectDescription}
                 onChange={(e) => setSubjectDescription(e.target.value)}
                 placeholder={uploadedImage 
-                  ? "Add details... e.g., professional headshot, warm smile, blue suit" 
+                  ? "Optional extra details for the prompt generator..." 
                   : "Describe what you want... e.g., a thoughtful doctor looking at a tablet"
                 }
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                rows={2}
+                className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
               />
             </Card>
 
