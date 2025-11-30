@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { VideoPromptBuilder } from "@/components/VideoPromptBuilder";
+import { SimpleVideoBuilder } from "@/components/SimpleVideoBuilder";
 import { ImagePromptBuilder } from "@/components/ImagePromptBuilder";
 import { AnimatePhotoBuilder } from "@/components/AnimatePhotoBuilder";
 import { InfographicPromptBuilder } from "@/components/InfographicPromptBuilder";
@@ -26,7 +26,7 @@ const Index = () => {
       {/* Builder Content */}
       <div className="relative flex-grow">
         {activeBuilder === "video" && (
-          <VideoPromptBuilder onSwitchToImage={() => setActiveBuilder("image")} />
+          <SimpleVideoBuilder />
         )}
         {activeBuilder === "animate" && (
           <AnimatePhotoBuilder onSwitchToVideo={() => setActiveBuilder("video")} />
