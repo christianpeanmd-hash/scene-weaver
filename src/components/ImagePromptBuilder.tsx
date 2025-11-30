@@ -7,6 +7,7 @@ import { StyleSelector } from "./StyleSelector";
 import { BrandSelector } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
+import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
 import { IllustrationStyle } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
@@ -147,15 +148,15 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
-                  className={`p-8 transition-all ${
+                  className={`p-6 transition-all ${
                     isDragging 
                       ? "bg-purple-50 dark:bg-purple-950/20 border-2 border-dashed border-purple-300" 
                       : "bg-muted/50"
                   }`}
                 >
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
-                      <Image className="w-8 h-8 text-purple-500" />
+                    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
+                      <Image className="w-7 h-7 text-purple-500" />
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">
                       Drag & drop, paste from clipboard, or
@@ -173,17 +174,17 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                     </label>
                     <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
                       <Clipboard className="w-3 h-3" />
-                      <span>Ctrl/Cmd+V to paste screenshots</span>
+                      <span>Ctrl/Cmd+V to paste</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-slate-50">
+                <div className="p-4 bg-muted/30">
                   <div className="relative">
                     <img
                       src={uploadedImage}
                       alt="Uploaded"
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-40 object-cover rounded-lg"
                     />
                     <button
                       onClick={clearImage}
@@ -194,6 +195,17 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   </div>
                 </div>
               )}
+              
+              {/* Favorite Photos */}
+              <div className="p-3 border-t border-border/50">
+                <FavoritePhotosPicker
+                  currentImage={uploadedImage}
+                  onSelectPhoto={(img) => {
+                    setUploadedImage(img);
+                    toast.success("Photo selected!");
+                  }}
+                />
+              </div>
             </Card>
 
             {/* Subject Description */}

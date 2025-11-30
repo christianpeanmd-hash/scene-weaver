@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { useCharacterLibrary } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironmentLibrary";
 import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
+import { useFavoritePhotos, FavoritePhoto } from "@/hooks/useFavoritePhotos";
 import { EnhancedCharacter } from "@/types/prompt-builder";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -19,11 +20,13 @@ export default function Library() {
   const { savedEnvironments, saveEnvironment, removeEnvironment } = useEnvironmentLibrary();
   const { savedStyles, saveStyle, removeStyle } = useSceneStyleLibrary();
   const { brands, saveBrand, updateBrand, removeBrand } = useBrandLibrary();
+  const { photos, removePhoto, updatePhotoName, maxPhotos } = useFavoritePhotos();
 
   const [editingCharacter, setEditingCharacter] = useState<EnhancedCharacter | null>(null);
   const [editingEnvironment, setEditingEnvironment] = useState<EnhancedEnvironment | null>(null);
   const [editingStyle, setEditingStyle] = useState<SceneStyle | null>(null);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<FavoritePhoto | null>(null);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -102,6 +105,21 @@ export default function Library() {
     }
   };
 
+  const handleSavePhoto = () => {
+    if (editingPhoto) {
+      updatePhotoName(editingPhoto.id, editingPhoto.name);
+      setEditingPhoto(null);
+      toast.success("Photo updated!");
+    }
+  };
+
+  const handleDeletePhoto = (id: string, name: string) => {
+    if (confirm(`Delete "${name}" from your favorites?`)) {
+      removePhoto(id);
+      toast.success("Photo deleted");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -126,44 +144,49 @@ export default function Library() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <Tabs defaultValue="characters" className="space-y-6">
-          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4">
-            <TabsTrigger value="characters" className="gap-2">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5">
+            <TabsTrigger value="characters" className="gap-1.5">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Characters</span>
-              <span className="sm:hidden">Chars</span>
               {savedCharacters.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
                   {savedCharacters.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="environments" className="gap-2">
+            <TabsTrigger value="environments" className="gap-1.5">
               <MapPin className="w-4 h-4" />
               <span className="hidden sm:inline">Environments</span>
-              <span className="sm:hidden">Envs</span>
               {savedEnvironments.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
                   {savedEnvironments.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="styles" className="gap-2">
+            <TabsTrigger value="styles" className="gap-1.5">
               <Palette className="w-4 h-4" />
-              <span className="hidden sm:inline">Scene Styles</span>
-              <span className="sm:hidden">Styles</span>
+              <span className="hidden sm:inline">Styles</span>
               {savedStyles.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
                   {savedStyles.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="brands" className="gap-2">
+            <TabsTrigger value="brands" className="gap-1.5">
               <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">Brands</span>
-              <span className="sm:hidden">Brand</span>
               {brands.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
                   {brands.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="gap-1.5">
+              <Heart className="w-4 h-4" />
+              <span className="hidden sm:inline">Photos</span>
+              {photos.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-600 text-xs rounded-full">
+                  {photos.length}
                 </span>
               )}
             </TabsTrigger>
@@ -285,6 +308,41 @@ export default function Library() {
                     formatDate={formatDate}
                   />
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Photos Tab */}
+          <TabsContent value="photos" className="space-y-4">
+            {photos.length === 0 ? (
+              <EmptyState
+                icon={Heart}
+                title="No favorite photos saved"
+                description="Upload photos in the Image builder and save them to your favorites"
+              />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  {photos.length} of {maxPhotos} favorite photos
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  {photos.map((photo) => (
+                    <PhotoCard
+                      key={photo.id}
+                      photo={photo}
+                      isEditing={editingPhoto?.id === photo.id}
+                      editingData={editingPhoto?.id === photo.id ? editingPhoto : null}
+                      onEdit={() => setEditingPhoto({ ...photo })}
+                      onCancel={() => setEditingPhoto(null)}
+                      onSave={handleSavePhoto}
+                      onDelete={() => handleDeletePhoto(photo.id, photo.name)}
+                      onChange={(name) =>
+                        setEditingPhoto((prev) => prev ? { ...prev, name } : null)
+                      }
+                      formatDate={formatDate}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </TabsContent>
@@ -703,6 +761,83 @@ function BrandCard({
         <div className="pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="w-3 h-3" />
           <span>Added {formatDate(brand.createdAt)}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Photo Card Component
+function PhotoCard({
+  photo,
+  isEditing,
+  editingData,
+  onEdit,
+  onCancel,
+  onSave,
+  onDelete,
+  onChange,
+  formatDate,
+}: {
+  photo: FavoritePhoto;
+  isEditing: boolean;
+  editingData: FavoritePhoto | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onChange: (name: string) => void;
+  formatDate: (t: number) => string;
+}) {
+  const data = isEditing && editingData ? editingData : photo;
+
+  return (
+    <Card className={cn("overflow-hidden transition-all", isEditing && "ring-2 ring-rose-500")}>
+      <div className="aspect-square relative">
+        <img
+          src={photo.imageBase64}
+          alt={data.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          {isEditing ? (
+            <input
+              value={data.name}
+              onChange={(e) => onChange(e.target.value)}
+              className="w-full px-2 py-1 bg-white border border-border rounded text-sm text-foreground"
+              autoFocus
+            />
+          ) : (
+            <h3 className="font-medium text-white truncate">{data.name}</h3>
+          )}
+        </div>
+      </div>
+      <div className="p-3 flex items-center justify-between bg-gradient-to-r from-rose-50/50 to-pink-50/50 dark:from-rose-950/20 dark:to-pink-950/20">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>{formatDate(photo.createdAt)}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {isEditing ? (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onCancel}>
+                <X className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onSave} className="text-emerald-600">
+                <Save className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onEdit}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onDelete} className="text-rose-500">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </Card>
