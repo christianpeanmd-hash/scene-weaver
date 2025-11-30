@@ -12,7 +12,7 @@ import { FreeLimitModal } from "@/components/FreeLimitModal";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 const Index = () => {
-  const [activeBuilder, setActiveBuilder] = useState<BuilderType>("video");
+  const [activeBuilder, setActiveBuilder] = useState<BuilderType>("image");
   const { showLimitModal, setShowLimitModal } = useUsageLimit();
 
   return (
