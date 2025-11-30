@@ -176,6 +176,26 @@ export const ILLUSTRATION_STYLES: IllustrationStyle[] = [
     promptTemplate: "Scientific diagram style illustration, crisp lines, neutral colors, medical journal aesthetic with clear labels and annotations. {subject}",
     previewPrompt: "Scientific diagram portrait, clean lines, annotations, neutral colors, medical textbook style",
   },
+  {
+    id: "whiteboard-sketch",
+    name: "Whiteboard Sketch",
+    category: "explainer",
+    look: "Hand-drawn marker style on whiteboard, quick sketches, arrows and annotations",
+    feel: "Collaborative, ideation-focused, startup brainstorm energy",
+    useCase: "Brainstorming sessions, quick concepts, team ideation",
+    promptTemplate: "Whiteboard sketch illustration, hand-drawn marker lines, quick sketch aesthetic, arrows and annotations, collaborative brainstorm feel. {subject}",
+    previewPrompt: "Whiteboard sketch style, marker drawn, arrows and annotations, brainstorm aesthetic",
+  },
+  {
+    id: "timeline-journey",
+    name: "Timeline Journey",
+    category: "explainer",
+    look: "Horizontal timeline with milestone markers, journey map aesthetic, connected stages",
+    feel: "Progressive, narrative-driven, clear progression",
+    useCase: "Roadmaps, customer journeys, historical progressions",
+    promptTemplate: "Timeline journey illustration, horizontal progression with milestone markers, journey map aesthetic, connected stages with clear narrative flow. {subject}",
+    previewPrompt: "Timeline journey map, milestone markers, horizontal progression, connected stages",
+  },
 
   // Humor / Satire
   {
