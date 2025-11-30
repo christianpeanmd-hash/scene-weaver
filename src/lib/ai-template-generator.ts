@@ -12,6 +12,7 @@ interface GenerateTemplateParams {
 interface GenerateSceneParams extends GenerateTemplateParams {
   sceneTitle: string;
   sceneDescription: string;
+  styleTemplate?: string;
 }
 
 export async function generateAITemplate(params: GenerateTemplateParams): Promise<string> {
@@ -49,6 +50,7 @@ export async function generateAIScene(params: GenerateSceneParams): Promise<stri
       environments: params.environments?.filter(e => e.name.trim() && e.setting.trim()) || [],
       sceneTitle: params.sceneTitle,
       sceneDescription: params.sceneDescription,
+      styleTemplate: params.styleTemplate,
     },
   });
 
