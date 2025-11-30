@@ -13,13 +13,13 @@ interface ScenesStepProps {
   savedEnvironments: EnhancedEnvironment[];
   savedSceneStyles: SceneStyle[];
   scenes: Scene[];
-  copiedId: number | null;
-  generatingSceneId: number | null;
+  copiedId: number | string | null;
+  generatingSceneId: number | string | null;
   onViewTemplate: () => void;
-  onUpdateScene: (id: number, field: keyof Scene, value: string | number[] | number | undefined) => void;
-  onGenerateScene: (id: number) => void;
-  onCopyScene: (id: number, content: string) => void;
-  onRemoveScene: (id: number) => void;
+  onUpdateScene: (id: number | string, field: keyof Scene, value: string | (string | number)[] | number | undefined) => void;
+  onGenerateScene: (id: number | string) => void;
+  onCopyScene: (id: number | string, content: string) => void;
+  onRemoveScene: (id: number | string) => void;
   onAddScene: () => void;
   onSaveSceneStyle: (style: Omit<SceneStyle, "id" | "createdAt">) => void;
 }
@@ -44,7 +44,7 @@ export function ScenesStep({
 }: ScenesStepProps) {
   const filledChars = characters.filter(isCharacterComplete);
 
-  const handleSelectCharacter = (sceneId: number, character: EnhancedCharacter) => {
+  const handleSelectCharacter = (sceneId: number | string, character: EnhancedCharacter) => {
     const scene = scenes.find(s => s.id === sceneId);
     if (!scene) return;
     const currentIds = scene.selectedCharacterIds || [];
@@ -53,18 +53,18 @@ export function ScenesStep({
     }
   };
 
-  const handleDeselectCharacter = (sceneId: number, charId: number) => {
+  const handleDeselectCharacter = (sceneId: number | string, charId: number | string) => {
     const scene = scenes.find(s => s.id === sceneId);
     if (!scene) return;
     const currentIds = scene.selectedCharacterIds || [];
     onUpdateScene(sceneId, "selectedCharacterIds", currentIds.filter(id => id !== charId));
   };
 
-  const handleSelectEnvironment = (sceneId: number, envId: number) => {
+  const handleSelectEnvironment = (sceneId: number | string, envId: number | string) => {
     onUpdateScene(sceneId, "selectedEnvironmentId", envId);
   };
 
-  const handleSelectStyle = (sceneId: number, styleId: string, template: string) => {
+  const handleSelectStyle = (sceneId: number | string, styleId: string, template: string) => {
     onUpdateScene(sceneId, "selectedStyleId", styleId);
     onUpdateScene(sceneId, "styleTemplate", template);
   };
