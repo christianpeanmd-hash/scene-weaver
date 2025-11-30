@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Info, Play, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
 import { IllustrationStyle } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
+import { cn } from "@/lib/utils";
 
 interface ImagePromptBuilderProps {
   onSwitchToVideo: () => void;
@@ -25,6 +26,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [customBrandText, setCustomBrandText] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -37,6 +40,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     const reader = new FileReader();
     reader.onload = (e) => {
       setUploadedImage(e.target?.result as string);
+      setGeneratedPrompt("");
+      setGeneratedImageUrl(null);
       toast.success("Image uploaded!");
     };
     reader.readAsDataURL(file);
@@ -86,6 +91,12 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     if (file) handleImageUpload(file);
   }, [handleImageUpload]);
 
+  const getBrandContext = () => {
+    return selectedBrand 
+      ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
+      : customBrandText.trim() || undefined;
+  };
+
   const handleGenerate = async () => {
     if (!selectedStyle && !customStyleText.trim()) {
       toast.error("Please select a style or describe your own");
@@ -94,16 +105,12 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
 
     setIsGenerating(true);
     try {
-      const brandContext = selectedBrand 
-        ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
-        : customBrandText.trim() || undefined;
-
       const prompt = await generateImagePrompt({
         style: selectedStyle,
         customStyle: customStyleText.trim() || undefined,
         imageBase64: uploadedImage,
         subjectDescription,
-        brandContext,
+        brandContext: getBrandContext(),
       });
       setGeneratedPrompt(prompt);
       toast.success("Prompt generated!");
@@ -112,6 +119,47 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       toast.error(error instanceof Error ? error.message : "Failed to generate prompt");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateImageDirectly = async () => {
+    if (!selectedStyle && !customStyleText.trim()) {
+      toast.error("Please select a style or describe your own");
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    setGeneratedImageUrl(null);
+    
+    try {
+      // First generate the prompt
+      const prompt = await generateImagePrompt({
+        style: selectedStyle,
+        customStyle: customStyleText.trim() || undefined,
+        imageBase64: uploadedImage,
+        subjectDescription,
+        brandContext: getBrandContext(),
+      });
+      setGeneratedPrompt(prompt);
+      
+      // Then generate the image using the prompt
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.functions.invoke("generate-ai-image", {
+        body: { prompt, type: "image" },
+      });
+
+      if (error) throw error;
+      if (data?.imageUrl) {
+        setGeneratedImageUrl(data.imageUrl);
+        toast.success("Image generated!");
+      } else {
+        throw new Error("No image returned");
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -125,6 +173,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const clearImage = () => {
     setUploadedImage(null);
     setGeneratedPrompt("");
+    setGeneratedImageUrl(null);
   };
 
   return (
@@ -193,6 +242,19 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                       <X className="w-4 h-4 text-white" />
                     </button>
                   </div>
+                  
+                  {/* Animation Tip */}
+                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Play className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs">
+                        <p className="font-medium text-blue-700 dark:text-blue-300">Want to animate this image?</p>
+                        <p className="text-blue-600 dark:text-blue-400 mt-1">
+                          Drop it directly into <strong>Sora</strong> or <strong>Veo</strong> and describe the motion you want.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               
@@ -243,26 +305,53 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               onCustomBrandChange={setCustomBrandText}
             />
 
-            {/* Generate Button */}
-            <Button
-              variant="hero"
-              size="xl"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-              disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating}
-              onClick={handleGenerate}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin-slow" />
-                  Generating Prompt...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  Generate Image Prompt
-                </>
-              )}
-            </Button>
+            {/* Generate Buttons */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                  onClick={handleGenerate}
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4" />
+                      Generate Prompt
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                  onClick={handleGenerateImageDirectly}
+                >
+                  {isGeneratingImage ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="w-4 h-4" />
+                      Generate Image
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-center text-muted-foreground">
+                Get a prompt to use elsewhere, or generate an image directly
+              </p>
+            </div>
           </div>
 
           {/* Right Column - Result */}
@@ -286,18 +375,35 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               </div>
               
               <div className="flex-1 p-4 bg-muted/30">
-                {generatedPrompt ? (
+                {generatedPrompt || generatedImageUrl ? (
                   <div className="space-y-4">
-                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
-                      {generatedPrompt}
-                    </pre>
+                    {/* Show generated image if we created one directly */}
+                    {generatedImageUrl && (
+                      <div className="rounded-lg overflow-hidden border border-border">
+                        <img
+                          src={generatedImageUrl}
+                          alt="Generated"
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    )}
                     
-                    {/* Generate Image Directly */}
-                    <GeneratedImageDisplay prompt={generatedPrompt} type="image" />
+                    {generatedPrompt && (
+                      <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
+                        {generatedPrompt}
+                      </pre>
+                    )}
+                    
+                    {/* Generate Image Directly (only show if we don't already have one) */}
+                    {!generatedImageUrl && generatedPrompt && (
+                      <GeneratedImageDisplay prompt={generatedPrompt} type="image" />
+                    )}
                     
                     {/* Or Use External Tools */}
                     <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-2">Or copy prompt to use in:</p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        {generatedImageUrl ? "Use your prompt in other tools:" : "Or copy prompt to use in:"}
+                      </p>
                       <AIToolLinks type="image" />
                     </div>
                   </div>
