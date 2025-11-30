@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code } from "lucide-react";
+import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
 
 interface ExplainerSection {
   id: string;
@@ -103,6 +105,9 @@ const TONES = [
 ];
 
 export function OnePageExplainerBuilder() {
+  // Brand library
+  const { brands: savedBrands, saveBrand, isLoading: brandsLoading } = useBrandLibrary();
+  
   // Form state
   const [sourceContent, setSourceContent] = useState("");
   const [references, setReferences] = useState("");
@@ -110,8 +115,14 @@ export function OnePageExplainerBuilder() {
   const [useCase, setUseCase] = useState("");
   const [desiredAction, setDesiredAction] = useState("");
   const [brandStyle, setBrandStyle] = useState("");
+  const [selectedSavedBrandId, setSelectedSavedBrandId] = useState<string | null>(null);
   const [customBrandTokens, setCustomBrandTokens] = useState("");
   const [tone, setTone] = useState("");
+  
+  // Save brand dialog state
+  const [saveBrandDialogOpen, setSaveBrandDialogOpen] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newBrandDescription, setNewBrandDescription] = useState("");
   
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -128,6 +139,52 @@ export function OnePageExplainerBuilder() {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const handleSelectBrand = (value: string) => {
+    if (value.startsWith("saved-")) {
+      const brandId = value.replace("saved-", "");
+      setSelectedSavedBrandId(brandId);
+      setBrandStyle("");
+    } else {
+      setSelectedSavedBrandId(null);
+      setBrandStyle(value);
+    }
+  };
+
+  const getSelectedBrandValue = () => {
+    if (selectedSavedBrandId) return `saved-${selectedSavedBrandId}`;
+    return brandStyle;
+  };
+
+  const handleSaveBrand = async () => {
+    if (!newBrandName.trim()) {
+      toast.error("Please enter a brand name");
+      return;
+    }
+    
+    // Parse custom tokens to extract colors
+    const colors: string[] = [];
+    const colorMatches = customBrandTokens.match(/#[0-9A-Fa-f]{6}/g);
+    if (colorMatches) {
+      colors.push(...colorMatches);
+    }
+    
+    // Extract font info
+    const fontMatch = customBrandTokens.match(/Font[:\s]+([^,\n]+)/i);
+    const fonts = fontMatch ? fontMatch[1].trim() : "";
+    
+    await saveBrand({
+      name: newBrandName,
+      description: newBrandDescription || customBrandTokens,
+      colors,
+      fonts,
+    });
+    
+    toast.success(`Brand "${newBrandName}" saved to library`);
+    setSaveBrandDialogOpen(false);
+    setNewBrandName("");
+    setNewBrandDescription("");
+  };
+
   const handleGenerate = async () => {
     if (!sourceContent.trim()) {
       toast.error("Please provide source content to generate the explainer");
@@ -142,12 +199,30 @@ export function OnePageExplainerBuilder() {
     setIsGenerating(true);
 
     try {
-      const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
-      const brandTokens = brandStyle === "custom" 
-        ? customBrandTokens 
-        : selectedBrand?.colors 
-          ? `Primary: ${selectedBrand.colors.primary}, Secondary: ${selectedBrand.colors.secondary}, Accent: ${selectedBrand.colors.accent}${selectedBrand.font ? `, Font: ${selectedBrand.font}` : ""}` 
-          : "";
+      let brandTokens = "";
+      let brandStyleLabel = "";
+      
+      if (selectedSavedBrandId) {
+        const savedBrand = savedBrands.find(b => b.id === selectedSavedBrandId);
+        if (savedBrand) {
+          brandStyleLabel = savedBrand.name;
+          const colorStr = savedBrand.colors?.length 
+            ? `Colors: ${savedBrand.colors.join(", ")}` 
+            : "";
+          const fontStr = savedBrand.fonts ? `Font: ${savedBrand.fonts}` : "";
+          const descStr = savedBrand.description ? `Style: ${savedBrand.description}` : "";
+          brandTokens = [colorStr, fontStr, descStr].filter(Boolean).join(". ");
+        }
+      } else if (brandStyle === "custom") {
+        brandTokens = customBrandTokens;
+        brandStyleLabel = "Custom";
+      } else {
+        const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
+        if (selectedBrand?.colors) {
+          brandStyleLabel = selectedBrand.label;
+          brandTokens = `Primary: ${selectedBrand.colors.primary}, Secondary: ${selectedBrand.colors.secondary}, Accent: ${selectedBrand.colors.accent}${selectedBrand.font ? `, Font: ${selectedBrand.font}` : ""}`;
+        }
+      }
 
       const { data, error } = await supabase.functions.invoke("generate-explainer", {
         body: {
@@ -156,7 +231,7 @@ export function OnePageExplainerBuilder() {
           audience,
           useCase: USE_CASES.find(u => u.value === useCase)?.label || useCase,
           desiredAction,
-          brandStyle: BRAND_STYLES.find(b => b.value === brandStyle)?.label || brandStyle,
+          brandStyle: brandStyleLabel || "None specified",
           brandTokens,
           tone: TONES.find(t => t.value === tone)?.label || tone,
         },
@@ -474,11 +549,37 @@ export function OnePageExplainerBuilder() {
                 <CardContent className="space-y-4 pt-0">
                   <div className="space-y-2">
                     <Label>Brand style</Label>
-                    <Select value={brandStyle} onValueChange={setBrandStyle}>
+                    <Select value={getSelectedBrandValue()} onValueChange={handleSelectBrand}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select brand style" />
                       </SelectTrigger>
                       <SelectContent className="max-h-80">
+                        {savedBrands.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Star className="w-3 h-3" />
+                              Your Saved Brands
+                            </SelectLabel>
+                            {savedBrands.map(brand => (
+                              <SelectItem key={brand.id} value={`saved-${brand.id}`}>
+                                <span className="flex items-center gap-2">
+                                  {brand.colors && brand.colors.length > 0 && (
+                                    <span className="flex gap-0.5">
+                                      {brand.colors.slice(0, 3).map((color, i) => (
+                                        <span
+                                          key={i}
+                                          className="w-3 h-3 rounded-full border border-border"
+                                          style={{ backgroundColor: color }}
+                                        />
+                                      ))}
+                                    </span>
+                                  )}
+                                  {brand.name}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        )}
                         <SelectGroup>
                           <SelectLabel className="text-xs text-muted-foreground">Healthcare & Clinical</SelectLabel>
                           <SelectItem value="techy-surgeon">Techy Surgeon – editorial, clinical</SelectItem>
@@ -527,7 +628,61 @@ export function OnePageExplainerBuilder() {
                   </div>
                   {brandStyle === "custom" && (
                     <div className="space-y-2">
-                      <Label htmlFor="customBrand">Brand tokens</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="customBrand">Brand tokens</Label>
+                        <Dialog open={saveBrandDialogOpen} onOpenChange={setSaveBrandDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs"
+                              disabled={!customBrandTokens.trim()}
+                            >
+                              <Save className="w-3 h-3 mr-1" />
+                              Save as Brand
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Save as New Brand</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="brandName">Brand Name</Label>
+                                <Input
+                                  id="brandName"
+                                  placeholder="e.g., My Company Brand"
+                                  value={newBrandName}
+                                  onChange={(e) => setNewBrandName(e.target.value)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="brandDesc">Description (optional)</Label>
+                                <Textarea
+                                  id="brandDesc"
+                                  placeholder="Brief description of this brand style"
+                                  value={newBrandDescription}
+                                  onChange={(e) => setNewBrandDescription(e.target.value)}
+                                  className="min-h-[60px]"
+                                />
+                              </div>
+                              <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                                <p className="font-medium mb-1">Tokens to save:</p>
+                                <p className="truncate">{customBrandTokens}</p>
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </DialogClose>
+                              <Button onClick={handleSaveBrand}>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save Brand
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                       <Textarea
                         id="customBrand"
                         placeholder="Primary color: #0B2545 Secondary: #3B82F6 Accent: #F59E0B Font vibe: clinical editorial / SF Pro"
