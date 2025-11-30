@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Copy, Check, Clock, Plus, User, MapPin, Clapperboard, Library, X, Loader2, Save, Layers, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Copy, Check, Clock, Plus, User, MapPin, Clapperboard, Library, X, Loader2, Save, Layers, ChevronDown, ChevronUp, GripVertical, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -351,7 +351,7 @@ export function SimpleVideoBuilder() {
     } catch (e) {
       console.warn('Failed to save scenes:', e);
     }
-    toast.success("Scene saved!");
+    toast.success("Scene added to storyline!");
   };
   
   const handleLoadScene = (scene: SavedScene) => {
@@ -371,59 +371,177 @@ export function SimpleVideoBuilder() {
     localStorage.setItem('video-saved-scenes', JSON.stringify(updated));
     toast.success("Scene deleted");
   };
+  
+  const handleCopyAllScenes = () => {
+    if (savedScenes.length === 0) return;
+    
+    const storyline = savedScenes.map((scene, index) => {
+      const sceneNum = savedScenes.length - index;
+      return `${"=".repeat(50)}
+SCENE ${sceneNum}: ${scene.title}
+Duration: ${scene.duration} seconds
+${"=".repeat(50)}
+
+${scene.prompt}`;
+    }).reverse().join("\n\n\n");
+    
+    const header = `STORYLINE - ${savedScenes.length} SCENES
+Total Duration: ${savedScenes.reduce((acc, s) => acc + s.duration, 0)} seconds
+Generated with TechyMemo
+
+`;
+    
+    navigator.clipboard.writeText(header + storyline);
+    toast.success(`Copied all ${savedScenes.length} scenes to clipboard!`);
+  };
+  
+  const handleMoveScene = (fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= savedScenes.length) return;
+    
+    const updated = [...savedScenes];
+    [updated[fromIndex], updated[toIndex]] = [updated[toIndex], updated[fromIndex]];
+    setSavedScenes(updated);
+    localStorage.setItem('video-saved-scenes', JSON.stringify(updated));
+  };
+  
+  const handleClearAllScenes = () => {
+    setSavedScenes([]);
+    localStorage.removeItem('video-saved-scenes');
+    toast.success("All scenes cleared");
+  };
 
   return (
     <>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         
-        {/* SAVED SCENES */}
-        {savedScenes.length > 0 && (
-          <Card className="p-4">
-            <button
-              onClick={() => setShowSavedScenes(!showSavedScenes)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-foreground"
-            >
-              <span className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-amber-500" />
-                Saved Scenes ({savedScenes.length})
-              </span>
-              {showSavedScenes ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            
-            {showSavedScenes && (
-              <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
-                {savedScenes.map((scene) => (
-                  <div
-                    key={scene.id}
-                    className="p-3 bg-muted/50 rounded-lg flex items-center justify-between gap-2"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{scene.title}</p>
-                      <p className="text-xs text-muted-foreground">{scene.duration}s</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleLoadScene(scene)}
-                      >
-                        Load
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteScene(scene.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
+        {/* STORYLINE BUILDER */}
+        <Card className="p-4 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent">
+          <button
+            onClick={() => setShowSavedScenes(!showSavedScenes)}
+            className="w-full flex items-center justify-between text-sm font-semibold text-foreground"
+          >
+            <span className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-amber-500" />
+              Your Storyline
+              {savedScenes.length > 0 && (
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs">
+                  {savedScenes.length} scene{savedScenes.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </span>
+            {showSavedScenes ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          
+          {showSavedScenes && (
+            <div className="mt-4 space-y-3">
+              {savedScenes.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No scenes yet. Generate a prompt and click "Save to Storyline" to start building!
+                </p>
+              ) : (
+                <>
+                  {/* Action buttons */}
+                  <div className="flex gap-2 pb-3 border-b border-border">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCopyAllScenes}
+                      className="flex-1"
+                    >
+                      <FileText className="w-4 h-4 mr-1" />
+                      Copy All Scenes
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleClearAllScenes}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        )}
+                  
+                  {/* Total duration */}
+                  <div className="text-xs text-muted-foreground text-center">
+                    Total: {savedScenes.reduce((acc, s) => acc + s.duration, 0)}s across {savedScenes.length} scenes
+                  </div>
+                  
+                  {/* Scene list - reversed so newest is at bottom (scene order) */}
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {[...savedScenes].reverse().map((scene, reversedIndex) => {
+                      const sceneNumber = reversedIndex + 1;
+                      const actualIndex = savedScenes.length - 1 - reversedIndex;
+                      return (
+                        <div
+                          key={scene.id}
+                          className="p-3 bg-background border border-border rounded-lg"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Scene number */}
+                            <div className="flex flex-col items-center gap-1">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                                {sceneNumber}
+                              </div>
+                              {/* Reorder buttons */}
+                              <div className="flex flex-col gap-0.5">
+                                <button
+                                  onClick={() => handleMoveScene(actualIndex, 'down')}
+                                  disabled={reversedIndex === 0}
+                                  className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
+                                >
+                                  <ChevronUp className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleMoveScene(actualIndex, 'up')}
+                                  disabled={reversedIndex === savedScenes.length - 1}
+                                  className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
+                                >
+                                  <ChevronDown className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Scene content */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">{scene.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {scene.duration}s
+                                {scene.characterId && selectedCharacter && (
+                                  <> • {selectedCharacter.name}</>
+                                )}
+                              </p>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleLoadScene(scene)}
+                                className="h-7 px-2 text-xs"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteScene(scene.id)}
+                                className="h-7 px-2 text-destructive hover:text-destructive"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* DURATION SELECTION */}
         <Card className="p-4">
@@ -781,7 +899,7 @@ export function SimpleVideoBuilder() {
                   className="gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  Save Scene
+                  Add to Storyline
                 </Button>
                 <Button
                   variant="ghost"
