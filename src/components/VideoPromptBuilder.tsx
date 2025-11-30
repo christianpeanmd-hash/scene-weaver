@@ -385,6 +385,13 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     setScenes(scenes.filter((s) => s.id !== id));
   };
 
+  const reorderScenes = (fromIndex: number, toIndex: number) => {
+    const newScenes = [...scenes];
+    const [movedScene] = newScenes.splice(fromIndex, 1);
+    newScenes.splice(toIndex, 0, movedScene);
+    setScenes(newScenes);
+  };
+
   const handleCopy = (text: string, id: number | string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -464,6 +471,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
             onCopyScene={(id, content) => handleCopy(content, id)}
             onRemoveScene={removeScene}
             onAddScene={addScene}
+            onReorderScenes={reorderScenes}
             onSaveSceneStyle={(style) => {
               saveSceneStyle(style);
               toast.success(`Saved "${style.name}" to your style library`);
