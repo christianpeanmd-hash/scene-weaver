@@ -29,9 +29,9 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [copiedId, setCopiedId] = useState<number | string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [expandedChar, setExpandedChar] = useState<number | null>(null);
-  const [expandedEnv, setExpandedEnv] = useState<number | null>(null);
-  const [generatingSceneId, setGeneratingSceneId] = useState<number | null>(null);
+  const [expandedChar, setExpandedChar] = useState<number | string | null>(null);
+  const [expandedEnv, setExpandedEnv] = useState<number | string | null>(null);
+  const [generatingSceneId, setGeneratingSceneId] = useState<number | string | null>(null);
 
   const { savedCharacters, saveCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment } = useEnvironmentLibrary();
@@ -39,14 +39,16 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
 
   // Character handlers
   const addCharacter = () => {
-    const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
+    const numericIds = characters.map(c => typeof c.id === 'number' ? c.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newChar: Character = { id: newId, name: "", look: "", demeanor: "", role: "" };
     setCharacters([...characters, newChar]);
     setExpandedChar(newId);
   };
 
   const addCharacterFromLibrary = (enhanced: EnhancedCharacter) => {
-    const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
+    const numericIds = characters.map(c => typeof c.id === 'number' ? c.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newChar: Character = {
       id: newId,
       name: enhanced.name,
@@ -64,7 +66,8 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     const demeanorMatch = preset.template.match(/\*\*Demeanor\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
     const roleMatch = preset.template.match(/\*\*Role\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
 
-    const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
+    const numericIds = characters.map(c => typeof c.id === 'number' ? c.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newChar: Character = {
       id: newId,
       name: preset.name,
@@ -78,7 +81,8 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
   };
 
   const addCharacterFromPhoto = (charData: { name: string; look: string; demeanor: string; role: string }) => {
-    const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
+    const numericIds = characters.map(c => typeof c.id === 'number' ? c.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newChar: Character = {
       id: newId,
       name: charData.name,
@@ -105,25 +109,27 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     saveCharacter(enhanced);
   };
 
-  const removeCharacter = (id: number) => {
+  const removeCharacter = (id: number | string) => {
     setCharacters(characters.filter((c) => c.id !== id));
     if (expandedChar === id) setExpandedChar(null);
   };
 
-  const updateCharacter = (id: number, field: keyof Character, value: string) => {
+  const updateCharacter = (id: number | string, field: keyof Character, value: string) => {
     setCharacters(characters.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
   };
 
   // Environment handlers
   const addEnvironment = () => {
-    const newId = environments.length > 0 ? Math.max(...environments.map((e) => e.id)) + 1 : 1;
+    const numericIds = environments.map(e => typeof e.id === 'number' ? e.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newEnv: Environment = { id: newId, name: "", setting: "", lighting: "", audio: "", props: "" };
     setEnvironments([...environments, newEnv]);
     setExpandedEnv(newId);
   };
 
   const addEnvironmentFromLibrary = (enhanced: EnhancedEnvironment) => {
-    const newId = environments.length > 0 ? Math.max(...environments.map((e) => e.id)) + 1 : 1;
+    const numericIds = environments.map(e => typeof e.id === 'number' ? e.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newEnv: Environment = {
       id: newId,
       name: enhanced.name,
@@ -143,7 +149,8 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     const audioMatch = preset.template.match(/\*\*Audio[^*]*\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
     const propsMatch = preset.template.match(/\*\*Props\*\*:\s*([^\n]+(?:\n(?!\*\*)[^\n]+)*)/);
 
-    const newId = environments.length > 0 ? Math.max(...environments.map((e) => e.id)) + 1 : 1;
+    const numericIds = environments.map(e => typeof e.id === 'number' ? e.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newEnv: Environment = {
       id: newId,
       name: preset.name,
@@ -158,7 +165,8 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
   };
 
   const addEnvironmentFromPhoto = (envData: { name: string; setting: string; lighting: string; audio: string; props: string }) => {
-    const newId = environments.length > 0 ? Math.max(...environments.map((e) => e.id)) + 1 : 1;
+    const numericIds = environments.map(e => typeof e.id === 'number' ? e.id : 0);
+    const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
     const newEnv: Environment = {
       id: newId,
       name: envData.name,

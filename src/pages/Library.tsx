@@ -77,14 +77,14 @@ export default function Library() {
     }
   };
 
-  const handleDeleteCharacter = (id: number, name: string) => {
+  const handleDeleteCharacter = (id: number | string, name: string) => {
     if (confirm(`Delete "${name}" from your library?`)) {
       removeCharacter(id);
       toast.success("Character deleted");
     }
   };
 
-  const handleDeleteEnvironment = (id: number, name: string) => {
+  const handleDeleteEnvironment = (id: number | string, name: string) => {
     if (confirm(`Delete "${name}" from your library?`)) {
       removeEnvironment(id);
       toast.success("Environment deleted");
