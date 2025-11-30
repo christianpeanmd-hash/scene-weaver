@@ -383,26 +383,62 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
               </Card>
             )}
 
-            {/* Generate Button */}
-            <Button
-              variant="hero"
-              size="xl"
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-              disabled={!uploadedImage || isGenerating}
-              onClick={handleGenerate}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Generating Motion Prompt...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  Generate Animation Prompt
-                </>
+            {/* Generate Buttons */}
+            <div className="space-y-3">
+              {/* Primary: Generate Prompt */}
+              <Button
+                variant="hero"
+                size="xl"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                disabled={!uploadedImage || isGenerating || videoGen.isGenerating}
+                onClick={handleGenerate}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Generating Motion Prompt...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-5 h-5" />
+                    Generate Animation Prompt
+                  </>
+                )}
+              </Button>
+              
+              {/* Premium: Direct Video Generation */}
+              {isPremium && generatedPrompt && !videoGen.videoUrl && (
+                <Button
+                  variant="default"
+                  size="xl"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  disabled={videoGen.isGenerating}
+                  onClick={handleGenerateVideo}
+                >
+                  {videoGen.isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Generating Video...
+                    </>
+                  ) : (
+                    <>
+                      <Film className="w-5 h-5" />
+                      Generate Video with Runway ML
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+              
+              {/* Premium hint when no prompt yet */}
+              {isPremium && !generatedPrompt && (
+                <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <Crown className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                  <p className="text-xs text-purple-700 dark:text-purple-300">
+                    <span className="font-medium">Premium:</span> Generate your prompt first, then you can create a video directly with Runway ML
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Column - Result */}
@@ -489,23 +525,18 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
                 {/* Prompt Display */}
                 {generatedPrompt && !videoGen.videoUrl && !videoGen.isGenerating && (
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-muted-foreground">Your motion prompt:</span>
+                      {isPremium && (
+                        <span className="text-xs text-purple-600 dark:text-purple-400 font-medium flex items-center gap-1">
+                          <Crown className="w-3 h-3" />
+                          Use button below to generate video
+                        </span>
+                      )}
+                    </div>
                     <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
                       {generatedPrompt}
                     </pre>
-                    
-                    {/* Direct Video Generation for Premium */}
-                    {isPremium && (
-                      <Button
-                        variant="default"
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                        onClick={handleGenerateVideo}
-                        disabled={videoGen.isGenerating}
-                      >
-                        <Film className="w-5 h-5 mr-2" />
-                        Generate Video with Runway ML
-                      </Button>
-                    )}
                     
                     {/* Instructions */}
                     <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
