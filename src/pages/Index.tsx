@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { VideoPromptBuilder } from "@/components/VideoPromptBuilder";
 import { ImagePromptBuilder } from "@/components/ImagePromptBuilder";
+import { AnimatePhotoBuilder } from "@/components/AnimatePhotoBuilder";
 import { InfographicPromptBuilder } from "@/components/InfographicPromptBuilder";
 import { HeroSection, BuilderType } from "@/components/HeroSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
@@ -25,6 +26,9 @@ const Index = () => {
       <div className="relative flex-grow">
         {activeBuilder === "video" && (
           <VideoPromptBuilder onSwitchToImage={() => setActiveBuilder("image")} />
+        )}
+        {activeBuilder === "animate" && (
+          <AnimatePhotoBuilder onSwitchToVideo={() => setActiveBuilder("video")} />
         )}
         {activeBuilder === "image" && (
           <ImagePromptBuilder onSwitchToVideo={() => setActiveBuilder("video")} />

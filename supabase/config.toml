@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.generate-ai-image]
 verify_jwt = false
 
+[functions.generate-motion-prompt]
+verify_jwt = false
+
 [functions.send-invite-request]
 verify_jwt = false
 
@@ -19,4 +22,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.customer-portal]
+verify_jwt = false
+
+[functions.get-billing-history]
+verify_jwt = false
+
+[functions.get-usage-analytics]
 verify_jwt = false
