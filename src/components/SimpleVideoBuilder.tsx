@@ -25,6 +25,7 @@ const DURATIONS = [
 interface SavedScene {
   id: string;
   title: string;
+  description: string;
   prompt: string;
   characterId: string | null;
   environmentId: string | null;
@@ -334,6 +335,7 @@ export function SimpleVideoBuilder() {
     const newScene: SavedScene = {
       id: Date.now().toString(),
       title: description.slice(0, 50) + (description.length > 50 ? "..." : ""),
+      description: description,
       prompt: generatedPrompt,
       characterId: selectedCharacterId,
       environmentId: selectedEnvironmentId,
@@ -353,6 +355,7 @@ export function SimpleVideoBuilder() {
   };
   
   const handleLoadScene = (scene: SavedScene) => {
+    setDescription(scene.description || scene.title);
     setGeneratedPrompt(scene.prompt);
     setSelectedCharacterId(scene.characterId);
     setSelectedEnvironmentId(scene.environmentId);
