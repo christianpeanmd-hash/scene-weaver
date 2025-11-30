@@ -1,6 +1,7 @@
 import { Copy, Check, CheckCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AIToolLinks } from "@/components/AIToolLinks";
 
 interface TemplateStepProps {
   template: string;
@@ -37,6 +38,9 @@ export function TemplateStep({ template, copied, onCopy, onEdit, onApprove }: Te
           <pre className="text-muted-foreground text-sm whitespace-pre-wrap font-mono leading-relaxed">
             {template}
           </pre>
+        </div>
+        <div className="p-4 border-t border-border/50 bg-card">
+          <AIToolLinks type="video" />
         </div>
       </Card>
 

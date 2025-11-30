@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 interface MemoableLogoProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  showSubtitle?: boolean;
 }
 
-export function MemoableLogo({ className, size = "md" }: MemoableLogoProps) {
+export function MemoableLogo({ className, size = "md", showSubtitle = false }: MemoableLogoProps) {
   const sizes = {
     sm: { 
       bar: "w-4 h-1", 
@@ -36,10 +37,17 @@ export function MemoableLogo({ className, size = "md" }: MemoableLogoProps) {
         <div className={cn(bar, "rounded-full bg-teal-500 transition-transform hover:scale-110")} style={{ animationDelay: '0.1s' }} />
         <div className={cn(bar, "rounded-full bg-emerald-400 transition-transform hover:scale-110")} style={{ animationDelay: '0.2s' }} />
       </div>
-      <span className={cn("font-bold tracking-tight", text)}>
-        <span className="text-slate-700">Memo</span>
-        <span className="gradient-text">able</span>
-      </span>
+      <div className="flex flex-col">
+        <span className={cn("font-bold tracking-tight", text)}>
+          <span className="text-slate-700">Memo</span>
+          <span className="gradient-text">able</span>
+        </span>
+        {showSubtitle && (
+          <span className="text-xs font-semibold text-muted-foreground tracking-widest uppercase -mt-1">
+            Scenes
+          </span>
+        )}
+      </div>
     </div>
   );
 }
