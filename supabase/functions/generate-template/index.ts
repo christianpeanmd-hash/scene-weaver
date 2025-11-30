@@ -6,11 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ANONYMOUS_DAILY_LIMIT = 3;
+const ANONYMOUS_DAILY_LIMIT = 5;
 
 // Generation limits per tier
 const TIER_LIMITS: Record<string, number> = {
-  free: 3,
+  free: 5,
   creator: 50,
   pro: 200,
   studio: 999999, // Unlimited
