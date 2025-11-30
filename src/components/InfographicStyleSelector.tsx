@@ -12,6 +12,19 @@ import timelinePreview from "@/assets/infographic-previews/timeline.jpg";
 import comparisonPreview from "@/assets/infographic-previews/comparison.jpg";
 import checklistPreview from "@/assets/infographic-previews/checklist.jpg";
 import processPreview from "@/assets/infographic-previews/process-flow.jpg";
+import educationalPreview from "@/assets/infographic-previews/educational.jpg";
+import stepByStepPreview from "@/assets/infographic-previews/step-by-step.jpg";
+import complexTechnicalPreview from "@/assets/infographic-previews/complex-technical.jpg";
+import careerMapPreview from "@/assets/infographic-previews/career-map.jpg";
+import leadMagnetPreview from "@/assets/infographic-previews/lead-magnet.jpg";
+import productBenefitsPreview from "@/assets/infographic-previews/product-benefits.jpg";
+import socialMediaPreview from "@/assets/infographic-previews/social-media.jpg";
+import cheatsheetPreview from "@/assets/infographic-previews/cheatsheet.jpg";
+import biologyDiagramPreview from "@/assets/infographic-previews/biology-diagram.jpg";
+import minimalistBwPreview from "@/assets/infographic-previews/minimalist-bw.jpg";
+import sketchStylePreview from "@/assets/infographic-previews/sketch-style.jpg";
+import landmarkMapPreview from "@/assets/infographic-previews/landmark-map.jpg";
+import megaInfographicPreview from "@/assets/infographic-previews/mega-infographic.jpg";
 
 interface InfographicStyleSelectorProps {
   selectedStyle: InfographicStyle | null;
@@ -26,6 +39,19 @@ const STYLE_PREVIEW_IMAGES: Record<string, string> = {
   "comparison": comparisonPreview,
   "checklist": checklistPreview,
   "process-flow": processPreview,
+  "educational": educationalPreview,
+  "step-by-step": stepByStepPreview,
+  "complex-technical": complexTechnicalPreview,
+  "career-map": careerMapPreview,
+  "lead-magnet": leadMagnetPreview,
+  "product-benefits": productBenefitsPreview,
+  "social-media": socialMediaPreview,
+  "cheatsheet": cheatsheetPreview,
+  "biology-diagram": biologyDiagramPreview,
+  "minimalist-bw": minimalistBwPreview,
+  "sketch-style": sketchStylePreview,
+  "landmark-map": landmarkMapPreview,
+  "mega-infographic": megaInfographicPreview,
 };
 
 // Visual preview configurations for each style type (fallback when no image)
