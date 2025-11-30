@@ -46,6 +46,9 @@ import infographicComic from "@/assets/style-previews/infographic-comic.jpg";
 import digitalFuturism from "@/assets/style-previews/digital-futurism.jpg";
 import whiteboardSketch from "@/assets/style-previews/whiteboard-sketch.jpg";
 import timelineJourney from "@/assets/style-previews/timeline-journey.jpg";
+import painterlyConcept from "@/assets/style-previews/painterly-concept.jpg";
+import newspaperHalftone from "@/assets/style-previews/newspaper-halftone.jpg";
+import brutalistPoster from "@/assets/style-previews/brutalist-poster.jpg";
 
 const CATEGORY_ICONS = {
   Target,
@@ -92,14 +95,14 @@ const STYLE_PREVIEWS: Record<string, string> = {
   // Futurism styles
   "retro-futurist": retroFuturist,
   "futuristic-neon": futuristicNeon,
-  "brutalist-poster": retroFuturist,
+  "brutalist-poster": brutalistPoster,
   "minimal-gradient": minimalGradient,
   "digital-futurism": digitalFuturism,
   // Artistic styles
   "japanese-woodblock": japaneseWoodblock,
   "vintage-engraving": vintageEngraving,
-  "painterly-concept": surrealistEditorial,
-  "newspaper-halftone": editorialCollagePreview,
+  "painterly-concept": painterlyConcept,
+  "newspaper-halftone": newspaperHalftone,
   "classic-portrait": classicPortrait,
   "impressionist": impressionist,
 };
