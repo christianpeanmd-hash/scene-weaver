@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "@/components/MemoableLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SEO } from "@/components/SEO";
 import { ArrowLeft } from "lucide-react";
 
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Terms of Service"
+        description="Review the terms and conditions for using TechyMemo. Understand your rights and responsibilities when using our AI-powered content creation tools."
+      />
       {/* Navigation */}
       <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
