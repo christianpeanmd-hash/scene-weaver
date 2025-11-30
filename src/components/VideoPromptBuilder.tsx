@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Image } from "lucide-react";
 import { toast } from "sonner";
 import { MemoableLogo } from "./MemoableLogo";
 import { ProgressSteps, StepKey } from "./ProgressSteps";
@@ -13,7 +13,11 @@ import { useCharacterLibrary, parseCharactersFromTemplate } from "@/hooks/useCha
 import { useEnvironmentLibrary, parseEnvironmentFromTemplate } from "@/hooks/useEnvironmentLibrary";
 import { PresetAnchor } from "@/data/preset-anchors";
 
-export function VideoPromptBuilder() {
+interface VideoPromptBuilderProps {
+  onSwitchToImage?: () => void;
+}
+
+export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps) {
   const [step, setStep] = useState<StepKey>("setup");
   const [characters, setCharacters] = useState<Character[]>([]);
   const [environments, setEnvironments] = useState<Environment[]>([]);
@@ -298,9 +302,20 @@ export function VideoPromptBuilder() {
         {/* Header */}
         <header className="flex items-center justify-between mb-8 animate-fade-in">
           <MemoableLogo />
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Sparkles className="w-4 h-4 text-primary" />
-            Video Prompt Builder
+          <div className="flex items-center gap-3">
+            {onSwitchToImage && (
+              <button
+                onClick={onSwitchToImage}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
+              >
+                <Image className="w-4 h-4" />
+                Image Builder
+              </button>
+            )}
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Video Prompt Builder
+            </div>
           </div>
         </header>
 
