@@ -187,11 +187,11 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         {/* Tagline */}
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight animate-slide-up">
-            Production-ready prompts for{" "}
-            <span className="gradient-text">AI media and infographics</span>
+            Turn any idea into{" "}
+            <span className="gradient-text">AI videos, images, infographics, and 1-pagers</span>
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Build consistent characters, environments, and scenes for Veo, Sora, Midjourney, and more.
+          <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            Paste a script, deck, or memo once. TechyMemo builds scene-by-scene storyboards, finished visuals, and copy-and-paste prompts you can render in-app or drop into Sora, Veo, Runway, and Midjourney—no prompt engineering required.
           </p>
         </div>
 
@@ -261,12 +261,10 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
           </div>
         </div>
 
-        {/* Feature badges */}
-        <div className="flex flex-wrap justify-center gap-2 mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <FeatureBadge icon={Sparkles} label="AI-Powered" />
-          <FeatureBadge icon={Wand2} label="Production-Ready" />
-          <FeatureBadge icon={ArrowRight} label="Copy & Go" />
-        </div>
+        {/* Support line */}
+        <p className="text-center text-xs text-muted-foreground mt-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          Generate the media right here, or copy the prompts to your favorite AI tools.
+        </p>
       </div>
     </div>
   );
