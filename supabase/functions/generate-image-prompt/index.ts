@@ -17,7 +17,8 @@ const TIER_LIMITS: Record<string, number> = {
 };
 
 interface ImagePromptRequest {
-  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload';
+  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload' | 'extract-colors';
+  mode?: 'extract-colors';
   styleName?: string;
   stylePromptTemplate?: string;
   styleLook?: string;
@@ -233,6 +234,23 @@ OUTPUT FORMAT (JSON):
 
 Be specific about colors - extract actual hex codes when possible. Describe the overall brand feel comprehensively. ALL IN ENGLISH.`;
 
+const COLOR_EXTRACTION_SYSTEM = `You are an expert at analyzing images and extracting color palettes. 
+
+When given an image (logo, brand asset, or any visual), extract the dominant colors as a usable color palette.
+
+OUTPUT FORMAT (JSON):
+{
+  "colors": ["#hexcode1", "#hexcode2", "#hexcode3"],
+  "font": "Suggested font style based on the image aesthetic (e.g., 'Modern sans-serif', 'Bold geometric', 'Classic serif')"
+}
+
+RULES:
+1. Extract 3-5 most prominent/representative colors as hex codes
+2. Order by visual importance: primary color first, then secondary, then accents
+3. Ensure colors are valid 6-digit hex codes starting with #
+4. Suggest a font style that would complement the visual aesthetic
+5. Return ONLY the JSON, no explanation`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -263,7 +281,12 @@ serve(async (req) => {
     let userPrompt: string;
     let responseFormat: 'text' | 'json' = 'text';
 
-    if (body.type === 'brand-from-upload') {
+    if (body.mode === 'extract-colors' || body.type === 'extract-colors') {
+      // Quick color extraction from image
+      systemPrompt = COLOR_EXTRACTION_SYSTEM;
+      userPrompt = "Extract the dominant colors from this image as a color palette.";
+      responseFormat = 'json';
+    } else if (body.type === 'brand-from-upload') {
       systemPrompt = BRAND_EXTRACTION_SYSTEM;
       const docContent = body.documentContent || '';
       const hasDoc = docContent.trim().length > 0;
@@ -432,7 +455,11 @@ Return ONLY the prompt text, nothing else.`;
         }
         const parsed = JSON.parse(jsonStr.trim());
         
-        if (body.type === 'brand-from-upload') {
+        if (body.mode === 'extract-colors' || body.type === 'extract-colors') {
+          return new Response(JSON.stringify({ colors: parsed.colors, font: parsed.font }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } else if (body.type === 'brand-from-upload') {
           return new Response(JSON.stringify({ brand: parsed }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });

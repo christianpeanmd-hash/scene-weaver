@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
+import { BrandPreviewPanel } from "@/components/BrandPreviewPanel";
 
 interface ExplainerSection {
   id: string;
@@ -134,6 +135,67 @@ export function OnePageExplainerBuilder() {
   });
   const [viewMode, setViewMode] = useState<"preview" | "json">("preview");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Compute current brand preview colors
+  const currentBrandPreview = useMemo(() => {
+    if (selectedSavedBrandId) {
+      const savedBrand = savedBrands.find(b => b.id === selectedSavedBrandId);
+      if (savedBrand?.colors && savedBrand.colors.length >= 3) {
+        return {
+          colors: {
+            primary: savedBrand.colors[0],
+            secondary: savedBrand.colors[1],
+            accent: savedBrand.colors[2],
+          },
+          font: savedBrand.fonts || undefined,
+          name: savedBrand.name,
+        };
+      }
+    }
+    
+    if (brandStyle && brandStyle !== "custom") {
+      const preset = BRAND_STYLES.find(b => b.value === brandStyle);
+      if (preset?.colors) {
+        return {
+          colors: preset.colors,
+          font: preset.font,
+          name: preset.label.split(" – ")[0],
+        };
+      }
+    }
+    
+    // Parse custom brand tokens for colors
+    if (brandStyle === "custom" && customBrandTokens) {
+      const colorMatches = customBrandTokens.match(/#[0-9A-Fa-f]{6}/g);
+      if (colorMatches && colorMatches.length >= 3) {
+        return {
+          colors: {
+            primary: colorMatches[0],
+            secondary: colorMatches[1],
+            accent: colorMatches[2],
+          },
+          font: undefined,
+          name: "Custom Brand",
+        };
+      }
+    }
+    
+    return null;
+  }, [selectedSavedBrandId, savedBrands, brandStyle, customBrandTokens]);
+
+  // Handle colors extracted from uploaded image
+  const handleColorsExtracted = (colors: string[], font?: string) => {
+    if (colors.length > 0) {
+      const tokenParts = [`Primary: ${colors[0]}`];
+      if (colors[1]) tokenParts.push(`Secondary: ${colors[1]}`);
+      if (colors[2]) tokenParts.push(`Accent: ${colors[2]}`);
+      if (font) tokenParts.push(`Font: ${font}`);
+      
+      setCustomBrandTokens(tokenParts.join(", "));
+      setBrandStyle("custom");
+      setSelectedSavedBrandId(null);
+    }
+  };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -692,6 +754,15 @@ export function OnePageExplainerBuilder() {
                       />
                     </div>
                   )}
+                  
+                  {/* Brand Preview Panel */}
+                  <BrandPreviewPanel
+                    colors={currentBrandPreview?.colors || null}
+                    font={currentBrandPreview?.font}
+                    brandName={currentBrandPreview?.name}
+                    onColorsExtracted={handleColorsExtracted}
+                  />
+                  
                   <div className="space-y-2">
                     <Label>Tone</Label>
                     <Select value={tone} onValueChange={setTone}>
