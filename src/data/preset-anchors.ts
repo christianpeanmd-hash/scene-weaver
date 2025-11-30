@@ -1,4 +1,4 @@
-import { Ghost, Building2, Rocket, Crown, Sparkles, TreePine, Home, Mountain, Palmtree, Factory, Coffee, Warehouse, Castle, Train, Tent, ShoppingBag, Plane, UtensilsCrossed, Bird, Gift, Skull, Anchor, Drama, Star, Flame, Snowflake, Glasses, Sword, Gem, Waves, Wine, Radiation, Globe, Moon, Pyramid } from "lucide-react";
+import { Ghost, Building2, Rocket, Crown, Sparkles, TreePine, Home, Mountain, Palmtree, Factory, Coffee, Warehouse, Castle, Train, Tent, ShoppingBag, Plane, UtensilsCrossed, Bird, Gift, Skull, Anchor, Drama, Star, Flame, Snowflake, Glasses, Sword, Gem, Waves, Wine, Radiation, Globe, Moon, Pyramid, Activity, Stethoscope } from "lucide-react";
 
 export interface PresetAnchor {
   id: string;
@@ -209,9 +209,64 @@ export const CHARACTER_PRESETS: PresetAnchor[] = [
 **Demeanor**: Speaks in third person about himself. Expects worship, confused when not received. Fascinated by building and legacy. Surprisingly curious about other cultures. Dramatic hand gestures.
 **Role**: God-king of ancient Egypt ruling the most powerful civilization on Earth.`,
   },
+  {
+    id: "ortho-bro",
+    name: "Fix-the-Fracture Bro",
+    icon: "Activity",
+    category: "character",
+    template: `**Character Anchor — "Fix-the-Fracture Bro"**
+**Look**: 35-year-old orthopedic surgeon, 6'4", bodybuilder buff build; tight royal-blue scrubs. Sandy-blond crew cut, handsome square jaw. Forearms like tree trunks, veins visible. Clean-shaven, confident smirk.
+**Demeanor**: Aggressively positive about bones and lifting. Speaks in gym bro metaphors applied to medicine. Fist-bumps patients after successful reductions. Genuinely caring but channels it through machismo. Gets emotional about good bone healing.
+**Role**: Orthopedic surgeon treating fractures with the intensity of a CrossFit coach.
+**Signature Props**: "BONE BROKE, ME FIX" coffee mug, neon Post-Op Pump protein shaker, large reduction forceps, Comically Large Mallet.`,
+  },
 ];
 
 export const ENVIRONMENT_PRESETS: PresetAnchor[] = [
+  {
+    id: "hospital-or",
+    name: "Operating Room",
+    icon: "Activity",
+    category: "environment",
+    template: `**Environment Anchor — Operating Room**
+**Setting**: Sterile surgical suite with bright overhead OR lights, surgical table center frame. Blue drapes everywhere, instrument trays gleaming with steel. Multiple monitors showing vitals, anesthesia machine at head of table. Surgical team in full gowns, masks, loupes.
+**Lighting**: Intense shadowless overhead surgical lights, cool blue ambient from monitors, green glow from anesthesia displays.
+**Audio Atmosphere**: Steady beep of heart monitor, rhythmic suction sounds, quiet murmurs between surgeon and scrub nurse, occasional instrument clinking on tray.
+**Props**: Surgical instruments (scalpels, forceps, retractors), suction tubing, sterile drapes, bovie electrocautery, patient positioning pads.`,
+  },
+  {
+    id: "hospital-er",
+    name: "Emergency Room",
+    icon: "Activity",
+    category: "environment",
+    template: `**Environment Anchor — Emergency Department**
+**Setting**: Chaotic ER bay with curtain dividers, multiple stretchers visible. Central nurses station with monitors. Whiteboard with patient tracking. Staff rushing past, EMS bringing in new patient. IV poles, crash carts staged against walls.
+**Lighting**: Harsh fluorescent overhead, blinking warning lights on equipment, computer screen glow at nurses station.
+**Audio Atmosphere**: Overhead pages and codes, monitor alarms beeping, ambulance sirens arriving, phones ringing, urgent voices overlapping, squeaky gurney wheels.
+**Props**: Crash cart, defibrillator, IV bags, blood pressure cuffs, stethoscopes around necks, clipboards, trauma shears.`,
+  },
+  {
+    id: "hospital-hallway",
+    name: "Hospital Corridor",
+    icon: "Building2",
+    category: "environment",
+    template: `**Environment Anchor — Hospital Hallway**
+**Setting**: Long institutional corridor with polished linoleum floors, handrails along walls. Room numbers on doors, supply carts parked along walls. Ceiling tiles with fluorescent panels. Occasional wheelchair or stretcher passing. Hand sanitizer stations at intervals.
+**Lighting**: Even fluorescent lighting, no shadows, sterile bright ambiance. Natural light from distant window at corridor end.
+**Audio Atmosphere**: Shoes squeaking on floors, distant intercom pages, elevator dings, rolling cart wheels, muffled conversations from patient rooms.
+**Props**: Wheelchair, IV pole on wheels, laundry hamper, medication cart, hand sanitizer dispenser, room number signs, exit signs.`,
+  },
+  {
+    id: "hospital-lounge",
+    name: "Doctors Lounge",
+    icon: "Coffee",
+    category: "environment",
+    template: `**Environment Anchor — Physician Lounge**
+**Setting**: Worn but comfortable break room with mismatched furniture. Coffee machine that's seen better days, microwave with "clean your food" sign. Vending machines, small fridge covered in notices. Scrub-clad staff collapsed on couches. Call schedule whiteboard.
+**Lighting**: Softer fluorescent than main hospital, warm light from coffee maker, TV screen glow in corner.
+**Audio Atmosphere**: Coffee machine gurgling, microwave beeping, tired sighs, quiet conversation, muted TV news, occasional pager going off.
+**Props**: Coffee mugs (some abandoned), protein bars, leftover pizza box, scrub caps tossed aside, stethoscopes on table, phones charging.`,
+  },
   {
     id: "nyc",
     name: "New York City",
@@ -481,4 +536,6 @@ export const ICON_MAP: Record<string, React.ComponentType<{ className?: string }
   Globe,
   Moon,
   Pyramid,
+  Activity,
+  Stethoscope,
 };
