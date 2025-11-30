@@ -1,11 +1,12 @@
-import { useState, useCallback } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StyleSelector } from "./StyleSelector";
 import { BrandSelector } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
+import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { IllustrationStyle } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
@@ -39,6 +40,29 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     };
     reader.readAsDataURL(file);
   }, []);
+
+  // Handle paste from clipboard
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          handleImageUpload(file);
+        }
+        break;
+      }
+    }
+  }, [handleImageUpload]);
+
+  // Listen for paste events
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -125,19 +149,19 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   onDragLeave={handleDragLeave}
                   className={`p-8 transition-all ${
                     isDragging 
-                      ? "bg-purple-50 border-2 border-dashed border-purple-300" 
-                      : "bg-slate-50"
+                      ? "bg-purple-50 dark:bg-purple-950/20 border-2 border-dashed border-purple-300" 
+                      : "bg-muted/50"
                   }`}
                 >
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
                       <Image className="w-8 h-8 text-purple-500" />
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Drag & drop a photo here, or
+                      Drag & drop, paste from clipboard, or
                     </p>
                     <label className="cursor-pointer">
-                      <span className="px-4 py-2 bg-white border border-border rounded-lg text-sm font-medium text-foreground hover:bg-slate-50 transition-colors">
+                      <span className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted/50 transition-colors">
                         Browse Files
                       </span>
                       <input
@@ -147,9 +171,10 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                         className="hidden"
                       />
                     </label>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      Or skip this to describe your subject manually
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
+                      <Clipboard className="w-3 h-3" />
+                      <span>Ctrl/Cmd+V to paste screenshots</span>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -248,13 +273,21 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                 )}
               </div>
               
-              <div className="flex-1 p-4 bg-slate-50">
+              <div className="flex-1 p-4 bg-muted/30">
                 {generatedPrompt ? (
                   <div className="space-y-4">
-                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-white p-4 rounded-lg border border-border">
+                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
                       {generatedPrompt}
                     </pre>
-                    <AIToolLinks type="image" />
+                    
+                    {/* Generate Image Directly */}
+                    <GeneratedImageDisplay prompt={generatedPrompt} type="image" />
+                    
+                    {/* Or Use External Tools */}
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2">Or copy prompt to use in:</p>
+                      <AIToolLinks type="image" />
+                    </div>
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-center">
