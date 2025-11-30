@@ -18,9 +18,17 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // Use anon key for user auth validation
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    
+    // Use service role key for profile queries (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
 
     // Authenticate user
@@ -33,7 +41,7 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
     
     if (authError || !user) {
       return new Response(
@@ -44,12 +52,14 @@ serve(async (req) => {
 
     logStep('User authenticated', { userId: user.id });
 
-    // Check subscription tier for video generation (premium feature)
-    const { data: profile } = await supabaseClient
+    // Check subscription tier for video generation (premium feature) - use admin client to bypass RLS
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('subscription_tier')
       .eq('user_id', user.id)
       .single();
+
+    logStep('Profile check', { tier: profile?.subscription_tier, error: profileError?.message });
 
     const allowedTiers = ['pro', 'studio'];
     if (!profile || !allowedTiers.includes(profile.subscription_tier || '')) {
@@ -211,7 +221,7 @@ serve(async (req) => {
 
     // Update scene status if sceneId provided
     if (sceneId) {
-      await supabaseClient
+      await supabaseAdmin
         .from('project_scenes')
         .update({ video_status: 'processing' })
         .eq('id', sceneId);
