@@ -6,15 +6,17 @@ interface GenerateImagePromptParams {
   customStyle?: string;
   imageBase64?: string | null;
   subjectDescription?: string;
+  brandContext?: string;
 }
 
 export async function generateImagePrompt(params: GenerateImagePromptParams): Promise<string> {
-  const { style, customStyle, imageBase64, subjectDescription } = params;
+  const { style, customStyle, imageBase64, subjectDescription, brandContext } = params;
 
   // Build the request body based on whether we have a preset style or custom style
   const body: Record<string, unknown> = {
     imageBase64: imageBase64,
     subjectDescription: subjectDescription || "",
+    brandContext: brandContext,
   };
 
   if (customStyle) {

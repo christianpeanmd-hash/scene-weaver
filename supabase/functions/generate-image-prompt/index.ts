@@ -14,6 +14,7 @@ interface ImagePromptRequest {
   customStyle?: string;
   imageBase64?: string;
   subjectDescription?: string;
+  brandContext?: string;
   // Infographic-specific
   styleId?: string;
   topic?: string;
@@ -113,13 +114,17 @@ TEMPLATE APPROACH: ${body.stylePromptTemplate}
 
 ${body.topic ? `TOPIC/FOCUS: ${body.topic}` : ''}
 
+${body.brandContext ? `BRAND/THEME CONTEXT:
+${body.brandContext}
+Apply this brand's visual identity throughout the infographic.` : ''}
+
 ${hasDocContent ? `SOURCE DOCUMENT CONTENT:
 ${docContent.substring(0, 3000)}${docContent.length > 3000 ? '...[truncated]' : ''}` : ''}
 
 Generate a complete, ready-to-use infographic prompt that:
 1. Follows the style template approach but expands it with specific details
 2. ${hasDocContent ? 'Extracts and organizes key information from the document' : 'Develops the topic comprehensively'}
-3. Includes specific visual style guidance (colors, layout structure, typography)
+3. Includes specific visual style guidance (colors, layout structure, typography)${body.brandContext ? ' incorporating the brand context' : ''}
 4. Specifies aspect ratio (16:9 for presentations, 9:16 for social media vertical)
 5. Adds quality and detail modifiers
 6. Is ready to paste directly into Gemini AI Studio, ChatGPT, or similar tools
@@ -137,11 +142,15 @@ Return ONLY the prompt text, ready to use.`;
 
 STYLE DESCRIPTION: ${body.customStyle}
 
+${body.brandContext ? `BRAND/THEME CONTEXT:
+${body.brandContext}
+Incorporate this brand's visual identity into the image.` : ''}
+
 ${hasImage ? 'I\'ve uploaded a reference photo. Describe the subject in the photo and incorporate it into the prompt.' : ''}
 ${body.subjectDescription ? `Subject description: ${body.subjectDescription}` : ''}
 
 Generate a complete, ready-to-use prompt that:
-1. Faithfully captures the user's custom style description
+1. Faithfully captures the user's custom style description${body.brandContext ? ' while incorporating brand elements' : ''}
 2. ${hasImage ? 'Describes the subject from the photo accurately' : 'Incorporates the subject description'}
 3. Includes specific style keywords and modifiers based on the custom description
 4. Suggests appropriate aspect ratio
@@ -157,11 +166,15 @@ STYLE CHARACTERISTICS:
 - Feel: ${body.styleFeel}
 - Base template: ${body.stylePromptTemplate}
 
+${body.brandContext ? `BRAND/THEME CONTEXT:
+${body.brandContext}
+Incorporate this brand's visual identity into the image.` : ''}
+
 ${hasImage ? 'I\'ve uploaded a reference photo. Describe the subject in the photo and incorporate it into the prompt.' : ''}
 ${body.subjectDescription ? `Subject description: ${body.subjectDescription}` : ''}
 
 Generate a complete, ready-to-use prompt that:
-1. Captures the essence of this illustration style
+1. Captures the essence of this illustration style${body.brandContext ? ' while incorporating brand elements' : ''}
 2. ${hasImage ? 'Describes the subject from the photo accurately' : 'Incorporates the subject description'}
 3. Includes specific style keywords and modifiers
 4. Suggests appropriate aspect ratio
