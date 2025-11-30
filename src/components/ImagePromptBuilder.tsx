@@ -8,6 +8,7 @@ import { BrandSelector } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
+import { GeneratedImagesGallery } from "./GeneratedImagesGallery";
 import { FreeLimitModal } from "./FreeLimitModal";
 import { IllustrationStyle, ILLUSTRATION_STYLES } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
@@ -15,6 +16,7 @@ import { generateImagePrompt } from "@/lib/image-prompt-generator";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useGeneratedImagesGallery } from "@/hooks/useGeneratedImagesGallery";
 
 // Popular styles for quick apply
 const QUICK_STYLES = [
@@ -48,6 +50,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [isDragging, setIsDragging] = useState(false);
   
   const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
+  const { images: galleryImages, isLoading: galleryLoading, addImage: addToGallery, deleteImage: deleteFromGallery } = useGeneratedImagesGallery();
 
   // Helper to check if an error is a rate limit error
   const isRateLimitError = (error: unknown): boolean => {
@@ -176,6 +179,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       if (error) throw error;
       if (data?.imageUrl) {
         setGeneratedImageUrl(data.imageUrl);
+        // Auto-save to gallery
+        addToGallery(data.imageUrl, prompt, selectedStyle?.name || customStyleText.trim());
         toast.success("Image generated!");
       } else {
         throw new Error("No image returned");
@@ -233,6 +238,9 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       if (error) throw error;
       if (data?.imageUrl) {
         setGeneratedImageUrl(data.imageUrl);
+        // Auto-save to gallery with thumbnail of source
+        const thumbnail = uploadedImage?.substring(0, 500); // Store small portion as reference
+        addToGallery(data.imageUrl, fullPrompt, selectedStyle?.name || customStyleText.trim(), thumbnail);
         toast.success("Style applied!");
       } else {
         throw new Error("No image returned");
@@ -297,6 +305,9 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       if (error) throw error;
       if (data?.imageUrl) {
         setGeneratedImageUrl(data.imageUrl);
+        // Auto-save to gallery
+        const thumbnail = uploadedImage?.substring(0, 500);
+        addToGallery(data.imageUrl, fullPrompt, style.name, thumbnail);
         toast.success(`${style.name} style applied!`);
       } else {
         throw new Error("No image returned");
@@ -434,6 +445,17 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   </div>
                 </div>
               )}
+              
+              {/* Generated Images Gallery */}
+              <GeneratedImagesGallery
+                images={galleryImages}
+                isLoading={galleryLoading}
+                onDelete={deleteFromGallery}
+                onSelect={(url) => {
+                  setGeneratedImageUrl(url);
+                  toast.success("Image loaded from gallery!");
+                }}
+              />
             </Card>
 
             {/* Scene Context - for Apply Style workflow */}
