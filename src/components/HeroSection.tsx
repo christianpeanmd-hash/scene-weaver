@@ -1,14 +1,17 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -20,8 +23,16 @@ interface HeroSectionProps {
   onSelectBuilder: (builder: BuilderType) => void;
 }
 
+const tierColors: Record<string, string> = {
+  free: "bg-muted text-muted-foreground",
+  creator: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+  pro: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  studio: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+};
+
 export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps) {
   const { user, profile, signOut, isAdmin } = useAuth();
+  const { tier, generationsRemaining, generationLimit, isLoading: subLoading } = useSubscription();
 
   return (
     <div className="relative overflow-hidden">
@@ -59,21 +70,66 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2">
-                    <User className="w-4 h-4" />
+                    {tier !== "free" ? (
+                      <Crown className="w-4 h-4 text-amber-500" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
                     <span className="hidden sm:inline">{profile?.full_name || user.email?.split("@")[0]}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                    {user.email}
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin">Admin Dashboard</Link>
-                    </DropdownMenuItem>
-                  )}
+                <DropdownMenuContent align="end" className="w-64 bg-popover">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-medium">{profile?.full_name || "Account"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut()}>
+                  
+                  {/* Subscription Status */}
+                  <div className="px-2 py-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground">Plan</span>
+                      <Badge variant="secondary" className={cn("text-xs capitalize", tierColors[tier])}>
+                        {tier}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Generations</span>
+                      <div className="flex items-center gap-1.5">
+                        <Zap className="w-3 h-3 text-primary" />
+                        <span className="text-xs font-medium">
+                          {tier === "studio" ? "Unlimited" : `${generationsRemaining} / ${generationLimit}`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {tier === "free" && (
+                    <>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <a href="#pricing" className="flex items-center gap-2 text-primary">
+                          <Crown className="w-4 h-4" />
+                          Upgrade Plan
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin">Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
+                  <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
