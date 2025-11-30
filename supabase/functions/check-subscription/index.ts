@@ -28,6 +28,9 @@ const PRODUCT_TIERS: Record<string, string> = {
   "prod_TW6xxq7Cl84XIs": "studio",
 };
 
+// Valid paid tiers that can be manually set in the database
+const VALID_PAID_TIERS = ["creator", "pro", "studio"];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -55,7 +58,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get user's profile for generation count
+    // Get user's profile for generation count and manual tier override
     const { data: profile } = await supabaseClient
       .from("profiles")
       .select("monthly_generations, generation_reset_at, subscription_tier")
@@ -63,6 +66,7 @@ serve(async (req) => {
       .single();
 
     let monthlyGenerations = profile?.monthly_generations || 0;
+    const dbTier = profile?.subscription_tier;
     
     // Check if we need to reset the monthly counter
     if (profile?.generation_reset_at) {
@@ -84,6 +88,23 @@ serve(async (req) => {
       }
     }
 
+    // IMPORTANT: If the database has a valid paid tier set (manually by admin), 
+    // respect it without requiring Stripe verification
+    if (dbTier && VALID_PAID_TIERS.includes(dbTier)) {
+      logStep("Using database tier override", { tier: dbTier });
+      return new Response(JSON.stringify({
+        subscribed: true,
+        tier: dbTier,
+        subscription_end: null, // Manual override - no end date
+        is_trial: false,
+        monthly_generations: monthlyGenerations
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // If no database override, check Stripe for subscription
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
