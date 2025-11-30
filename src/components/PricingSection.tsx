@@ -17,60 +17,80 @@ interface PricingTier {
   buttonText: string;
   buttonVariant: "default" | "outline";
   popular?: boolean;
-  tier: "free" | "creator" | "studio";
+  tier: "free" | "creator" | "pro" | "studio";
   note?: string;
+  generationLimit: string;
 }
 
 const tiers: PricingTier[] = [
   {
-    name: "Free preview",
+    name: "Free",
     monthlyPrice: "$0",
     yearlyPrice: "$0",
-    description: "Great for testing Techy Memo on one or two ideas",
+    description: "Try Techy Memo risk-free",
     features: [
-      "Up to 3 scene generations per browser",
-      "No login, no setup",
-      "Great for testing Techy Memo on one or two ideas",
+      "3 generations total",
+      "No login required",
+      "Great for testing",
     ],
     buttonText: "Start for free",
     buttonVariant: "outline",
     tier: "free",
-    note: "Anonymous preview only. Scenes aren't saved."
+    generationLimit: "3 total",
+    note: "Anonymous preview. Scenes aren't saved."
   },
   {
     name: "Creator",
+    monthlyPrice: "$9",
+    yearlyPrice: "$90",
+    period: "/ month",
+    description: "For individual creators",
+    features: [
+      "50 generations per month",
+      "Save scenes, characters & styles",
+      "Image & infographic prompts",
+      "Export for Sora, Veo, Runway",
+    ],
+    buttonText: "Start 7-day free trial",
+    buttonVariant: "outline",
+    tier: "creator",
+    generationLimit: "50/month",
+  },
+  {
+    name: "Pro",
     monthlyPrice: "$19",
     yearlyPrice: "$190",
     period: "/ month",
-    description: "Perfect for creators, educators, clinicians, and marketers",
+    description: "For power users",
     features: [
-      "Unlimited SceneBlock generations (fair use)",
-      "Save and reuse scenes, characters, environments, and styles",
-      "Full infographic & image prompt library included",
-      "Export-ready prompts for Sora, Veo, Runway, and popular image models",
-      "Perfect for creators, educators, clinicians, and marketers",
+      "200 generations per month",
+      "Everything in Creator",
+      "Priority generation queue",
+      "Advanced templates",
     ],
     buttonText: "Start 7-day free trial",
     buttonVariant: "default",
     popular: true,
-    tier: "creator",
+    tier: "pro",
+    generationLimit: "200/month",
   },
   {
     name: "Studio",
-    monthlyPrice: "$49",
-    yearlyPrice: "$490",
+    monthlyPrice: "$29",
+    yearlyPrice: "$290",
     period: "/ month",
-    description: "Ideal for agencies, podcast teams, and research groups",
+    description: "For teams & agencies",
     features: [
-      "Everything in Creator, plus:",
+      "Unlimited generations",
+      "Everything in Pro",
       "Up to 5 team members",
-      "Shared libraries for brands, characters, and style packs",
-      "Higher usage limits & priority support",
-      "Ideal for agencies, podcast teams, and research groups",
+      "Shared libraries",
+      "Priority support",
     ],
     buttonText: "Start 7-day free trial",
     buttonVariant: "outline",
     tier: "studio",
+    generationLimit: "Unlimited",
   },
 ];
 
@@ -112,9 +132,15 @@ export function PricingSection() {
     // Start checkout
     try {
       setLoadingTier(tier.tier);
-      const priceId = tier.tier === "creator" 
-        ? (billingCycle === "monthly" ? PRICE_IDS.creator.monthly : PRICE_IDS.creator.yearly)
-        : (billingCycle === "monthly" ? PRICE_IDS.studio.monthly : PRICE_IDS.studio.yearly);
+      let priceId: string;
+      
+      if (tier.tier === "creator") {
+        priceId = billingCycle === "monthly" ? PRICE_IDS.creator.monthly : PRICE_IDS.creator.yearly;
+      } else if (tier.tier === "pro") {
+        priceId = billingCycle === "monthly" ? PRICE_IDS.pro.monthly : PRICE_IDS.pro.yearly;
+      } else {
+        priceId = billingCycle === "monthly" ? PRICE_IDS.studio.monthly : PRICE_IDS.studio.yearly;
+      }
       
       await startCheckout(priceId);
     } catch (error) {
@@ -142,11 +168,11 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="py-16 md:py-24 bg-background">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Pricing</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Simple, transparent pricing</h2>
           <p className="text-muted-foreground mb-6">
-            Try it free, then upgrade when you're ready to build more.
+            Start free, upgrade when you need more.
           </p>
 
           {/* Billing toggle */}
@@ -177,12 +203,12 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto">
           {tiers.map((tier) => (
             <div
               key={tier.name}
               className={cn(
-                "relative bg-card border rounded-2xl p-6 flex flex-col",
+                "relative bg-card border rounded-2xl p-5 flex flex-col",
                 tier.popular
                   ? "border-primary shadow-lg"
                   : "border-border",
@@ -207,21 +233,22 @@ export function PricingSection() {
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-foreground mb-2">{tier.name}</h3>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-1">{tier.name}</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">
+                  <span className="text-3xl font-bold text-foreground">
                     {billingCycle === "monthly" ? tier.monthlyPrice : tier.yearlyPrice}
                   </span>
                   {tier.period && (
-                    <span className="text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {billingCycle === "yearly" ? "/ year" : tier.period}
                     </span>
                   )}
                 </div>
+                <p className="text-xs text-primary font-medium mt-1">{tier.generationLimit}</p>
               </div>
 
-              <ul className="space-y-3 mb-6 flex-grow">
+              <ul className="space-y-2 mb-5 flex-grow">
                 {tier.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -232,6 +259,7 @@ export function PricingSection() {
 
               <Button
                 variant={tier.buttonVariant}
+                size="sm"
                 className={cn(
                   "w-full",
                   tier.popular && !isCurrentPlan(tier) && "bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -244,14 +272,14 @@ export function PricingSection() {
               </Button>
 
               {tier.note && (
-                <p className="text-xs text-muted-foreground mt-3 text-center">
+                <p className="text-xs text-muted-foreground mt-2 text-center">
                   {tier.note}
                 </p>
               )}
 
               {tier.tier !== "free" && !isCurrentPlan(tier) && (
-                <p className="text-xs text-muted-foreground mt-3 text-center">
-                  7-day free trial, cancel anytime
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  7-day free trial
                 </p>
               )}
             </div>
@@ -259,7 +287,7 @@ export function PricingSection() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-8">
-          Need more than 5 seats or custom limits?{" "}
+          Need custom limits or more seats?{" "}
           <button
             onClick={() => {
               setInviteType("enterprise");
@@ -267,7 +295,7 @@ export function PricingSection() {
             }}
             className="text-primary hover:underline"
           >
-            Contact us for an enterprise plan
+            Contact us
           </button>
         </p>
       </div>

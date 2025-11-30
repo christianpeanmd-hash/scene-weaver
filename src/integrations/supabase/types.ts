@@ -53,7 +53,9 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string | null
+          generation_reset_at: string | null
           id: string
+          monthly_generations: number | null
           subscription_tier: string | null
           updated_at: string
           user_id: string
@@ -63,7 +65,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          generation_reset_at?: string | null
           id?: string
+          monthly_generations?: number | null
           subscription_tier?: string | null
           updated_at?: string
           user_id: string
@@ -73,7 +77,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          generation_reset_at?: string | null
           id?: string
+          monthly_generations?: number | null
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string
