@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Sparkles, Copy, Check, Clock, Plus, User, MapPin, Clapperboard, Library, X, Loader2 } from "lucide-react";
+import { Sparkles, Copy, Check, Clock, Plus, User, MapPin, Clapperboard, Library, X, Loader2, Save, Layers, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AIToolLinks } from "@/components/AIToolLinks";
 import { FreeLimitModal } from "@/components/FreeLimitModal";
+import { PhotoToAnchor } from "@/components/PhotoToAnchor";
 import { VIDEO_STYLE_PRESETS } from "@/data/video-style-presets";
 import { CHARACTER_PRESETS, ENVIRONMENT_PRESETS, ICON_MAP } from "@/data/preset-anchors";
 import { generateAITemplate, RateLimitError } from "@/lib/ai-template-generator";
@@ -16,10 +17,21 @@ import { cn } from "@/lib/utils";
 import { EnhancedCharacter } from "@/types/prompt-builder";
 
 const DURATIONS = [
-  { seconds: 5, label: "5s" },
-  { seconds: 10, label: "10s" },
-  { seconds: 15, label: "15s" },
+  { seconds: 5, label: "5 sec", description: "Quick clip" },
+  { seconds: 10, label: "10 sec", description: "Standard" },
+  { seconds: 15, label: "15 sec", description: "Extended" },
 ];
+
+interface SavedScene {
+  id: string;
+  title: string;
+  prompt: string;
+  characterId: string | null;
+  environmentId: string | null;
+  styleId: string | null;
+  duration: number;
+  createdAt: number;
+}
 
 export function SimpleVideoBuilder() {
   const [description, setDescription] = useState("");
@@ -37,10 +49,56 @@ export function SimpleVideoBuilder() {
   const [customCharacterDesc, setCustomCharacterDesc] = useState("");
   const [customEnvironmentDesc, setCustomEnvironmentDesc] = useState("");
   const [isCreatingPreset, setIsCreatingPreset] = useState(false);
+  
+  // Scene management
+  const [savedScenes, setSavedScenes] = useState<SavedScene[]>(() => {
+    try {
+      const saved = localStorage.getItem('video-saved-scenes');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [showSavedScenes, setShowSavedScenes] = useState(false);
 
   const { savedCharacters, saveCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment } = useEnvironmentLibrary();
   const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
+  
+  // Photo to anchor handlers
+  const handleCharacterFromPhoto = (character: any) => {
+    const enhanced: EnhancedCharacter = {
+      id: Date.now() + Math.random(),
+      name: character.name || "Photo Character",
+      look: character.look || "",
+      demeanor: character.demeanor || "",
+      role: character.role || "",
+      enhancedLook: character.look,
+      enhancedDemeanor: character.demeanor,
+      enhancedRole: character.role,
+      sourceTemplate: "Generated from photo",
+      createdAt: Date.now(),
+    };
+    saveCharacter(enhanced);
+    setSelectedCharacterId(String(enhanced.id));
+  };
+  
+  const handleEnvironmentFromPhoto = (environment: any) => {
+    const enhanced: EnhancedEnvironment = {
+      id: Date.now() + Math.random(),
+      name: environment.name || "Photo Environment",
+      setting: environment.setting || "",
+      lighting: environment.lighting || "",
+      audio: environment.audio || "",
+      props: environment.props || "",
+      enhancedSetting: environment.setting,
+      enhancedLighting: environment.lighting,
+      enhancedAudio: environment.audio,
+      enhancedProps: environment.props,
+      sourceTemplate: "Generated from photo",
+      createdAt: Date.now(),
+    };
+    saveEnvironment(enhanced);
+    setSelectedEnvironmentId(String(enhanced.id));
+  };
 
   // Get selected items
   const selectedCharacter = selectedCharacterId 
@@ -269,10 +327,125 @@ export function SimpleVideoBuilder() {
   const handleReset = () => {
     setGeneratedPrompt("");
   };
+  
+  const handleSaveScene = () => {
+    if (!generatedPrompt) return;
+    
+    const newScene: SavedScene = {
+      id: Date.now().toString(),
+      title: description.slice(0, 50) + (description.length > 50 ? "..." : ""),
+      prompt: generatedPrompt,
+      characterId: selectedCharacterId,
+      environmentId: selectedEnvironmentId,
+      styleId: selectedStyle,
+      duration,
+      createdAt: Date.now(),
+    };
+    
+    const updated = [newScene, ...savedScenes];
+    setSavedScenes(updated);
+    try {
+      localStorage.setItem('video-saved-scenes', JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Failed to save scenes:', e);
+    }
+    toast.success("Scene saved!");
+  };
+  
+  const handleLoadScene = (scene: SavedScene) => {
+    setGeneratedPrompt(scene.prompt);
+    setSelectedCharacterId(scene.characterId);
+    setSelectedEnvironmentId(scene.environmentId);
+    setSelectedStyle(scene.styleId);
+    setDuration(scene.duration);
+    setShowSavedScenes(false);
+    toast.success("Scene loaded!");
+  };
+  
+  const handleDeleteScene = (id: string) => {
+    const updated = savedScenes.filter(s => s.id !== id);
+    setSavedScenes(updated);
+    localStorage.setItem('video-saved-scenes', JSON.stringify(updated));
+    toast.success("Scene deleted");
+  };
 
   return (
     <>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        
+        {/* SAVED SCENES */}
+        {savedScenes.length > 0 && (
+          <Card className="p-4">
+            <button
+              onClick={() => setShowSavedScenes(!showSavedScenes)}
+              className="w-full flex items-center justify-between text-sm font-semibold text-foreground"
+            >
+              <span className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-amber-500" />
+                Saved Scenes ({savedScenes.length})
+              </span>
+              {showSavedScenes ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            
+            {showSavedScenes && (
+              <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                {savedScenes.map((scene) => (
+                  <div
+                    key={scene.id}
+                    className="p-3 bg-muted/50 rounded-lg flex items-center justify-between gap-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{scene.title}</p>
+                      <p className="text-xs text-muted-foreground">{scene.duration}s</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleLoadScene(scene)}
+                      >
+                        Load
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteScene(scene.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* DURATION SELECTION */}
+        <Card className="p-4">
+          <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+            <Clock className="w-4 h-4 text-amber-500" />
+            Video Duration
+          </label>
+          <div className="flex gap-2">
+            {DURATIONS.map((d) => (
+              <button
+                key={d.seconds}
+                onClick={() => setDuration(d.seconds)}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-lg border text-sm font-medium transition-all",
+                  duration === d.seconds
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <div className="font-semibold">{d.label}</div>
+                <div className="text-xs text-muted-foreground">{d.description}</div>
+              </button>
+            ))}
+          </div>
+        </Card>
         
         {/* 1. CHARACTER SELECTION */}
         <Card className="p-4">
@@ -353,13 +526,16 @@ export function SimpleVideoBuilder() {
               )}
 
               {/* Create custom */}
-              <button
-                onClick={() => setShowCharacterCreator(true)}
-                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Create custom character
-              </button>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <button
+                  onClick={() => setShowCharacterCreator(true)}
+                  className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Describe character
+                </button>
+                <PhotoToAnchor type="character" onGenerated={handleCharacterFromPhoto} />
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -468,13 +644,16 @@ export function SimpleVideoBuilder() {
                 </div>
               )}
 
-              <button
-                onClick={() => setShowEnvironmentCreator(true)}
-                className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-500 font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Create custom environment
-              </button>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <button
+                  onClick={() => setShowEnvironmentCreator(true)}
+                  className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-500 font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Describe setting
+                </button>
+                <PhotoToAnchor type="environment" onGenerated={handleEnvironmentFromPhoto} />
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -540,34 +719,13 @@ export function SimpleVideoBuilder() {
           </div>
         </Card>
 
-        {/* 4. DESCRIPTION + DURATION */}
+        {/* 4. DESCRIPTION */}
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Sparkles className="w-4 h-4 text-primary" />
-              4. What happens?
-              <span className="text-rose-500 text-xs font-normal">required</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <div className="flex gap-1">
-                {DURATIONS.map((d) => (
-                  <button
-                    key={d.seconds}
-                    onClick={() => setDuration(d.seconds)}
-                    className={cn(
-                      "px-2.5 py-1 rounded text-xs font-medium transition-all",
-                      duration === d.seconds
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80"
-                    )}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+            <Sparkles className="w-4 h-4 text-primary" />
+            4. What happens in this scene?
+            <span className="text-rose-500 text-xs font-normal">required</span>
+          </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -601,7 +759,7 @@ export function SimpleVideoBuilder() {
         {/* GENERATED OUTPUT */}
         {generatedPrompt && (
           <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="font-semibold text-foreground">Your Video Prompt</h3>
               <div className="flex gap-2">
                 <Button
@@ -611,7 +769,16 @@ export function SimpleVideoBuilder() {
                   className="gap-2"
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? "Copied!" : "Copy Prompt"}
+                  {copied ? "Copied!" : "Copy"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveScene}
+                  className="gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Scene
                 </Button>
                 <Button
                   variant="ghost"
