@@ -54,6 +54,9 @@ export function SceneCard({
   const videoGen = useVideoGeneration();
   const isPremium = tier === 'pro' || tier === 'studio';
 
+  // Get current selected style IDs (support both old and new format)
+  const selectedStyleIds = scene.selectedStyleIds || (scene.selectedStyleId ? [scene.selectedStyleId] : []);
+
   const handleGenerateVideo = async () => {
     if (!scene.content) return;
     
@@ -66,11 +69,45 @@ export function SceneCard({
   };
 
   const handleSelectPreset = (preset: SceneStylePreset) => {
-    onSelectStyle(preset.id, preset.template);
+    const newIds = [...selectedStyleIds, preset.id];
+    onUpdate("selectedStyleIds", newIds);
+    // Combine templates
+    const allTemplates = newIds.map(id => {
+      const p = SCENE_STYLE_PRESETS.find(sp => sp.id === id);
+      return p?.template || savedSceneStyles.find(s => s.id === id)?.template;
+    }).filter(Boolean).join("\n\n---\n\n");
+    onUpdate("styleTemplate", allTemplates);
+  };
+
+  const handleDeselectPreset = (presetId: string) => {
+    const newIds = selectedStyleIds.filter(id => id !== presetId);
+    onUpdate("selectedStyleIds", newIds);
+    // Recombine templates
+    const allTemplates = newIds.map(id => {
+      const p = SCENE_STYLE_PRESETS.find(sp => sp.id === id);
+      return p?.template || savedSceneStyles.find(s => s.id === id)?.template;
+    }).filter(Boolean).join("\n\n---\n\n");
+    onUpdate("styleTemplate", allTemplates);
   };
 
   const handleSelectSaved = (style: SceneStyle) => {
-    onSelectStyle(style.id, style.template);
+    const newIds = [...selectedStyleIds, style.id];
+    onUpdate("selectedStyleIds", newIds);
+    const allTemplates = newIds.map(id => {
+      const p = SCENE_STYLE_PRESETS.find(sp => sp.id === id);
+      return p?.template || savedSceneStyles.find(s => s.id === id)?.template;
+    }).filter(Boolean).join("\n\n---\n\n");
+    onUpdate("styleTemplate", allTemplates);
+  };
+
+  const handleDeselectSaved = (styleId: string) => {
+    const newIds = selectedStyleIds.filter(id => id !== styleId);
+    onUpdate("selectedStyleIds", newIds);
+    const allTemplates = newIds.map(id => {
+      const p = SCENE_STYLE_PRESETS.find(sp => sp.id === id);
+      return p?.template || savedSceneStyles.find(s => s.id === id)?.template;
+    }).filter(Boolean).join("\n\n---\n\n");
+    onUpdate("styleTemplate", allTemplates);
   };
 
   const handleSaveCurrentAsStyle = () => {
@@ -165,12 +202,15 @@ export function SceneCard({
 
           {/* Scene Style Picker */}
           <SceneStylePicker
-            selectedStyleId={scene.selectedStyleId}
+            selectedStyleIds={selectedStyleIds}
             savedStyles={savedSceneStyles}
             onSelectPreset={handleSelectPreset}
+            onDeselectPreset={handleDeselectPreset}
             onSelectSaved={handleSelectSaved}
+            onDeselectSaved={handleDeselectSaved}
             onSaveCurrentAsStyle={handleSaveCurrentAsStyle}
             currentDescription={scene.description}
+            multiSelect={true}
           />
 
           <div>
