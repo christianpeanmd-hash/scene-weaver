@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette, Upload, File, X } from "lucide-react";
+import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette, Upload, File, X, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -466,9 +466,51 @@ export function OnePageExplainerBuilder() {
   const downloadAsHTML = () => {
     if (!result) return;
 
-    const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
-    const colors = selectedBrand?.colors || { primary: "#1a365d", secondary: "#3B82F6", accent: "#F59E0B" };
-    const fontFamily = selectedBrand?.font || "'Segoe UI', system-ui, sans-serif";
+    // Get colors from saved brand, preset, result's brand_tokens_used, or defaults
+    let colors = { primary: "#1a365d", secondary: "#3B82F6", accent: "#F59E0B" };
+    let fontFamily = "'Segoe UI', system-ui, sans-serif";
+    
+    // Priority 1: Check saved brand from library
+    if (selectedSavedBrandId) {
+      const savedBrand = savedBrands.find(b => b.id === selectedSavedBrandId);
+      if (savedBrand?.colors && savedBrand.colors.length >= 3) {
+        colors = {
+          primary: savedBrand.colors[0],
+          secondary: savedBrand.colors[1],
+          accent: savedBrand.colors[2],
+        };
+        if (savedBrand.fonts) fontFamily = savedBrand.fonts;
+      }
+    }
+    // Priority 2: Check preset brand style
+    else if (brandStyle && brandStyle !== "custom") {
+      const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
+      if (selectedBrand?.colors) {
+        colors = selectedBrand.colors;
+        if (selectedBrand.font) fontFamily = selectedBrand.font;
+      }
+    }
+    // Priority 3: Check AI-generated brand_tokens_used from result
+    else if (result.brand_tokens_used) {
+      if (result.brand_tokens_used.primary_color) colors.primary = result.brand_tokens_used.primary_color;
+      if (result.brand_tokens_used.secondary_color) colors.secondary = result.brand_tokens_used.secondary_color;
+      if (result.brand_tokens_used.accent_color) colors.accent = result.brand_tokens_used.accent_color;
+      if (result.brand_tokens_used.font_style) fontFamily = result.brand_tokens_used.font_style;
+    }
+    // Priority 4: Parse custom brand tokens
+    else if (brandStyle === "custom" && customBrandTokens) {
+      const colorMatches = customBrandTokens.match(/#[0-9A-Fa-f]{6}/g);
+      if (colorMatches && colorMatches.length >= 3) {
+        colors = {
+          primary: colorMatches[0],
+          secondary: colorMatches[1],
+          accent: colorMatches[2],
+        };
+      }
+      const fontMatch = customBrandTokens.match(/Font[:\s]+([^,\n]+)/i);
+      if (fontMatch) fontFamily = fontMatch[1].trim();
+    }
+    
     const primaryFont = fontFamily.split('/')[0].trim();
     const googleFontName = primaryFont.replace(/'/g, '').trim();
     const googleFontUrl = `https://fonts.googleapis.com/css2?family=${googleFontName.replace(/\s+/g, '+')}:wght@400;600;700&display=swap`;
@@ -548,6 +590,117 @@ export function OnePageExplainerBuilder() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Downloaded as HTML");
+  };
+
+  const downloadAsPDF = () => {
+    if (!result) return;
+
+    // Get colors from saved brand, preset, result's brand_tokens_used, or defaults
+    let colors = { primary: "#1a365d", secondary: "#3B82F6", accent: "#F59E0B" };
+    let fontFamily = "'Segoe UI', system-ui, sans-serif";
+    
+    if (selectedSavedBrandId) {
+      const savedBrand = savedBrands.find(b => b.id === selectedSavedBrandId);
+      if (savedBrand?.colors && savedBrand.colors.length >= 3) {
+        colors = {
+          primary: savedBrand.colors[0],
+          secondary: savedBrand.colors[1],
+          accent: savedBrand.colors[2],
+        };
+        if (savedBrand.fonts) fontFamily = savedBrand.fonts;
+      }
+    } else if (brandStyle && brandStyle !== "custom") {
+      const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
+      if (selectedBrand?.colors) {
+        colors = selectedBrand.colors;
+        if (selectedBrand.font) fontFamily = selectedBrand.font;
+      }
+    } else if (result.brand_tokens_used) {
+      if (result.brand_tokens_used.primary_color) colors.primary = result.brand_tokens_used.primary_color;
+      if (result.brand_tokens_used.secondary_color) colors.secondary = result.brand_tokens_used.secondary_color;
+      if (result.brand_tokens_used.accent_color) colors.accent = result.brand_tokens_used.accent_color;
+      if (result.brand_tokens_used.font_style) fontFamily = result.brand_tokens_used.font_style;
+    }
+
+    const primaryFont = fontFamily.split('/')[0].trim();
+    const googleFontName = primaryFont.replace(/'/g, '').trim();
+    const googleFontUrl = `https://fonts.googleapis.com/css2?family=${googleFontName.replace(/\s+/g, '+')}:wght@400;600;700&display=swap`;
+
+    // Create a print-optimized HTML document
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Please allow pop-ups to download PDF");
+      return;
+    }
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${result.title}</title>
+    <link rel="stylesheet" href="${googleFontUrl}">
+    <style>
+        @page { size: letter; margin: 0.5in; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: ${fontFamily}; font-size: 10pt; line-height: 1.4; color: #1f2937; background: #fff; }
+        .page { max-width: 100%; }
+        .header { background: ${colors.primary}; color: white; padding: 1rem 1.5rem; margin-bottom: 1rem; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 0.15rem; font-weight: 700; }
+        .header .tagline { color: rgba(255,255,255,0.85); font-size: 0.85rem; }
+        .section { margin-bottom: 0.75rem; }
+        .section h2 { font-size: 0.9rem; font-weight: 600; color: ${colors.primary}; border-bottom: 2px solid ${colors.accent}; padding-bottom: 0.15rem; margin-bottom: 0.35rem; }
+        .section p { margin-bottom: 0.35rem; font-size: 0.85rem; }
+        .section ul { margin-left: 1rem; font-size: 0.85rem; }
+        .section li { margin-bottom: 0.15rem; }
+        .callout { background: #f8fafc; border-left: 3px solid ${colors.accent}; padding: 0.75rem; margin: 0.75rem 0; }
+        .callout h3 { font-size: 0.85rem; color: ${colors.primary}; margin-bottom: 0.25rem; }
+        .callout p, .callout li { font-size: 0.8rem; }
+        .cta { background: #f1f5f9; border-top: 2px solid ${colors.primary}; padding: 0.75rem 1rem; margin-top: 1rem; }
+        .cta h3 { color: ${colors.primary}; margin-bottom: 0.15rem; font-size: 0.9rem; }
+        .cta p { font-size: 0.8rem; }
+        .cta-button { display: inline-block; background: ${colors.accent}; color: white; padding: 0.35rem 1rem; border-radius: 3px; text-decoration: none; font-weight: 600; margin-top: 0.35rem; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>${result.title}</h1>
+            <p class="tagline">${result.subtitle}</p>
+        </div>
+        
+        ${result.sections.map(section => `
+        <div class="section">
+            <h2>${section.heading}</h2>
+            <p>${section.body}</p>
+            ${section.bullets.length > 0 ? `<ul>${section.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+        </div>
+        `).join('')}
+        
+        ${result.callout_box.title ? `
+        <div class="callout">
+            <h3>${result.callout_box.title}</h3>
+            <p>${result.callout_box.body}</p>
+            ${result.callout_box.bullets.length > 0 ? `<ul>${result.callout_box.bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}
+        </div>
+        ` : ''}
+        
+        <div class="cta">
+            <h3>${result.cta.heading}</h3>
+            <p>${result.cta.body}</p>
+            <a href="${result.cta.suggested_link_anchor}" class="cta-button">${result.cta.button_text}</a>
+        </div>
+    </div>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>`);
+    printWindow.document.close();
+    toast.success("Print dialog opened - save as PDF");
   };
 
   const getPlainText = () => {
@@ -1115,6 +1268,15 @@ export function OnePageExplainerBuilder() {
               >
                 <Download className="w-3 h-3 mr-1" />
                 HTML
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={downloadAsPDF}
+                className="flex-1 min-w-0"
+              >
+                <FileDown className="w-3 h-3 mr-1" />
+                Save as PDF
               </Button>
             </div>
           )}
