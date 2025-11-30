@@ -50,7 +50,17 @@ export function FavoritePhotosPicker({ currentImage, onSelectPhoto }: FavoritePh
   };
 
   if (photos.length === 0 && !currentImage) {
-    return null;
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Heart className="w-3 h-3" />
+          <span>Saved Photos (0/{maxPhotos})</span>
+        </div>
+        <p className="text-xs text-muted-foreground/70">
+          Upload a photo and save it here for quick access later
+        </p>
+      </div>
+    );
   }
 
   return (
