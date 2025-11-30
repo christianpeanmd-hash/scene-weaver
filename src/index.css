@@ -77,6 +77,13 @@
     --gradient-hero: linear-gradient(135deg, hsl(168 76% 42%), hsl(158 64% 52%));
     --gradient-background: linear-gradient(180deg, hsl(210 40% 98%) 0%, hsl(166 76% 97% / 0.3) 50%, hsl(152 81% 96% / 0.4) 100%);
     --gradient-card-accent: linear-gradient(135deg, hsl(168 76% 42%), hsl(160 84% 39%));
+    --gradient-purple: linear-gradient(135deg, hsl(271 81% 56%), hsl(330 81% 60%));
+
+    /* Purple tones for Image Builder */
+    --purple-50: 270 100% 98%;
+    --purple-100: 269 100% 95%;
+    --purple-500: 271 81% 56%;
+    --purple-600: 271 81% 50%;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(215 25% 27% / 0.05);
@@ -162,20 +169,38 @@
     background: var(--gradient-hero);
   }
 
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(168 76% 42%), hsl(160 84% 39%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .shadow-primary {
     box-shadow: var(--shadow-primary);
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.4s ease-out forwards;
+    opacity: 0;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.4s ease-out;
+    animation: slideUp 0.5s ease-out forwards;
+    opacity: 0;
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.2s ease-out;
+    animation: scaleIn 0.3s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-pulse-slow {
+    animation: pulseSlow 4s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
   }
 
   @keyframes fadeIn {
@@ -186,7 +211,7 @@
   @keyframes slideUp {
     from { 
       opacity: 0; 
-      transform: translateY(10px); 
+      transform: translateY(16px); 
     }
     to { 
       opacity: 1; 
@@ -205,6 +230,22 @@
     }
   }
 
+  @keyframes pulseSlow {
+    0%, 100% { 
+      opacity: 0.4;
+      transform: scale(1);
+    }
+    50% { 
+      opacity: 0.6;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -212,5 +253,17 @@
 
   .animate-spin-slow {
     animation: spin 1s linear infinite;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

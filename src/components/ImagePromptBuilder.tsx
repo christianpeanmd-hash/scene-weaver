@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
-import { Image, Sparkles, Upload, Copy, Check, ArrowLeft, X, Wand2 } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2 } from "lucide-react";
 import { toast } from "sonner";
-import { MemoableLogo } from "./MemoableLogo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StyleSelector } from "./StyleSelector";
@@ -92,36 +91,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-8 animate-fade-in">
-          <MemoableLogo />
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onSwitchToVideo}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Video Prompt Builder
-            </button>
-          </div>
-        </header>
-
-        {/* Title */}
-        <div className="text-center mb-8 animate-slide-up">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-purple-700 text-sm font-medium mb-4">
-            <Image className="w-4 h-4" />
-            Image Prompt Builder
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Transform Photos into Art
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Upload a photo, pick an illustration style, and generate a detailed prompt for your favorite image generator.
-          </p>
-        </div>
-
+    <div className="pb-8 md:pb-12">
+      <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left Column - Upload & Style */}
           <div className="space-y-5">
