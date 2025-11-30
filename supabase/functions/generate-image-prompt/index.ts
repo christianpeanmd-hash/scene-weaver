@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface ImagePromptRequest {
-  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic';
+  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload';
   styleName?: string;
   stylePromptTemplate?: string;
   styleLook?: string;
@@ -75,6 +75,20 @@ RULES:
 6. ALL OUTPUT MUST BE IN ENGLISH ONLY
 7. Make prompts ready to paste directly into AI tools`;
 
+const BRAND_EXTRACTION_SYSTEM = `You are an expert at analyzing brand materials and extracting brand identity information.
+
+When given a brand kit image, screenshot of a website/brand, or document content describing a brand, extract and describe the brand identity comprehensively.
+
+OUTPUT FORMAT (JSON):
+{
+  "name": "Brand name if visible, otherwise a descriptive name based on the visual identity",
+  "description": "Detailed description of the brand's visual identity, personality, voice, and aesthetic. Include tone (professional, playful, luxurious, etc.), target audience impression, and overall brand personality.",
+  "colors": ["Array of hex color codes extracted from the brand materials, e.g., '#1a73e8', '#ffffff'. Extract primary, secondary, and accent colors."],
+  "fonts": "Font family names if identifiable, or descriptive font style (e.g., 'Modern sans-serif with clean geometric letterforms', 'Classic serif with elegant curves')"
+}
+
+Be specific about colors - extract actual hex codes when possible. Describe the overall brand feel comprehensively. ALL IN ENGLISH.`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -93,7 +107,15 @@ serve(async (req) => {
     let userPrompt: string;
     let responseFormat: 'text' | 'json' = 'text';
 
-    if (body.type === 'character-from-photo') {
+    if (body.type === 'brand-from-upload') {
+      systemPrompt = BRAND_EXTRACTION_SYSTEM;
+      const docContent = body.documentContent || '';
+      const hasDoc = docContent.trim().length > 0;
+      userPrompt = hasDoc 
+        ? `Analyze this brand kit document and extract the brand identity:\n\n${docContent.substring(0, 4000)}`
+        : "Analyze this brand image/screenshot and extract the brand identity details including colors, fonts, and overall brand feel.";
+      responseFormat = 'json';
+    } else if (body.type === 'character-from-photo') {
       systemPrompt = CHARACTER_SYSTEM;
       userPrompt = "Analyze this photo and create a detailed character anchor description.";
       responseFormat = 'json';
@@ -257,7 +279,11 @@ Return ONLY the prompt text, nothing else.`;
         }
         const parsed = JSON.parse(jsonStr.trim());
         
-        if (body.type === 'character-from-photo') {
+        if (body.type === 'brand-from-upload') {
+          return new Response(JSON.stringify({ brand: parsed }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } else if (body.type === 'character-from-photo') {
           return new Response(JSON.stringify({ character: parsed }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
