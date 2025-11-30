@@ -87,6 +87,11 @@ const BRAND_STYLES = [
   // Education & Research
   { value: "academic", label: "Academic – scholarly, authoritative, classic", colors: { primary: "#7C2D12", secondary: "#B45309", accent: "#1E3A8A" }, font: "Crimson Text / Lora" },
   { value: "edtech-fresh", label: "EdTech Fresh – modern learning, engaging", colors: { primary: "#4338CA", secondary: "#6366F1", accent: "#06B6D4" }, font: "Lexend / Inter" },
+  { value: "academic-journal", label: "Academic Journal – peer-review formal, citation-ready", colors: { primary: "#1F2937", secondary: "#4B5563", accent: "#0369A1" }, font: "Times New Roman / Helvetica" },
+  { value: "research-poster", label: "Research Poster – conference-ready, visual hierarchy", colors: { primary: "#1E3A8A", secondary: "#3B82F6", accent: "#F59E0B" }, font: "Arial / Calibri" },
+  { value: "grant-proposal", label: "Grant Proposal – NIH/NSF style, structured, formal", colors: { primary: "#0F172A", secondary: "#334155", accent: "#059669" }, font: "Arial / Times New Roman" },
+  { value: "scientific-modern", label: "Scientific Modern – Nature/Science style, clean data", colors: { primary: "#18181B", secondary: "#52525B", accent: "#2563EB" }, font: "Helvetica Neue / Georgia" },
+  { value: "clinical-research", label: "Clinical Research – IRB-friendly, patient-focused", colors: { primary: "#0C4A6E", secondary: "#0284C7", accent: "#16A34A" }, font: "Calibri / Open Sans" },
   
   // Government & Non-profit
   { value: "gov-official", label: "Government Official – formal, accessible", colors: { primary: "#1E3A5F", secondary: "#4B5563", accent: "#DC2626" }, font: "Source Serif Pro / Public Sans" },
