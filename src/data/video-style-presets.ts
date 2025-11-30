@@ -1,4 +1,4 @@
-import { Video, Camera, Tv, Film, Clapperboard, Sparkles, Zap, Heart, GraduationCap } from "lucide-react";
+import { Video, Camera, Tv, Film, Clapperboard, Sparkles, Zap, Heart, GraduationCap, Laugh, Ghost, Palette, Music, Swords } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface VideoStylePreset {
@@ -44,6 +44,41 @@ export const VIDEO_STYLE_PRESETS: VideoStylePreset[] = [
     icon: Zap,
     description: "TikTok/Reels optimized quick cuts",
     prompt: "Social media viral style with punchy quick cuts, bright well-lit scenes, exaggerated reactions, hook in first 0.5 seconds, works on mute, vertical 9:16 or horizontal 16:9",
+  },
+  {
+    id: "comedy-skit",
+    name: "Comedy Skit",
+    icon: Laugh,
+    description: "Timing-focused comedic delivery",
+    prompt: "Comedy skit style with snappy timing, reaction shots, comedic pauses, bright even lighting, quick cuts on punchlines, exaggerated performances",
+  },
+  {
+    id: "horror",
+    name: "Horror",
+    icon: Ghost,
+    description: "Unsettling, suspenseful atmosphere",
+    prompt: "Horror style with low-key lighting, deep shadows, unsettling angles, slow creeping camera moves, desaturated cold tones, suspenseful pacing, jump scare timing",
+  },
+  {
+    id: "anime",
+    name: "Anime",
+    icon: Palette,
+    description: "Japanese animation aesthetic",
+    prompt: "Anime style with cel-shaded look, vibrant colors, dramatic speed lines, exaggerated expressions, dynamic action poses, cherry blossom particles, manga panel transitions",
+  },
+  {
+    id: "music-video",
+    name: "Music Video",
+    icon: Music,
+    description: "Stylized performance visuals",
+    prompt: "Music video style with dramatic lighting changes, smoke and haze, rhythmic cuts synced to beat, lens flares, slow-motion moments, stylized color grading, performance energy",
+  },
+  {
+    id: "action",
+    name: "Action",
+    icon: Swords,
+    description: "High-energy dynamic sequences",
+    prompt: "Action style with dynamic camera movement, speed ramping, impactful cuts, dramatic angles, motion blur, intense color grading, adrenaline pacing",
   },
   {
     id: "aesthetic",

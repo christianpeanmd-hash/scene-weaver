@@ -59,6 +59,56 @@ export const CHARACTER_PRESETS: PresetAnchor[] = [
 **Demeanor**: Speaks entirely in startup jargon and hand gestures. Constantly checking phone mid-conversation. Nods vigorously while clearly not listening. Everything is "super interesting" and needs to "circle back."
 **Role**: Startup founder pivoting through life, disrupting ordinary situations.`,
   },
+  {
+    id: "grumpy-grandma",
+    name: "Grumpy Grandma",
+    icon: "Crown",
+    category: "character",
+    template: `**Character Anchor — Nana Rose**
+**Look**: Petite 78-year-old with silver-blue hair in tight curls. Cat-eye glasses on beaded chain, bright red lipstick slightly outside lip line. Floral housecoat over elastic-waist pants, orthopedic shoes. Tote bag filled with tissues and hard candies.
+**Demeanor**: Brutally honest, no filter whatsoever. Eye rolls visible from space. Mutters under breath constantly. Surprisingly spry when motivated by gossip or food. Passive-aggressive compliments delivered with sweet smile.
+**Role**: Retired busybody dispensing unsolicited advice and backhanded compliments.`,
+  },
+  {
+    id: "barista",
+    name: "Hipster Barista",
+    icon: "Coffee",
+    category: "character",
+    template: `**Character Anchor — Jasper the Barista**
+**Look**: Mid-20s with immaculately waxed handlebar mustache. Tattoo sleeves featuring vintage coffee equipment. Denim apron over flannel shirt, rolled sleeves. Man bun secured with artisanal hair tie. Thick-rimmed glasses, single earring.
+**Demeanor**: Passionate about coffee to an exhausting degree. Judges drink orders silently but expressively. Speaks in third-wave coffee jargon. Disappointed when customers add sugar. Sketches latte art like it's fine art.
+**Role**: Coffee purist treating every order as a sacred ritual.`,
+  },
+  {
+    id: "fitness-influencer",
+    name: "Fitness Influencer",
+    icon: "Sparkles",
+    category: "character",
+    template: `**Character Anchor — Brayden Gains**
+**Look**: Impossibly fit 28-year-old, perpetually shirtless or in tank top. Spray tan perfectly maintained, teeth blindingly white. Hair gelled into structured quiff. Gym bag always visible, protein shaker in hand. Designer athletic wear, visible brand logos.
+**Demeanor**: Aggressively positive energy, speaks in motivational quotes. Films everything for content. Flexes reflexively in any reflective surface. Meal preps mentioned within first 30 seconds of conversation.
+**Role**: Social media fitness personality turning every moment into content.`,
+  },
+  {
+    id: "conspiracy-theorist",
+    name: "Conspiracy Guy",
+    icon: "Ghost",
+    category: "character",
+    template: `**Character Anchor — Dale Truthseeker**
+**Look**: Rumpled 40s guy, unkempt beard with food crumbs. Wrinkled aluminum foil occasionally peeking from hat. "Question Everything" t-shirt under cargo vest with many pockets. Thick folder of "evidence" always carried. Eyes constantly darting, looking for surveillance.
+**Demeanor**: Whispers important information, speaks normally about mundane things. Connects everything to larger conspiracy. Uses "wake up, sheeple" unironically. Genuinely kind but profoundly paranoid.
+**Role**: Amateur investigator convinced ordinary events are cover-ups.`,
+  },
+  {
+    id: "tired-parent",
+    name: "Exhausted Parent",
+    icon: "Home",
+    category: "character",
+    template: `**Character Anchor — Chris the Parent**
+**Look**: Late 30s, dark circles under eyes, coffee-stained shirt. Hair in hasty ponytail or uncombed. Mysterious stains on shoulder. Diaper bag doubling as purse/briefcase. Phone with cracked screen, kid's stickers on case.
+**Demeanor**: Speaks in half-sentences, distracted. Mumbles children's song lyrics unconsciously. Startles awake from micro-naps. Overshares about child's bodily functions. Forgets own age.
+**Role**: Sleep-deprived parent operating on autopilot and cold coffee.`,
+  },
 ];
 
 export const ENVIRONMENT_PRESETS: PresetAnchor[] = [
