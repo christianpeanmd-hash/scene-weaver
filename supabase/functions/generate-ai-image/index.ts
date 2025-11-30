@@ -7,7 +7,9 @@ const corsHeaders = {
 
 interface GenerateImageRequest {
   prompt: string;
-  aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
+  // For editing existing images
+  editMode?: boolean;
+  sourceImageBase64?: string;
 }
 
 serve(async (req) => {
@@ -17,7 +19,7 @@ serve(async (req) => {
 
   try {
     const body: GenerateImageRequest = await req.json();
-    console.log('Received image generation request');
+    console.log('Received image request, editMode:', body.editMode || false);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -31,8 +33,30 @@ serve(async (req) => {
       });
     }
 
-    console.log('Calling Nano Banana Pro (Gemini Flash Image) for image generation...');
+    // Build the message content based on whether we're editing or generating
+    let messageContent: any;
     
+    if (body.editMode && body.sourceImageBase64) {
+      // Edit mode: include the source image with the edit instruction
+      console.log('Processing image edit request...');
+      messageContent = [
+        {
+          type: 'text',
+          text: body.prompt,
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: body.sourceImageBase64,
+          },
+        },
+      ];
+    } else {
+      // Generate mode: just the prompt
+      console.log('Processing image generation request...');
+      messageContent = body.prompt;
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -44,7 +68,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: body.prompt,
+            content: messageContent,
           }
         ],
         modalities: ['image', 'text'],
@@ -97,10 +121,10 @@ serve(async (req) => {
     // Return the first generated image
     const imageUrl = images[0].image_url?.url;
     
-    console.log('Successfully generated image');
+    console.log('Successfully processed image request');
     return new Response(JSON.stringify({ 
       imageUrl,
-      message: textContent || 'Image generated successfully'
+      message: textContent || (body.editMode ? 'Image edited successfully' : 'Image generated successfully')
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
