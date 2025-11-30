@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const ANONYMOUS_DAILY_LIMIT = 10;
 
 interface Character {
   name: string;
@@ -30,6 +33,109 @@ interface GenerateRequest {
   sceneTitle?: string;
   sceneDescription?: string;
   styleTemplate?: string;
+}
+
+// Rate limiting helper
+async function checkRateLimit(req: Request): Promise<{ allowed: boolean; error?: string }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const authHeader = req.headers.get('authorization');
+  
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  
+  // Check if authenticated user
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (user && !error) {
+      console.log('Authenticated user, skipping rate limit');
+      return { allowed: true };
+    }
+  }
+  
+  // Anonymous user - check IP-based rate limit
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(clientIp + userAgent);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const ipHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  console.log('Checking rate limit for hash:', ipHash.substring(0, 16));
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { data: usage } = await supabaseAdmin
+    .from('usage_tracking')
+    .select('generation_count')
+    .eq('ip_hash', ipHash)
+    .gte('updated_at', today.toISOString())
+    .single();
+  
+  const currentCount = usage?.generation_count || 0;
+  
+  if (currentCount >= ANONYMOUS_DAILY_LIMIT) {
+    return { allowed: false, error: 'Daily limit reached. Sign up for unlimited access.' };
+  }
+  
+  return { allowed: true };
+}
+
+async function incrementUsage(req: Request): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const authHeader = req.headers.get('authorization');
+  
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  
+  // Skip for authenticated users
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+    if (user) return;
+  }
+  
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(clientIp + userAgent);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const ipHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const userAgentHash = hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  // Check if record exists
+  const { data: existing } = await supabaseAdmin
+    .from('usage_tracking')
+    .select('id, generation_count')
+    .eq('ip_hash', ipHash)
+    .single();
+  
+  if (existing) {
+    await supabaseAdmin
+      .from('usage_tracking')
+      .update({ 
+        generation_count: existing.generation_count + 1,
+        last_generation_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+  } else {
+    await supabaseAdmin
+      .from('usage_tracking')
+      .insert({
+        ip_hash: ipHash,
+        user_agent_hash: userAgentHash,
+        generation_count: 1,
+        last_generation_at: new Date().toISOString()
+      });
+  }
+  
+  console.log('Usage incremented for hash:', ipHash.substring(0, 16));
 }
 
 const SYSTEM_PROMPT = `You are an expert video production template writer optimized for AI video generators (Veo 3, Sora). Your job is to create highly specific, structured prompts that produce consistent, high-quality video output.
@@ -99,7 +205,7 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 
 [For each character, write:]
 **Character Anchor: [Name]**
-* **Look**: [Detailed physical appearance - clothing colors, textures, distinctive features, accessories. Be specific: "wrinkled navy polo with coffee stain on collar" not "nice shirt"]
+* **Look**: [Detailed physical appearance - clothing colors, textures, distinctive features, accessories, hair, skin tone, any unique characteristics]
 * **Demeanor**: [How they move, speak, react. Personality traits, emotional baseline, vocal quality]
 * **Role**: [Their function in this scene]
 
@@ -181,7 +287,6 @@ const getScenePrompt = (req: GenerateRequest) => {
     ? '10 seconds (Sora) - 5 beats: 0-2s, 2-4s, 4-6s, 6-8s, 8-10s'
     : '15 seconds (Sora) - 5 beats: 0-3s, 3-6s, 6-9s, 9-12s, 12-15s';
 
-  // Include style template instructions if provided
   const styleInstructions = req.styleTemplate
     ? `\n\n**SCENE STYLE TEMPLATE (follow this structure closely):**\n${req.styleTemplate}`
     : '';
@@ -217,6 +322,18 @@ serve(async (req) => {
   }
 
   try {
+    // Check rate limit first
+    const rateLimitResult = await checkRateLimit(req);
+    if (!rateLimitResult.allowed) {
+      return new Response(JSON.stringify({ 
+        error: rateLimitResult.error,
+        errorCode: 'RATE_LIMIT_EXCEEDED'
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const body: GenerateRequest = await req.json();
     console.log('Received request:', JSON.stringify(body, null, 2));
 
@@ -270,6 +387,9 @@ serve(async (req) => {
     if (!generatedContent) {
       throw new Error('No content generated');
     }
+
+    // Increment usage after successful generation
+    await incrementUsage(req);
 
     console.log('Successfully generated template');
     return new Response(JSON.stringify({ content: generatedContent }), {

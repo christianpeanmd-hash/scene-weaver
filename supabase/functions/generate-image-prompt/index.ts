@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const ANONYMOUS_DAILY_LIMIT = 10;
 
 interface ImagePromptRequest {
   type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload';
@@ -15,10 +18,108 @@ interface ImagePromptRequest {
   imageBase64?: string;
   subjectDescription?: string;
   brandContext?: string;
-  // Infographic-specific
   styleId?: string;
   topic?: string;
   documentContent?: string;
+}
+
+// Rate limiting helper
+async function checkRateLimit(req: Request): Promise<{ allowed: boolean; error?: string }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const authHeader = req.headers.get('authorization');
+  
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (user && !error) {
+      console.log('Authenticated user, skipping rate limit');
+      return { allowed: true };
+    }
+  }
+  
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(clientIp + userAgent);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const ipHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  console.log('Checking rate limit for hash:', ipHash.substring(0, 16));
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { data: usage } = await supabaseAdmin
+    .from('usage_tracking')
+    .select('generation_count')
+    .eq('ip_hash', ipHash)
+    .gte('updated_at', today.toISOString())
+    .single();
+  
+  const currentCount = usage?.generation_count || 0;
+  
+  if (currentCount >= ANONYMOUS_DAILY_LIMIT) {
+    return { allowed: false, error: 'Daily limit reached. Sign up for unlimited access.' };
+  }
+  
+  return { allowed: true };
+}
+
+async function incrementUsage(req: Request): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const authHeader = req.headers.get('authorization');
+  
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+    if (user) return;
+  }
+  
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(clientIp + userAgent);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const ipHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const userAgentHash = hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  const { data: existing } = await supabaseAdmin
+    .from('usage_tracking')
+    .select('id, generation_count')
+    .eq('ip_hash', ipHash)
+    .single();
+  
+  if (existing) {
+    await supabaseAdmin
+      .from('usage_tracking')
+      .update({ 
+        generation_count: existing.generation_count + 1,
+        last_generation_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+  } else {
+    await supabaseAdmin
+      .from('usage_tracking')
+      .insert({
+        ip_hash: ipHash,
+        user_agent_hash: userAgentHash,
+        generation_count: 1,
+        last_generation_at: new Date().toISOString()
+      });
+  }
+  
+  console.log('Usage incremented for hash:', ipHash.substring(0, 16));
 }
 
 const IMAGE_PROMPT_SYSTEM = `You are an expert at writing image generation prompts for AI tools like Midjourney, DALL-E, Stable Diffusion, and Firefly.
@@ -95,6 +196,18 @@ serve(async (req) => {
   }
 
   try {
+    // Check rate limit first
+    const rateLimitResult = await checkRateLimit(req);
+    if (!rateLimitResult.allowed) {
+      return new Response(JSON.stringify({ 
+        error: rateLimitResult.error,
+        errorCode: 'RATE_LIMIT_EXCEEDED'
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const body: ImagePromptRequest = await req.json();
     console.log('Received request type:', body.type || 'image-prompt');
 
@@ -159,7 +272,6 @@ Return ONLY the prompt text, ready to use.`;
       const hasCustomStyle = body.customStyle && body.customStyle.trim();
       
       if (hasCustomStyle) {
-        // User provided their own style description
         userPrompt = `Create a detailed image generation prompt using this custom style:
 
 STYLE DESCRIPTION: ${body.customStyle}
@@ -180,7 +292,6 @@ Generate a complete, ready-to-use prompt that:
 
 Return ONLY the prompt text, nothing else.`;
       } else {
-        // User selected a preset style
         userPrompt = `Create a detailed image generation prompt in the "${body.styleName}" style.
 
 STYLE CHARACTERISTICS:
@@ -206,12 +317,10 @@ Return ONLY the prompt text, nothing else.`;
       }
     }
 
-    // Build messages array
     const messages: any[] = [
       { role: 'system', content: systemPrompt },
     ];
 
-    // Handle image in message if provided
     if (body.imageBase64 && body.imageBase64.startsWith('data:image')) {
       messages.push({
         role: 'user',
@@ -266,12 +375,13 @@ Return ONLY the prompt text, nothing else.`;
       throw new Error('No content generated');
     }
 
+    // Increment usage after successful generation
+    await incrementUsage(req);
+
     console.log('Successfully generated content');
 
-    // Parse response based on type
     if (responseFormat === 'json') {
       try {
-        // Extract JSON from potential markdown code blocks
         let jsonStr = generatedContent;
         const jsonMatch = generatedContent.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (jsonMatch) {
