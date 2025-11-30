@@ -1,4 +1,4 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,15 @@ const tierColors: Record<string, string> = {
 
 export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps) {
   const { user, profile, signOut, isAdmin } = useAuth();
-  const { tier, generationsRemaining, generationLimit, isLoading: subLoading } = useSubscription();
+  const { tier, generationsRemaining, generationLimit, openCustomerPortal } = useSubscription();
+
+  const handleManageSubscription = async () => {
+    try {
+      await openCustomerPortal();
+    } catch (error) {
+      toast.error("Failed to open subscription portal");
+    }
+  };
 
   return (
     <div className="relative overflow-hidden">
@@ -108,13 +117,21 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
                   
                   <DropdownMenuSeparator />
                   
-                  {tier === "free" && (
+                  {tier === "free" ? (
                     <>
                       <DropdownMenuItem asChild className="cursor-pointer">
                         <a href="#pricing" className="flex items-center gap-2 text-primary">
                           <Crown className="w-4 h-4" />
                           Upgrade Plan
                         </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={handleManageSubscription} className="cursor-pointer">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Manage Subscription
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
