@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target } from "lucide-react";
+import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star, Target, Save } from "lucide-react";
 import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
+import { useSceneStyleLibrary } from "@/hooks/useSceneStyleLibrary";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ILLUSTRATION_STYLES, STYLE_CATEGORIES, IllustrationStyle, StyleCategory } from "@/data/illustration-styles";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Import style preview images
 import editorialCollagePreview from "@/assets/style-previews/editorial-collage-preview.jpg";
@@ -94,10 +97,12 @@ export function StyleSelector({
   customStyleText = "",
   onCustomStyleChange 
 }: StyleSelectorProps) {
-  const [expandedCategory, setExpandedCategory] = useState<StyleCategory | "custom" | "favorites" | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<StyleCategory | "custom" | "favorites" | "saved" | null>(null);
   const [previewStyle, setPreviewStyle] = useState<IllustrationStyle | null>(null);
   const [isCustomMode, setIsCustomMode] = useState(false);
+  const [styleName, setStyleName] = useState("");
   const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
+  const { savedStyles, saveStyle } = useSceneStyleLibrary("image");
 
   const favoriteStyles = ILLUSTRATION_STYLES.filter((s) => favorites.illustration.includes(s.id));
 
@@ -246,7 +251,7 @@ export function StyleSelector({
           </button>
 
           {expandedCategory === "custom" && (
-            <div className="p-4 pt-0 bg-purple-50/30 animate-fade-in">
+            <div className="p-4 pt-0 bg-purple-50/30 animate-fade-in space-y-3">
               <textarea
                 value={customStyleText}
                 onChange={(e) => {
@@ -260,12 +265,112 @@ export function StyleSelector({
                 rows={3}
                 className="w-full px-4 py-3 bg-white border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none text-sm"
               />
-              <p className="text-xs text-muted-foreground mt-2">
+              
+              {/* Save custom style */}
+              {customStyleText && customStyleText.length > 20 && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={styleName}
+                    onChange={(e) => setStyleName(e.target.value)}
+                    placeholder="Style name..."
+                    className="flex-1 px-3 py-2 bg-white border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400"
+                  />
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    disabled={!styleName.trim()}
+                    onClick={async () => {
+                      await saveStyle({
+                        name: styleName.trim(),
+                        description: customStyleText.slice(0, 100),
+                        template: customStyleText,
+                      });
+                      toast.success(`Saved "${styleName}" to your style library`);
+                      setStyleName("");
+                    }}
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    Save
+                  </Button>
+                </div>
+              )}
+              
+              <p className="text-xs text-muted-foreground">
                 Tip: Be specific about colors, textures, and artistic influences
               </p>
             </div>
           )}
         </div>
+
+        {/* Saved Custom Styles */}
+        {savedStyles.length > 0 && (
+          <div>
+            <button
+              onClick={() => setExpandedCategory(expandedCategory === "saved" ? null : "saved")}
+              className={cn(
+                "w-full p-4 flex items-center justify-between transition-colors",
+                expandedCategory === "saved" ? "bg-purple-50/50 dark:bg-purple-950/20" : "hover:bg-muted/50"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Save className="w-4 h-4 text-purple-500" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium text-foreground">Saved Styles</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {savedStyles.length} custom
+                  </span>
+                </div>
+              </div>
+              <ChevronDown className={cn(
+                "w-5 h-5 text-muted-foreground transition-transform",
+                expandedCategory === "saved" && "rotate-180"
+              )} />
+            </button>
+
+            {expandedCategory === "saved" && (
+              <div className="p-3 pt-0 bg-purple-50/30 dark:bg-purple-950/10 animate-fade-in">
+                <div className="grid grid-cols-2 gap-2">
+                  {savedStyles.map((style) => {
+                    const isSelected = isCustomMode && customStyleText === style.template;
+                    
+                    return (
+                      <button
+                        key={style.id}
+                        onClick={() => {
+                          setIsCustomMode(true);
+                          onSelectStyle(null);
+                          onCustomStyleChange?.(style.template);
+                        }}
+                        className={cn(
+                          "p-2 rounded-lg text-left transition-all",
+                          isSelected
+                            ? "bg-purple-100 dark:bg-purple-900/30 border-2 border-purple-400"
+                            : "bg-card border border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
+                        )}
+                      >
+                        <div className="w-full h-12 rounded-md mb-2 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                          <Pencil className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <span className={cn(
+                          "text-xs font-medium block truncate",
+                          isSelected ? "text-purple-700 dark:text-purple-300" : "text-foreground"
+                        )}>
+                          {style.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground line-clamp-1">
+                          {style.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Preset Categories */}
         {stylesByCategory.map((category) => {

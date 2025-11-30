@@ -15,6 +15,7 @@ export function InfographicPromptBuilder() {
   const [uploadedDocument, setUploadedDocument] = useState<{ name: string; content: string } | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<InfographicStyle | null>(null);
+  const [customStyleText, setCustomStyleText] = useState("");
   const [topicDescription, setTopicDescription] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [customBrandText, setCustomBrandText] = useState("");
@@ -114,8 +115,8 @@ export function InfographicPromptBuilder() {
   }, [handleDocumentUpload]);
 
   const handleGenerate = async () => {
-    if (!selectedStyle) {
-      toast.error("Please select an infographic style");
+    if (!selectedStyle && !customStyleText.trim()) {
+      toast.error("Please select an infographic style or describe a custom style");
       return;
     }
 
@@ -133,9 +134,10 @@ export function InfographicPromptBuilder() {
       const { data, error } = await supabase.functions.invoke('generate-image-prompt', {
         body: {
           type: 'infographic',
-          styleId: selectedStyle.id,
-          styleName: selectedStyle.name,
-          stylePromptTemplate: selectedStyle.promptTemplate,
+          styleId: selectedStyle?.id || 'custom',
+          styleName: selectedStyle?.name || 'Custom Style',
+          stylePromptTemplate: selectedStyle?.promptTemplate || customStyleText,
+          customStyleDescription: customStyleText || undefined,
           topic: topicDescription,
           documentContent: uploadedDocument?.content,
           brandContext,
@@ -291,6 +293,8 @@ export function InfographicPromptBuilder() {
             <InfographicStyleSelector
               selectedStyle={selectedStyle}
               onSelectStyle={setSelectedStyle}
+              customStyleText={customStyleText}
+              onCustomStyleChange={setCustomStyleText}
             />
 
             {/* Brand Selector */}
@@ -306,7 +310,7 @@ export function InfographicPromptBuilder() {
               variant="hero"
               size="xl"
               className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              disabled={(!uploadedDocument && !topicDescription.trim()) || !selectedStyle || isGenerating}
+              disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating}
               onClick={handleGenerate}
             >
               {isGenerating ? (
