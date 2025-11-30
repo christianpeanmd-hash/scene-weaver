@@ -1,27 +1,31 @@
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
 import { useState } from "react";
 import { RequestInviteModal } from "./RequestInviteModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription, PRICE_IDS } from "@/hooks/useSubscription";
+import { useToast } from "@/hooks/use-toast";
 
 interface PricingTier {
   name: string;
-  price: string;
+  monthlyPrice: string;
+  yearlyPrice: string;
   period?: string;
   description: string;
   features: string[];
   buttonText: string;
   buttonVariant: "default" | "outline";
   popular?: boolean;
-  comingSoon?: boolean;
+  tier: "free" | "creator" | "studio";
   note?: string;
 }
 
 const tiers: PricingTier[] = [
   {
     name: "Free preview",
-    price: "$0",
+    monthlyPrice: "$0",
+    yearlyPrice: "$0",
     description: "Great for testing Techy Memo on one or two ideas",
     features: [
       "Up to 3 scene generations per browser",
@@ -30,11 +34,13 @@ const tiers: PricingTier[] = [
     ],
     buttonText: "Start for free",
     buttonVariant: "outline",
+    tier: "free",
     note: "Anonymous preview only. Scenes aren't saved."
   },
   {
     name: "Creator",
-    price: "$19",
+    monthlyPrice: "$19",
+    yearlyPrice: "$190",
     period: "/ month",
     description: "Perfect for creators, educators, clinicians, and marketers",
     features: [
@@ -47,10 +53,12 @@ const tiers: PricingTier[] = [
     buttonText: "Start 7-day free trial",
     buttonVariant: "default",
     popular: true,
+    tier: "creator",
   },
   {
     name: "Studio",
-    price: "$49",
+    monthlyPrice: "$49",
+    yearlyPrice: "$490",
     period: "/ month",
     description: "Ideal for agencies, podcast teams, and research groups",
     features: [
@@ -60,35 +68,113 @@ const tiers: PricingTier[] = [
       "Higher usage limits & priority support",
       "Ideal for agencies, podcast teams, and research groups",
     ],
-    buttonText: "Join waitlist",
+    buttonText: "Start 7-day free trial",
     buttonVariant: "outline",
-    comingSoon: true,
+    tier: "studio",
   },
 ];
 
 export function PricingSection() {
+  const { user } = useAuth();
+  const { tier: currentTier, subscribed, isTrial, startCheckout, openCustomerPortal, isLoading: subLoading } = useSubscription();
+  const { toast } = useToast();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteType, setInviteType] = useState<"invite" | "enterprise">("invite");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
-  const handleTierClick = (tier: PricingTier) => {
-    if (tier.name === "Free preview") {
+  const handleTierClick = async (tier: PricingTier) => {
+    if (tier.tier === "free") {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } else if (tier.comingSoon) {
-      setInviteType("invite");
-      setIsInviteModalOpen(true);
-    } else {
+      return;
+    }
+
+    // If user not logged in, redirect to auth
+    if (!user) {
       window.location.href = "/auth";
+      return;
+    }
+
+    // If already subscribed to this tier
+    if (subscribed && currentTier === tier.tier) {
+      try {
+        await openCustomerPortal();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to open subscription management. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Start checkout
+    try {
+      setLoadingTier(tier.tier);
+      const priceId = tier.tier === "creator" 
+        ? (billingCycle === "monthly" ? PRICE_IDS.creator.monthly : PRICE_IDS.creator.yearly)
+        : (billingCycle === "monthly" ? PRICE_IDS.studio.monthly : PRICE_IDS.studio.yearly);
+      
+      await startCheckout(priceId);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to start checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTier(null);
     }
   };
+
+  const getButtonText = (tier: PricingTier) => {
+    if (loadingTier === tier.tier) return "Loading...";
+    if (subscribed && currentTier === tier.tier) {
+      return isTrial ? "Manage Trial" : "Current Plan";
+    }
+    if (tier.tier === "free") return "Start for free";
+    if (!user) return "Sign up to subscribe";
+    return "Start 7-day free trial";
+  };
+
+  const isCurrentPlan = (tier: PricingTier) => subscribed && currentTier === tier.tier;
 
   return (
     <section id="pricing" className="py-16 md:py-24 bg-background">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Pricing</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-6">
             Try it free, then upgrade when you're ready to build more.
           </p>
+
+          {/* Billing toggle */}
+          <div className="inline-flex items-center gap-2 bg-muted rounded-full p-1">
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                billingCycle === "monthly"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingCycle("yearly")}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                billingCycle === "yearly"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Yearly
+              <span className="ml-1.5 text-xs text-primary">Save 2 months</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -99,10 +185,11 @@ export function PricingSection() {
                 "relative bg-card border rounded-2xl p-6 flex flex-col",
                 tier.popular
                   ? "border-primary shadow-lg"
-                  : "border-border"
+                  : "border-border",
+                isCurrentPlan(tier) && "ring-2 ring-primary"
               )}
             >
-              {tier.popular && (
+              {tier.popular && !isCurrentPlan(tier) && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
@@ -111,12 +198,25 @@ export function PricingSection() {
                 </div>
               )}
 
+              {isCurrentPlan(tier) && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    {isTrial ? "Current Trial" : "Your Plan"}
+                  </span>
+                </div>
+              )}
+
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-foreground mb-2">{tier.name}</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">{tier.price}</span>
+                  <span className="text-4xl font-bold text-foreground">
+                    {billingCycle === "monthly" ? tier.monthlyPrice : tier.yearlyPrice}
+                  </span>
                   {tier.period && (
-                    <span className="text-muted-foreground">{tier.period}</span>
+                    <span className="text-muted-foreground">
+                      {billingCycle === "yearly" ? "/ year" : tier.period}
+                    </span>
                   )}
                 </div>
               </div>
@@ -134,11 +234,13 @@ export function PricingSection() {
                 variant={tier.buttonVariant}
                 className={cn(
                   "w-full",
-                  tier.popular && "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  tier.popular && !isCurrentPlan(tier) && "bg-primary hover:bg-primary/90 text-primary-foreground"
                 )}
                 onClick={() => handleTierClick(tier)}
+                disabled={loadingTier === tier.tier || subLoading}
               >
-                {tier.buttonText}
+                {loadingTier === tier.tier && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {getButtonText(tier)}
               </Button>
 
               {tier.note && (
@@ -147,10 +249,10 @@ export function PricingSection() {
                 </p>
               )}
 
-              {tier.popular && (
-                <button className="text-xs text-primary hover:underline mt-3 text-center">
-                  View plan details
-                </button>
+              {tier.tier !== "free" && !isCurrentPlan(tier) && (
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  7-day free trial, cancel anytime
+                </p>
               )}
             </div>
           ))}
