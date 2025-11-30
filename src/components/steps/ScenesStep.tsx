@@ -1,10 +1,13 @@
-import { Plus, FolderPlus, Film } from "lucide-react";
+import { Plus, Film, List, LayoutGrid } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SceneCard } from "@/components/SceneCard";
 import { ProjectManager } from "@/components/ProjectManager";
+import { StoryOutline } from "@/components/StoryOutline";
 import { Character, Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { isCharacterComplete } from "@/lib/template-generator";
+import { cn } from "@/lib/utils";
 
 interface ScenesStepProps {
   concept: string;
@@ -22,6 +25,7 @@ interface ScenesStepProps {
   onCopyScene: (id: number | string, content: string) => void;
   onRemoveScene: (id: number | string) => void;
   onAddScene: () => void;
+  onReorderScenes: (fromIndex: number, toIndex: number) => void;
   onSaveSceneStyle: (style: Omit<SceneStyle, "id" | "createdAt">) => void;
 }
 
@@ -41,8 +45,12 @@ export function ScenesStep({
   onCopyScene,
   onRemoveScene,
   onAddScene,
+  onReorderScenes,
   onSaveSceneStyle,
 }: ScenesStepProps) {
+  const [viewMode, setViewMode] = useState<"detailed" | "outline">("detailed");
+  const [selectedSceneIndex, setSelectedSceneIndex] = useState<number | null>(null);
+  
   const filledChars = characters.filter(isCharacterComplete);
 
   const handleSelectCharacter = (sceneId: number | string, character: EnhancedCharacter) => {
@@ -68,6 +76,16 @@ export function ScenesStep({
   const handleSelectStyle = (sceneId: number | string, styleId: string, template: string) => {
     onUpdateScene(sceneId, "selectedStyleId", styleId);
     onUpdateScene(sceneId, "styleTemplate", template);
+  };
+
+  const handleOutlineSelectScene = (index: number) => {
+    setSelectedSceneIndex(index);
+    setViewMode("detailed");
+    // Scroll to the scene after a brief delay for view switch
+    setTimeout(() => {
+      const sceneElement = document.getElementById(`scene-${scenes[index]?.id}`);
+      sceneElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   return (
@@ -113,46 +131,101 @@ export function ScenesStep({
         </div>
       </div>
 
-      {/* Story Flow Info */}
-      <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-border">
-        <Film className="w-4 h-4 text-primary" />
-        <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">Story flow:</span> Each scene should build on the previous one. The AI will maintain character consistency and story continuity.
-        </p>
-      </div>
-
-      {/* Scenes */}
-      <div className="space-y-4 relative">
-        {/* Connecting line for story flow */}
-        {scenes.length > 1 && (
-          <div className="absolute left-[22px] top-8 bottom-8 w-0.5 bg-gradient-to-b from-teal-500 via-emerald-500 to-teal-500 opacity-30 z-0" />
-        )}
-        
-        {scenes.map((scene, index) => (
-          <div key={scene.id} className="relative z-10">
-            <SceneCard
-              scene={scene}
-              index={index}
-              totalScenes={scenes.length}
-              previousSceneDescription={index > 0 ? scenes[index - 1]?.description : undefined}
-              copied={copiedId === scene.id}
-              isGenerating={generatingSceneId === scene.id}
-              savedCharacters={savedCharacters}
-              savedEnvironments={savedEnvironments}
-              savedSceneStyles={savedSceneStyles}
-              onUpdate={(field, value) => onUpdateScene(scene.id, field, value)}
-              onSelectCharacter={(char) => handleSelectCharacter(scene.id, char)}
-              onDeselectCharacter={(charId) => handleDeselectCharacter(scene.id, charId)}
-              onSelectEnvironment={(envId) => handleSelectEnvironment(scene.id, envId)}
-              onSelectStyle={(styleId, template) => handleSelectStyle(scene.id, styleId, template)}
-              onSaveStyle={onSaveSceneStyle}
-              onGenerate={() => onGenerateScene(scene.id)}
-              onCopy={() => onCopyScene(scene.id, scene.content)}
-              onRemove={() => onRemoveScene(scene.id)}
-            />
+      {/* View Toggle */}
+      {scenes.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-border flex-1 mr-3">
+            <Film className="w-4 h-4 text-primary" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Story flow:</span> Each scene builds on the previous. Drag to reorder in outline view.
+            </p>
           </div>
-        ))}
-      </div>
+          
+          <div className="flex items-center bg-muted rounded-lg p-1">
+            <button
+              onClick={() => setViewMode("detailed")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                viewMode === "detailed"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="hidden sm:inline">Detailed</span>
+            </button>
+            <button
+              onClick={() => setViewMode("outline")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                viewMode === "outline"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <List className="w-4 h-4" />
+              <span className="hidden sm:inline">Outline</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state info */}
+      {scenes.length === 0 && (
+        <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-border">
+          <Film className="w-4 h-4 text-primary" />
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Story flow:</span> Each scene should build on the previous one. The AI will maintain character consistency and story continuity.
+          </p>
+        </div>
+      )}
+
+      {/* Outline View */}
+      {viewMode === "outline" && scenes.length > 0 && (
+        <StoryOutline
+          scenes={scenes}
+          savedCharacters={savedCharacters}
+          savedEnvironments={savedEnvironments}
+          generatingSceneId={generatingSceneId}
+          onReorder={onReorderScenes}
+          onSelectScene={handleOutlineSelectScene}
+        />
+      )}
+
+      {/* Detailed View - Scenes */}
+      {viewMode === "detailed" && (
+        <div className="space-y-4 relative">
+          {/* Connecting line for story flow */}
+          {scenes.length > 1 && (
+            <div className="absolute left-[22px] top-8 bottom-8 w-0.5 bg-gradient-to-b from-teal-500 via-emerald-500 to-teal-500 opacity-30 z-0" />
+          )}
+          
+          {scenes.map((scene, index) => (
+            <div key={scene.id} id={`scene-${scene.id}`} className="relative z-10">
+              <SceneCard
+                scene={scene}
+                index={index}
+                totalScenes={scenes.length}
+                previousSceneDescription={index > 0 ? scenes[index - 1]?.description : undefined}
+                copied={copiedId === scene.id}
+                isGenerating={generatingSceneId === scene.id}
+                savedCharacters={savedCharacters}
+                savedEnvironments={savedEnvironments}
+                savedSceneStyles={savedSceneStyles}
+                onUpdate={(field, value) => onUpdateScene(scene.id, field, value)}
+                onSelectCharacter={(char) => handleSelectCharacter(scene.id, char)}
+                onDeselectCharacter={(charId) => handleDeselectCharacter(scene.id, charId)}
+                onSelectEnvironment={(envId) => handleSelectEnvironment(scene.id, envId)}
+                onSelectStyle={(styleId, template) => handleSelectStyle(scene.id, styleId, template)}
+                onSaveStyle={onSaveSceneStyle}
+                onGenerate={() => onGenerateScene(scene.id)}
+                onCopy={() => onCopyScene(scene.id, scene.content)}
+                onRemove={() => onRemoveScene(scene.id)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Scene */}
       <Button variant="dashed" size="xl" className="w-full" onClick={onAddScene}>
