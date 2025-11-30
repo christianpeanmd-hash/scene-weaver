@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { MemoableLogo } from "./MemoableLogo";
+import { TechyMemoLogo } from "./MemoableLogo";
 import { ProgressSteps, StepKey } from "./ProgressSteps";
 import { SetupStep } from "./steps/SetupStep";
 import { TemplateStep } from "./steps/TemplateStep";

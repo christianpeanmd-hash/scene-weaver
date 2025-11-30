@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MemoableLogo } from "@/components/MemoableLogo";
+import { TechyMemoLogo } from "@/components/MemoableLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,7 +117,7 @@ export default function Auth() {
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
           <div className="flex justify-center mb-6">
-            <MemoableLogo size="lg" showSubtitle />
+            <TechyMemoLogo size="lg" showSubtitle />
           </div>
 
           <h1 className="text-2xl font-bold text-center mb-2">
