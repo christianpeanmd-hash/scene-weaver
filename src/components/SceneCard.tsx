@@ -1,5 +1,5 @@
-import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play, ChevronDown, ChevronUp, Sparkles, Crown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
@@ -55,10 +55,32 @@ export function SceneCard({
   onRemove,
 }: SceneCardProps) {
   const [showCustomEnv, setShowCustomEnv] = useState(false);
+  const [autoGenerateVideo, setAutoGenerateVideo] = useState(false);
   const selectedEnv = savedEnvironments.find(e => e.id === scene.selectedEnvironmentId);
   const { tier } = useSubscription();
   const videoGen = useVideoGeneration();
   const isPremium = tier === 'pro' || tier === 'studio';
+  const prevGeneratedRef = useRef(scene.generated);
+
+  // Auto-generate video when prompt generation completes (if requested)
+  useEffect(() => {
+    if (autoGenerateVideo && scene.generated && !prevGeneratedRef.current && scene.content) {
+      // Scene just became generated, start video generation
+      videoGen.generateVideo({
+        prompt: scene.content,
+        duration: 5,
+        aspectRatio: '16:9',
+        sceneId: sceneId,
+      });
+      setAutoGenerateVideo(false);
+    }
+    prevGeneratedRef.current = scene.generated;
+  }, [scene.generated, scene.content, autoGenerateVideo, sceneId, videoGen]);
+
+  const handleGeneratePromptAndVideo = () => {
+    setAutoGenerateVideo(true);
+    onGenerate();
+  };
 
   // Get current selected style IDs (support both old and new format)
   const selectedStyleIds = scene.selectedStyleIds || (scene.selectedStyleId ? [scene.selectedStyleId] : []);
@@ -322,24 +344,59 @@ export function SceneCard({
             />
           </div>
 
-          <Button
-            variant="soft"
-            className="w-full"
-            disabled={!scene.description.trim() || isGenerating}
-            onClick={onGenerate}
-          >
-            {isGenerating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                Generating with AI...
-              </>
-            ) : (
-              <>
-                <Wand2 className="w-4 h-4" />
-                Generate Scene Template
-              </>
+          {/* Generate Buttons */}
+          <div className="space-y-2">
+            <Button
+              variant="soft"
+              className="w-full"
+              disabled={!scene.description.trim() || isGenerating || autoGenerateVideo}
+              onClick={onGenerate}
+            >
+              {isGenerating && !autoGenerateVideo ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  Generating with AI...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4" />
+                  Generate Scene Template
+                </>
+              )}
+            </Button>
+            
+            {/* Combined Generate + Video Button for Premium */}
+            {isPremium && (
+              <Button
+                variant="default"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                disabled={!scene.description.trim() || isGenerating || autoGenerateVideo}
+                onClick={handleGeneratePromptAndVideo}
+              >
+                {autoGenerateVideo || (isGenerating && autoGenerateVideo) ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating Prompt + Video...
+                  </>
+                ) : (
+                  <>
+                    <Film className="w-4 h-4" />
+                    Generate Prompt + Video
+                  </>
+                )}
+              </Button>
             )}
-          </Button>
+            
+            {/* Premium hint */}
+            {!isPremium && (
+              <div className="flex items-center gap-2 p-2.5 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                <Crown className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                <p className="text-xs text-purple-700 dark:text-purple-300">
+                  <span className="font-medium">Pro/Studio:</span> Generate prompts + videos directly with Runway ML
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="p-4 space-y-4">
