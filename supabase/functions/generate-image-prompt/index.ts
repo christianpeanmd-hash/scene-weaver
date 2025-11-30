@@ -6,7 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ANONYMOUS_DAILY_LIMIT = 10;
+const ANONYMOUS_DAILY_LIMIT = 3;
+
+// Generation limits per tier
+const TIER_LIMITS: Record<string, number> = {
+  free: 3,
+  creator: 50,
+  pro: 200,
+  studio: 999999,
+};
 
 interface ImagePromptRequest {
   type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic' | 'brand-from-upload';
@@ -23,8 +31,8 @@ interface ImagePromptRequest {
   documentContent?: string;
 }
 
-// Rate limiting helper
-async function checkRateLimit(req: Request): Promise<{ allowed: boolean; error?: string }> {
+// Rate limiting helper for authenticated users
+async function checkUserLimit(req: Request): Promise<{ allowed: boolean; error?: string; userId?: string }> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const authHeader = req.headers.get('authorization');
@@ -34,12 +42,42 @@ async function checkRateLimit(req: Request): Promise<{ allowed: boolean; error?:
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    
     if (user && !error) {
-      console.log('Authenticated user, skipping rate limit');
-      return { allowed: true };
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('subscription_tier, monthly_generations, generation_reset_at')
+        .eq('user_id', user.id)
+        .single();
+      
+      const tier = profile?.subscription_tier || 'free';
+      let monthlyGenerations = profile?.monthly_generations || 0;
+      
+      if (profile?.generation_reset_at) {
+        const resetDate = new Date(profile.generation_reset_at);
+        const now = new Date();
+        const daysSinceReset = (now.getTime() - resetDate.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceReset >= 30) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ monthly_generations: 0, generation_reset_at: now.toISOString() })
+            .eq('user_id', user.id);
+          monthlyGenerations = 0;
+        }
+      }
+      
+      const limit = TIER_LIMITS[tier] || TIER_LIMITS.free;
+      
+      if (monthlyGenerations >= limit) {
+        return { allowed: false, error: `Monthly limit of ${limit} generations reached. Upgrade for more.`, userId: user.id };
+      }
+      
+      return { allowed: true, userId: user.id };
     }
   }
   
+  // Anonymous user
   const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
   const userAgent = req.headers.get('user-agent') || 'unknown';
   
@@ -49,38 +87,36 @@ async function checkRateLimit(req: Request): Promise<{ allowed: boolean; error?:
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const ipHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   
-  console.log('Checking rate limit for hash:', ipHash.substring(0, 16));
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
   const { data: usage } = await supabaseAdmin
     .from('usage_tracking')
     .select('generation_count')
     .eq('ip_hash', ipHash)
-    .gte('updated_at', today.toISOString())
     .single();
   
-  const currentCount = usage?.generation_count || 0;
-  
-  if (currentCount >= ANONYMOUS_DAILY_LIMIT) {
-    return { allowed: false, error: 'Daily limit reached. Sign up for unlimited access.' };
+  if ((usage?.generation_count || 0) >= ANONYMOUS_DAILY_LIMIT) {
+    return { allowed: false, error: `Free limit of ${ANONYMOUS_DAILY_LIMIT} generations reached. Sign up for more.` };
   }
   
   return { allowed: true };
 }
 
-async function incrementUsage(req: Request): Promise<void> {
+async function incrementUsage(req: Request, userId?: string): Promise<void> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const authHeader = req.headers.get('authorization');
-  
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
   
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (user) return;
+  if (userId) {
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('monthly_generations')
+      .eq('user_id', userId)
+      .single();
+    
+    await supabaseAdmin
+      .from('profiles')
+      .update({ monthly_generations: (profile?.monthly_generations || 0) + 1 })
+      .eq('user_id', userId);
+    return;
   }
   
   const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -118,8 +154,6 @@ async function incrementUsage(req: Request): Promise<void> {
         last_generation_at: new Date().toISOString()
       });
   }
-  
-  console.log('Usage incremented for hash:', ipHash.substring(0, 16));
 }
 
 const IMAGE_PROMPT_SYSTEM = `You are an expert at writing image generation prompts for AI tools like Midjourney, DALL-E, Stable Diffusion, and Firefly.
@@ -197,7 +231,7 @@ serve(async (req) => {
 
   try {
     // Check rate limit first
-    const rateLimitResult = await checkRateLimit(req);
+    const rateLimitResult = await checkUserLimit(req);
     if (!rateLimitResult.allowed) {
       return new Response(JSON.stringify({ 
         error: rateLimitResult.error,

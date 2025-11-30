@@ -14,6 +14,14 @@ const logStep = (step: string, details?: any) => {
 
 // Product ID to tier mapping
 const PRODUCT_TIERS: Record<string, string> = {
+  // New pricing products
+  "prod_TW72izzMZyLYGt": "creator",
+  "prod_TW72LrlV9fiZvi": "creator",
+  "prod_TW73a6a72eGqHA": "pro",
+  "prod_TW73Na0Eq5M2na": "pro",
+  "prod_TW74oDdSdLDr4m": "studio",
+  "prod_TW74OXOraT0tm7": "studio",
+  // Old pricing products (for backwards compatibility)
   "prod_TW6wmlFLF0EktU": "creator",
   "prod_TW6xEBY4agTyYy": "creator",
   "prod_TW6x1xTWdYX40G": "studio",
@@ -47,6 +55,35 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get user's profile for generation count
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("monthly_generations, generation_reset_at, subscription_tier")
+      .eq("user_id", user.id)
+      .single();
+
+    let monthlyGenerations = profile?.monthly_generations || 0;
+    
+    // Check if we need to reset the monthly counter
+    if (profile?.generation_reset_at) {
+      const resetDate = new Date(profile.generation_reset_at);
+      const now = new Date();
+      const daysSinceReset = (now.getTime() - resetDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (daysSinceReset >= 30) {
+        // Reset the counter
+        await supabaseClient
+          .from("profiles")
+          .update({ 
+            monthly_generations: 0, 
+            generation_reset_at: now.toISOString() 
+          })
+          .eq("user_id", user.id);
+        monthlyGenerations = 0;
+        logStep("Monthly generation count reset");
+      }
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
@@ -56,7 +93,8 @@ serve(async (req) => {
         subscribed: false, 
         tier: "free",
         subscription_end: null,
-        is_trial: false
+        is_trial: false,
+        monthly_generations: monthlyGenerations
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -83,7 +121,8 @@ serve(async (req) => {
         subscribed: false, 
         tier: "free",
         subscription_end: null,
-        is_trial: false
+        is_trial: false,
+        monthly_generations: monthlyGenerations
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -112,7 +151,8 @@ serve(async (req) => {
       subscribed: true,
       tier,
       subscription_end: subscriptionEnd,
-      is_trial: isTrial
+      is_trial: isTrial,
+      monthly_generations: monthlyGenerations
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
