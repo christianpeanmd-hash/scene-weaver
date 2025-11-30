@@ -163,7 +163,7 @@ export default function About() {
                 <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                A side project from someone who lives in docs, decks, and operating rooms
+                Built by someone who lives in docs, decks, and operating rooms
               </h2>
             </div>
             <div className="space-y-4 text-muted-foreground pl-0 md:pl-13">
