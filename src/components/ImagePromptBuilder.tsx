@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Palette, Zap } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,14 +36,12 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<IllustrationStyle | null>(null);
   const [customStyleText, setCustomStyleText] = useState("");
-  const [subjectDescription, setSubjectDescription] = useState("");
+  const [sceneDescription, setSceneDescription] = useState(""); // What user wants to see
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [customBrandText, setCustomBrandText] = useState("");
-  const [sceneContext, setSceneContext] = useState(""); // For Apply Style workflow
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [isApplyingStyle, setIsApplyingStyle] = useState(false);
   const [applyingStyleId, setApplyingStyleId] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -72,7 +70,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       setUploadedImage(e.target?.result as string);
       setGeneratedPrompt("");
       setGeneratedImageUrl(null);
-      toast.success("Image uploaded!");
+      toast.success("Photo uploaded!");
     };
     reader.readAsDataURL(file);
   }, []);
@@ -152,9 +150,52 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       : customBrandText.trim() || undefined;
   };
 
+  // Build a creative prompt that uses the photo as reference but allows creative freedom
+  const buildCreativePrompt = (style: IllustrationStyle | null, customStyle: string | undefined) => {
+    const styleName = style?.name || "custom style";
+    const styleLook = style?.look || customStyle || "";
+    const brandContext = getBrandContext();
+    
+    let prompt = "";
+    
+    if (uploadedImage) {
+      // Photo uploaded - use person as reference but allow creative scene
+      if (sceneDescription.trim()) {
+        // User described what they want - create that scene with the person
+        prompt = `Using the person from this photo as your subject reference, create: ${sceneDescription.trim()}. 
+
+Render in ${styleName} style: ${styleLook}
+
+Keep the person recognizable but feel free to change their pose, expression, clothing, and setting to match the described scene. The goal is a creative, styled image of this person in the new scenario.`;
+      } else {
+        // No scene description - stylize the person in an interesting way
+        prompt = `Transform this person into a ${styleName} artwork. 
+
+Style: ${styleLook}
+
+Create an artistic, visually striking image. You can adjust the pose, setting, and background to best showcase the style while keeping the person recognizable.`;
+      }
+    } else {
+      // No photo - pure generation from description
+      prompt = `Create an image: ${sceneDescription.trim() || "a compelling visual"}
+
+Render in ${styleName} style: ${styleLook}`;
+    }
+    
+    if (brandContext) {
+      prompt += `\n\nBrand context: ${brandContext}`;
+    }
+    
+    return prompt;
+  };
+
   const handleGenerate = async () => {
     if (!selectedStyle && !customStyleText.trim()) {
-      toast.error("Please select a style or describe your own");
+      toast.error("Please select a style");
+      return;
+    }
+    if (!uploadedImage && !sceneDescription.trim()) {
+      toast.error("Upload a photo or describe what you want");
       return;
     }
 
@@ -164,7 +205,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
         style: selectedStyle,
         customStyle: customStyleText.trim() || undefined,
         imageBase64: uploadedImage,
-        subjectDescription,
+        subjectDescription: sceneDescription,
         brandContext: getBrandContext(),
       });
       setGeneratedPrompt(prompt);
@@ -177,37 +218,44 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     }
   };
 
-  const handleGenerateImageDirectly = async () => {
-    if (!selectedStyle && !customStyleText.trim()) {
-      toast.error("Please select a style or describe your own");
+  // Main image generation function - simpler, more creative
+  const handleGenerateImage = async (styleOverride?: IllustrationStyle) => {
+    const styleToUse = styleOverride || selectedStyle;
+    const customToUse = styleOverride ? undefined : customStyleText.trim();
+    
+    if (!styleToUse && !customToUse) {
+      toast.error("Please select a style");
+      return;
+    }
+    if (!uploadedImage && !sceneDescription.trim()) {
+      toast.error("Upload a photo or describe what you want");
       return;
     }
 
     setIsGeneratingImage(true);
     setGeneratedImageUrl(null);
+    if (styleOverride) setApplyingStyleId(styleOverride.id);
     
     try {
-      // First generate the prompt
-      const prompt = await generateImagePrompt({
-        style: selectedStyle,
-        customStyle: customStyleText.trim() || undefined,
-        imageBase64: uploadedImage,
-        subjectDescription,
-        brandContext: getBrandContext(),
-      });
+      const prompt = buildCreativePrompt(styleToUse, customToUse);
       setGeneratedPrompt(prompt);
       
-      // Then generate the image using the prompt
+      // Generate the image
       const { data, error } = await supabase.functions.invoke("generate-ai-image", {
-        body: { prompt, type: "image" },
+        body: { 
+          prompt, 
+          editMode: !!uploadedImage,
+          sourceImageBase64: uploadedImage,
+        },
       });
 
       if (error) throw error;
       if (data?.imageUrl) {
         setGeneratedImageUrl(data.imageUrl);
         // Auto-save to gallery
-        addToGallery(data.imageUrl, prompt, selectedStyle?.name || customStyleText.trim());
-        toast.success("Image generated!");
+        const thumbnail = uploadedImage?.substring(0, 500);
+        addToGallery(data.imageUrl, prompt, styleToUse?.name || customToUse || "Custom", thumbnail);
+        toast.success("Image created!");
       } else {
         throw new Error("No image returned");
       }
@@ -220,67 +268,21 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       }
     } finally {
       setIsGeneratingImage(false);
+      setApplyingStyleId(null);
     }
   };
 
-  const handleApplyStyleToImage = async () => {
-    if (!uploadedImage) {
-      toast.error("Please upload an image first");
-      return;
-    }
-    if (!selectedStyle && !customStyleText.trim()) {
-      toast.error("Please select a style");
-      return;
-    }
-
-    setIsApplyingStyle(true);
-    setGeneratedImageUrl(null);
+  const handleQuickApply = async (styleId: string) => {
+    const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
+    if (!style) return;
     
-    try {
-      // Build the style instruction - be VERY explicit about preserving the subject
-      const styleInstruction = selectedStyle 
-        ? `IMPORTANT: You must transform THIS EXACT PERSON/SUBJECT from the attached photo into the "${selectedStyle.name}" artistic style. Keep their exact face, pose, expression, and features - only change the visual rendering style to: ${selectedStyle.look}. Do NOT generate a different person or new characters. Recreate THIS specific person in the new style.`
-        : `IMPORTANT: You must transform THIS EXACT PERSON/SUBJECT from the attached photo using this style: ${customStyleText}. Keep their exact face, pose, expression, and features - only change the visual rendering style. Do NOT generate a different person or new characters.`;
-      
-      // Include scene context if provided (e.g., "make it a professional headshot", "put them in a coffee shop")
-      const contextPart = sceneContext.trim() 
-        ? ` Additional context: ${sceneContext.trim()}.`
-        : '';
-      
-      const brandContext = getBrandContext();
-      const fullPrompt = `${styleInstruction}${contextPart}${brandContext ? ` ${brandContext}` : ''}`;
-      
-      setGeneratedPrompt(fullPrompt);
-      
-      // Use edit mode to restyle the actual image
-      const { data, error } = await supabase.functions.invoke("generate-ai-image", {
-        body: { 
-          prompt: fullPrompt, 
-          editMode: true,
-          sourceImageBase64: uploadedImage,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.imageUrl) {
-        setGeneratedImageUrl(data.imageUrl);
-        // Auto-save to gallery with thumbnail of source
-        const thumbnail = uploadedImage?.substring(0, 500); // Store small portion as reference
-        addToGallery(data.imageUrl, fullPrompt, selectedStyle?.name || customStyleText.trim(), thumbnail);
-        toast.success("Style applied!");
-      } else {
-        throw new Error("No image returned");
-      }
-    } catch (error) {
-      console.error("Error applying style:", error);
-      if (isRateLimitError(error)) {
-        handleRateLimitError();
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to apply style");
-      }
-    } finally {
-      setIsApplyingStyle(false);
+    if (!uploadedImage) {
+      toast.error("Please upload a photo first");
+      return;
     }
+
+    setSelectedStyle(style);
+    handleGenerateImage(style);
   };
 
   const handleCopy = () => {
@@ -296,62 +298,6 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     setGeneratedImageUrl(null);
   };
 
-  const handleQuickApply = async (styleId: string) => {
-    const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
-    if (!style) return;
-    
-    // Immediately trigger apply
-    if (!uploadedImage) {
-      toast.error("Please upload an image first");
-      return;
-    }
-
-    // Update selection and show loading on this specific button
-    setSelectedStyle(style);
-    setApplyingStyleId(styleId);
-    setIsApplyingStyle(true);
-    setGeneratedImageUrl(null);
-    
-    try {
-      // Be VERY explicit about preserving the subject
-      const styleInstruction = `IMPORTANT: You must transform THIS EXACT PERSON/SUBJECT from the attached photo into the "${style.name}" artistic style. Keep their exact face, pose, expression, and features - only change the visual rendering style to: ${style.look}. Do NOT generate a different person or new characters. Recreate THIS specific person in the new style.`;
-      const contextPart = sceneContext.trim() ? ` Additional context: ${sceneContext.trim()}.` : '';
-      const brandContext = getBrandContext();
-      const fullPrompt = `${styleInstruction}${contextPart}${brandContext ? ` ${brandContext}` : ''}`;
-      
-      setGeneratedPrompt(fullPrompt);
-      
-      const { data, error } = await supabase.functions.invoke("generate-ai-image", {
-        body: { 
-          prompt: fullPrompt, 
-          editMode: true,
-          sourceImageBase64: uploadedImage,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.imageUrl) {
-        setGeneratedImageUrl(data.imageUrl);
-        // Auto-save to gallery
-        const thumbnail = uploadedImage?.substring(0, 500);
-        addToGallery(data.imageUrl, fullPrompt, style.name, thumbnail);
-        toast.success(`${style.name} style applied!`);
-      } else {
-        throw new Error("No image returned");
-      }
-    } catch (error) {
-      console.error("Error applying style:", error);
-      if (isRateLimitError(error)) {
-        handleRateLimitError();
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to apply style");
-      }
-    } finally {
-      setIsApplyingStyle(false);
-      setApplyingStyleId(null);
-    }
-  };
-
   // Trigger pending quick apply from Library navigation
   useEffect(() => {
     if (pendingQuickApplyStyle && uploadedImage) {
@@ -360,19 +306,21 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     }
   }, [pendingQuickApplyStyle, uploadedImage]);
 
+  const canGenerate = (selectedStyle || customStyleText.trim()) && (uploadedImage || sceneDescription.trim());
+
   return (
     <>
     <div className="pb-8 md:pb-12">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Left Column - Upload & Style */}
+          {/* Left Column - Simple Flow */}
           <div className="space-y-5">
-            {/* Image Upload */}
+            {/* Step 1: Photo Upload */}
             <Card className="overflow-hidden">
               <div className="p-4 border-b border-border/50">
                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Upload className="w-4 h-4 text-primary" />
-                  Your Photo
+                  1. Your Photo
                   <span className="text-muted-foreground text-xs font-normal">optional</span>
                 </label>
               </div>
@@ -404,7 +352,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                       <Image className="w-7 h-7 text-purple-500" />
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Drag & drop, paste from clipboard, or
+                      Drag & drop, paste, or
                     </p>
                     <label className="cursor-pointer">
                       <span className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted/50 transition-colors">
@@ -446,9 +394,9 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                 <div className="p-3 border-t border-border/50">
                   <div className="flex items-center gap-2 mb-2">
                     <Zap className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-xs font-medium text-muted-foreground">Quick Apply</span>
+                    <span className="text-xs font-medium text-muted-foreground">One-tap styles</span>
                     {applyingStyleId && (
-                      <span className="text-[10px] text-purple-500 animate-pulse">applying...</span>
+                      <span className="text-[10px] text-purple-500 animate-pulse">creating...</span>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -493,55 +441,45 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               />
             </Card>
 
-            {/* Scene Context - for Apply Style workflow */}
-            {uploadedImage && (
-              <Card className="p-5 border-purple-200 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
-                  <Wand2 className="w-4 h-4 text-purple-500" />
-                  Scene Context
-                  <span className="text-muted-foreground text-xs font-normal">optional</span>
-                </label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Describe how you want the style applied — setting, mood, purpose
-                </p>
-                <textarea
-                  value={sceneContext}
-                  onChange={(e) => setSceneContext(e.target.value)}
-                  placeholder="e.g., Make it a professional LinkedIn headshot in a modern office, warm lighting, confident pose"
-                  rows={2}
-                  className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none text-sm"
-                />
-              </Card>
-            )}
-
-            {/* Subject Description - for Generate Image workflow */}
+            {/* Step 2: Describe what you want */}
             <Card className="p-5">
-              <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                {uploadedImage ? "Additional Details" : "Subject Description"}
+                2. Describe what you want
                 {!uploadedImage && <span className="text-rose-500 text-xs">required</span>}
               </label>
-              <textarea
-                value={subjectDescription}
-                onChange={(e) => setSubjectDescription(e.target.value)}
-                placeholder={uploadedImage 
-                  ? "Optional extra details for the prompt generator..." 
-                  : "Describe what you want... e.g., a thoughtful doctor looking at a tablet"
+              <p className="text-xs text-muted-foreground mb-3">
+                {uploadedImage 
+                  ? "Describe a scene, scenario, or look for this person"
+                  : "Describe the image you want to create"
                 }
-                rows={2}
+              </p>
+              <textarea
+                value={sceneDescription}
+                onChange={(e) => setSceneDescription(e.target.value)}
+                placeholder={uploadedImage 
+                  ? "e.g., as a superhero flying over a city, professional headshot in a modern office, portrait in a cozy coffee shop..."
+                  : "e.g., a wise owl wearing glasses reading a book, a sunset over mountains..."
+                }
+                rows={3}
                 className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
               />
             </Card>
 
-            {/* Style Selector */}
-            <StyleSelector
-              selectedStyle={selectedStyle}
-              onSelectStyle={setSelectedStyle}
-              customStyleText={customStyleText}
-              onCustomStyleChange={setCustomStyleText}
-            />
+            {/* Step 3: Pick a Style */}
+            <div>
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <span className="text-sm font-medium text-foreground">3. Pick a Style</span>
+              </div>
+              <StyleSelector
+                selectedStyle={selectedStyle}
+                onSelectStyle={setSelectedStyle}
+                customStyleText={customStyleText}
+                onCustomStyleChange={setCustomStyleText}
+              />
+            </div>
 
-            {/* Brand Selector */}
+            {/* Optional: Brand */}
             <BrandSelector
               selectedBrand={selectedBrand}
               onSelectBrand={setSelectedBrand}
@@ -549,93 +487,59 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               onCustomBrandChange={setCustomBrandText}
             />
 
-            {/* Generate Buttons */}
+            {/* Generate Button - Primary CTA */}
             <div className="space-y-3">
-              {/* Primary action: Apply style to uploaded photo */}
-              {uploadedImage && (
-                <Button
-                  variant="hero"
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  disabled={(!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage || isApplyingStyle}
-                  onClick={handleApplyStyleToImage}
-                >
-                  {isApplyingStyle ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                      Applying Style...
-                    </>
-                  ) : (
-                    <>
-                      <Palette className="w-4 h-4" />
-                      Apply Style to Image
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button
+                variant="hero"
+                size="lg"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                disabled={!canGenerate || isGenerating || isGeneratingImage}
+                onClick={() => handleGenerateImage()}
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Creating Image...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-4 h-4" />
+                    Generate Image
+                  </>
+                )}
+              </Button>
               
-              {/* Secondary actions */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full"
-                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage || isApplyingStyle}
-                  onClick={handleGenerate}
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4" />
-                      Generate Prompt
-                    </>
-                  )}
-                </Button>
-                
-                <Button
-                  variant={uploadedImage ? "outline" : "hero"}
-                  size="lg"
-                  className={cn(
-                    "w-full",
-                    !uploadedImage && "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  )}
-                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage || isApplyingStyle}
-                  onClick={handleGenerateImageDirectly}
-                >
-                  {isGeneratingImage ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus className="w-4 h-4" />
-                      Generate Image
-                    </>
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-center text-muted-foreground">
-                {uploadedImage 
-                  ? "Apply style directly, or get a prompt / generate new image"
-                  : "Get a prompt to use elsewhere, or generate an image directly"
-                }
-              </p>
+              {/* Secondary: Generate Prompt Only */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-muted-foreground"
+                disabled={!canGenerate || isGenerating || isGeneratingImage}
+                onClick={handleGenerate}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3 h-3" />
+                    Just get the prompt
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
           {/* Right Column - Result */}
           <div className="space-y-5">
-            {/* Generated Prompt / Image */}
+            {/* Generated Image / Prompt */}
             <Card className="h-full flex flex-col">
               <div className="p-4 border-b border-border/50 flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Sparkles className="w-4 h-4 text-purple-500" />
-                  Generated Prompt / Image
+                  Result
                 </label>
                 {generatedPrompt && (
                   <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
@@ -651,7 +555,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               <div className="flex-1 p-4 bg-muted/30">
                 {generatedPrompt || generatedImageUrl ? (
                   <div className="space-y-4">
-                    {/* Show generated image if we created one directly */}
+                    {/* Show generated image */}
                     {generatedImageUrl && (
                       <div className="rounded-lg overflow-hidden border border-border">
                         <img
@@ -662,36 +566,45 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                       </div>
                     )}
                     
+                    {/* Show prompt (collapsible when image exists) */}
                     {generatedPrompt && (
-                      <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
-                        {generatedPrompt}
-                      </pre>
+                      <details className={generatedImageUrl ? "text-sm" : ""} open={!generatedImageUrl}>
+                        <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground mb-2">
+                          {generatedImageUrl ? "View prompt" : "Generated Prompt"}
+                        </summary>
+                        <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
+                          {generatedPrompt}
+                        </pre>
+                      </details>
                     )}
                     
-                    {/* Generate Image Directly (only show if we don't already have one) */}
+                    {/* Generate Image from prompt if we only have prompt */}
                     {!generatedImageUrl && generatedPrompt && (
                       <GeneratedImageDisplay prompt={generatedPrompt} type="image" />
                     )}
                     
-                    {/* Or Use External Tools */}
+                    {/* External tools */}
                     <div className="pt-2 border-t border-border/50">
                       <p className="text-xs text-muted-foreground mb-2">
-                        {generatedImageUrl ? "Use your prompt in other tools:" : "Or copy prompt to use in:"}
+                        Use prompt in other tools:
                       </p>
                       <AIToolLinks type="image" />
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-center">
+                  <div className="h-full flex items-center justify-center text-center py-12">
                     <div>
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                        <Sparkles className="w-8 h-8 text-slate-400" />
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center">
+                        <ImagePlus className="w-8 h-8 text-purple-400" />
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Your generated prompt or image will appear here
+                      <p className="text-sm font-medium text-foreground mb-1">
+                        Your image will appear here
                       </p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">
-                        Select a style and click Generate
+                      <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+                        {uploadedImage 
+                          ? "Pick a style and hit Generate, or describe a scene first"
+                          : "Upload a photo or describe what you want, then pick a style"
+                        }
                       </p>
                     </div>
                   </div>
