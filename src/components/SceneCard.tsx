@@ -7,6 +7,7 @@ interface SceneCardProps {
   scene: Scene;
   index: number;
   copied: boolean;
+  isGenerating?: boolean;
   onUpdate: (field: keyof Scene, value: string) => void;
   onGenerate: () => void;
   onCopy: () => void;
@@ -17,6 +18,7 @@ export function SceneCard({
   scene,
   index,
   copied,
+  isGenerating = false,
   onUpdate,
   onGenerate,
   onCopy,
@@ -79,11 +81,20 @@ export function SceneCard({
           <Button
             variant="soft"
             className="w-full"
-            disabled={!scene.description.trim()}
+            disabled={!scene.description.trim() || isGenerating}
             onClick={onGenerate}
           >
-            <Wand2 className="w-4 h-4" />
-            Generate Scene Template
+            {isGenerating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                Generating with AI...
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-4 h-4" />
+                Generate Scene Template
+              </>
+            )}
           </Button>
         </div>
       ) : (
