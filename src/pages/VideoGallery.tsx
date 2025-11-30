@@ -95,16 +95,24 @@ export default function VideoGallery() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Card className="p-8 text-center max-w-md">
           <Film className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <h2 className="text-xl font-semibold mb-2">Sign in Required</h2>
           <p className="text-muted-foreground mb-4">
             Please sign in to view your generated videos.
           </p>
-          <Link to="/auth">
-            <Button>Sign In</Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/auth">
+              <Button className="w-full sm:w-auto">Sign In</Button>
+            </Link>
+            <Link to="/">
+              <Button variant="outline" className="w-full sm:w-auto">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
         </Card>
       </div>
     );
