@@ -135,10 +135,19 @@ serve(async (req) => {
       );
     }
 
+    // Map user-friendly aspect ratios to Runway's resolution format
+    const ratioMap: Record<string, string> = {
+      '16:9': '1280:720',
+      '9:16': '720:1280',
+      '1:1': '960:960',
+    };
+    const mappedRatio = ratioMap[aspectRatio] || '1280:720';
+
     logStep('Processing video generation request', { 
       hasImage: !!(imageBase64 || imageUrl), 
       duration: duration || 5,
-      aspectRatio: aspectRatio || '16:9'
+      aspectRatio: aspectRatio || '16:9',
+      mappedRatio
     });
 
     // Determine the API endpoint and payload based on input type
@@ -167,9 +176,9 @@ serve(async (req) => {
       payload = {
         model: 'gen4.5',
         promptImage: promptImage,
-        promptText: prompt.slice(0, 512), // Max 512 characters
-        duration: duration || 5, // 5 or 10 seconds
-        ratio: aspectRatio || '16:9', // 16:9, 9:16, or 1:1
+        promptText: prompt.slice(0, 512),
+        duration: duration || 5,
+        ratio: mappedRatio,
         watermark: false,
       };
     } else {
@@ -180,7 +189,7 @@ serve(async (req) => {
         model: 'gen4.5',
         promptText: prompt.slice(0, 512),
         duration: duration || 5,
-        ratio: aspectRatio || '16:9',
+        ratio: mappedRatio,
         watermark: false,
       };
     }
