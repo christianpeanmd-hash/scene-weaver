@@ -174,7 +174,7 @@ serve(async (req) => {
       }
 
       payload = {
-        model: 'gen4.5',
+        model: 'gen4_turbo',
         promptImage: promptImage,
         promptText: prompt.slice(0, 512),
         duration: duration || 5,
@@ -186,7 +186,7 @@ serve(async (req) => {
       endpoint = `${RUNWAY_API_URL}/text_to_video`;
       
       payload = {
-        model: 'gen4.5',
+        model: 'gen4_turbo',
         promptText: prompt.slice(0, 512),
         duration: duration || 5,
         ratio: mappedRatio,
