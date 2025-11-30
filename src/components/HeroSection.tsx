@@ -1,6 +1,7 @@
 import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MemoableLogo } from "./MemoableLogo";
+import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 
 export type BuilderType = "video" | "image" | "infographic";
@@ -24,7 +25,8 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         <div className="flex items-center justify-between mb-6 animate-fade-in">
           <div className="flex-1" />
           <MemoableLogo size="lg" showSubtitle />
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end items-center gap-1">
+            <ThemeToggle />
             <Link
               to="/library"
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
