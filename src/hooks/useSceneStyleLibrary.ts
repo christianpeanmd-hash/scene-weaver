@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-const LOCAL_STORAGE_KEY = "memoable_scene_styles";
+export type StyleType = "video" | "image" | "infographic";
+
+const getLocalStorageKey = (type: StyleType) => `memoable_${type}_styles`;
 
 export interface SceneStyle {
   id: string;
@@ -12,9 +14,11 @@ export interface SceneStyle {
   createdAt: number;
   isPreset?: boolean;
   isShared?: boolean;
+  styleType?: StyleType;
 }
 
-export function useSceneStyleLibrary() {
+export function useSceneStyleLibrary(styleType: StyleType = "video") {
+  const LOCAL_STORAGE_KEY = getLocalStorageKey(styleType);
   const { user } = useAuth();
   const [savedStyles, setSavedStyles] = useState<SceneStyle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +32,7 @@ export function useSceneStyleLibrary() {
         const { data, error } = await supabase
           .from("library_scene_styles")
           .select("*")
+          .eq("style_type", styleType)
           .order("created_at", { ascending: false });
 
         if (!error && data) {
@@ -73,7 +78,7 @@ export function useSceneStyleLibrary() {
     }
 
     loadStyles();
-  }, [user]);
+  }, [user, styleType, LOCAL_STORAGE_KEY]);
 
   const migrateLocalStyles = async (localStyles: SceneStyle[], userId: string) => {
     for (const style of localStyles) {
@@ -83,6 +88,7 @@ export function useSceneStyleLibrary() {
         description: style.description,
         template: style.template,
         is_preset: style.isPreset || false,
+        style_type: styleType,
       });
     }
   };
@@ -116,6 +122,7 @@ export function useSceneStyleLibrary() {
             description: style.description,
             template: style.template,
             is_preset: style.isPreset || false,
+            style_type: styleType,
           })
           .select()
           .single();

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles, Heart, Image, Video, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,7 @@ import { TechyMemoLogo } from "@/components/MemoableLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCharacterLibrary } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironmentLibrary";
-import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
+import { useSceneStyleLibrary, SceneStyle, StyleType } from "@/hooks/useSceneStyleLibrary";
 import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
 import { useFavoritePhotos, FavoritePhoto } from "@/hooks/useFavoritePhotos";
 import { EnhancedCharacter } from "@/types/prompt-builder";
@@ -18,9 +18,41 @@ import { cn } from "@/lib/utils";
 export default function Library() {
   const { savedCharacters, saveCharacter, removeCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment, removeEnvironment } = useEnvironmentLibrary();
-  const { savedStyles, saveStyle, removeStyle } = useSceneStyleLibrary();
+  const { savedStyles: videoStyles, saveStyle: saveVideoStyle, removeStyle: removeVideoStyle } = useSceneStyleLibrary("video");
+  const { savedStyles: imageStyles, saveStyle: saveImageStyle, removeStyle: removeImageStyle } = useSceneStyleLibrary("image");
+  const { savedStyles: infographicStyles, saveStyle: saveInfographicStyle, removeStyle: removeInfographicStyle } = useSceneStyleLibrary("infographic");
   const { brands, saveBrand, updateBrand, removeBrand } = useBrandLibrary();
   const { photos, removePhoto, updatePhotoName, maxPhotos } = useFavoritePhotos();
+
+  const [styleTab, setStyleTab] = useState<StyleType>("video");
+
+  // Get current style data based on selected tab
+  const getCurrentStyles = () => {
+    switch (styleTab) {
+      case "image": return imageStyles;
+      case "infographic": return infographicStyles;
+      default: return videoStyles;
+    }
+  };
+  
+  const savedStyles = getCurrentStyles();
+  const allStylesCount = videoStyles.length + imageStyles.length + infographicStyles.length;
+
+  const saveStyle = (style: Omit<SceneStyle, "id" | "createdAt">) => {
+    switch (styleTab) {
+      case "image": return saveImageStyle(style);
+      case "infographic": return saveInfographicStyle(style);
+      default: return saveVideoStyle(style);
+    }
+  };
+
+  const removeStyle = (id: string) => {
+    switch (styleTab) {
+      case "image": return removeImageStyle(id);
+      case "infographic": return removeInfographicStyle(id);
+      default: return removeVideoStyle(id);
+    }
+  };
 
   const [editingCharacter, setEditingCharacter] = useState<EnhancedCharacter | null>(null);
   const [editingEnvironment, setEditingEnvironment] = useState<EnhancedEnvironment | null>(null);
@@ -166,9 +198,9 @@ export default function Library() {
             <TabsTrigger value="styles" className="gap-1.5">
               <Palette className="w-4 h-4" />
               <span className="hidden sm:inline">Styles</span>
-              {savedStyles.length > 0 && (
+              {allStylesCount > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
-                  {savedStyles.length}
+                  {allStylesCount}
                 </span>
               )}
             </TabsTrigger>
@@ -254,11 +286,42 @@ export default function Library() {
 
           {/* Scene Styles Tab */}
           <TabsContent value="styles" className="space-y-4">
+            {/* Style Type Tabs */}
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={styleTab === "video" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStyleTab("video")}
+                className="gap-1.5"
+              >
+                <Video className="w-4 h-4" />
+                Video ({videoStyles.length})
+              </Button>
+              <Button
+                variant={styleTab === "image" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStyleTab("image")}
+                className="gap-1.5"
+              >
+                <Image className="w-4 h-4" />
+                Image ({imageStyles.length})
+              </Button>
+              <Button
+                variant={styleTab === "infographic" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStyleTab("infographic")}
+                className="gap-1.5"
+              >
+                <FileText className="w-4 h-4" />
+                Infographic ({infographicStyles.length})
+              </Button>
+            </div>
+
             {savedStyles.length === 0 ? (
               <EmptyState
                 icon={Palette}
-                title="No scene styles saved"
-                description="Scene styles you save in the Video builder will appear here"
+                title={`No ${styleTab} styles saved`}
+                description={`Custom ${styleTab} styles you save will appear here`}
               />
             ) : (
               <div className="grid gap-4 md:grid-cols-2">

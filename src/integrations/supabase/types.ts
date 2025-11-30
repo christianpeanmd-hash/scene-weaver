@@ -246,6 +246,7 @@ export type Database = {
           id: string
           is_preset: boolean | null
           name: string
+          style_type: string
           team_id: string | null
           template: string
           updated_at: string
@@ -257,6 +258,7 @@ export type Database = {
           id?: string
           is_preset?: boolean | null
           name: string
+          style_type?: string
           team_id?: string | null
           template: string
           updated_at?: string
@@ -268,6 +270,7 @@ export type Database = {
           id?: string
           is_preset?: boolean | null
           name?: string
+          style_type?: string
           team_id?: string | null
           template?: string
           updated_at?: string

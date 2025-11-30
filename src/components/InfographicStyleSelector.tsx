@@ -1,9 +1,12 @@
-import { Check, FileText, Star, ChevronDown } from "lucide-react";
+import { Check, FileText, Star, ChevronDown, Pencil, Save } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { INFOGRAPHIC_STYLES, INFOGRAPHIC_CATEGORIES, InfographicStyle } from "@/data/infographic-styles";
 import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
+import { useSceneStyleLibrary } from "@/hooks/useSceneStyleLibrary";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Import preview images
 import explainerPreview from "@/assets/infographic-previews/explainer.jpg";
@@ -30,7 +33,9 @@ import visualAbstractPreview from "@/assets/infographic-previews/visual-abstract
 
 interface InfographicStyleSelectorProps {
   selectedStyle: InfographicStyle | null;
-  onSelectStyle: (style: InfographicStyle) => void;
+  onSelectStyle: (style: InfographicStyle | null) => void;
+  customStyleText?: string;
+  onCustomStyleChange?: (text: string) => void;
 }
 
 // Preview images for styles that have them
@@ -87,10 +92,17 @@ const STYLE_PREVIEWS: Record<string, {
   "mega-infographic": { bg: "from-violet-100 to-pink-100", accent: "bg-violet-500", layout: "custom" },
 };
 
-export function InfographicStyleSelector({ selectedStyle, onSelectStyle }: InfographicStyleSelectorProps) {
+export function InfographicStyleSelector({ 
+  selectedStyle, 
+  onSelectStyle,
+  customStyleText = "",
+  onCustomStyleChange 
+}: InfographicStyleSelectorProps) {
   const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
-  // Start with all categories collapsed, user expands what they want
+  const { savedStyles, saveStyle } = useSceneStyleLibrary("infographic");
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [styleName, setStyleName] = useState("");
   
   const favoriteStyles = INFOGRAPHIC_STYLES.filter((s) => favorites.infographic.includes(s.id));
 
@@ -117,12 +129,151 @@ export function InfographicStyleSelector({ selectedStyle, onSelectStyle }: Infog
           Infographic Style
           <span className="text-rose-500 text-xs">required</span>
         </label>
-        {selectedStyle && (
+        {selectedStyle && !isCustomMode && (
           <p className="text-sm text-amber-600 mt-1">Selected: {selectedStyle.name}</p>
+        )}
+        {isCustomMode && customStyleText && (
+          <p className="text-sm text-amber-600 mt-1">Using: Custom Style</p>
         )}
       </div>
 
       <div className="p-3 bg-muted/30 space-y-3">
+        {/* Custom Style Section */}
+        <div>
+          <button
+            onClick={() => setCollapsedCategories(prev => {
+              const next = new Set(prev);
+              if (next.has("custom")) {
+                next.delete("custom");
+              } else {
+                next.add("custom");
+              }
+              return next;
+            })}
+            className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors py-1"
+          >
+            <span className="flex items-center gap-1.5">
+              <Pencil className="w-3.5 h-3.5" />
+              Custom Style
+            </span>
+            <ChevronDown className={cn(
+              "w-3.5 h-3.5 transition-transform",
+              !collapsedCategories.has("custom") && "rotate-180"
+            )} />
+          </button>
+          
+          {!collapsedCategories.has("custom") && (
+            <div className="space-y-2 animate-fade-in mb-3">
+              <textarea
+                value={customStyleText}
+                onChange={(e) => {
+                  onCustomStyleChange?.(e.target.value);
+                  if (e.target.value) {
+                    setIsCustomMode(true);
+                    onSelectStyle(null);
+                  } else {
+                    setIsCustomMode(false);
+                  }
+                }}
+                placeholder="Describe your infographic style... e.g., 'Clean minimalist design with a blue/white color scheme, sans-serif typography, and simple iconography'"
+                rows={3}
+                className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all resize-none"
+              />
+              
+              {customStyleText && customStyleText.length > 20 && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={styleName}
+                    onChange={(e) => setStyleName(e.target.value)}
+                    placeholder="Style name..."
+                    className="flex-1 px-3 py-2 bg-white border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400"
+                  />
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    disabled={!styleName.trim()}
+                    onClick={async () => {
+                      await saveStyle({
+                        name: styleName.trim(),
+                        description: customStyleText.slice(0, 100),
+                        template: customStyleText,
+                      });
+                      toast.success(`Saved "${styleName}" to your style library`);
+                      setStyleName("");
+                    }}
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    Save
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Saved Custom Styles */}
+        {savedStyles.length > 0 && (
+          <div>
+            <button
+              onClick={() => setCollapsedCategories(prev => {
+                const next = new Set(prev);
+                if (next.has("saved")) {
+                  next.delete("saved");
+                } else {
+                  next.add("saved");
+                }
+                return next;
+              })}
+              className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors py-1"
+            >
+              <span className="flex items-center gap-1.5">
+                <Save className="w-3.5 h-3.5" />
+                Saved Styles
+                <span className="text-muted-foreground/60">({savedStyles.length})</span>
+              </span>
+              <ChevronDown className={cn(
+                "w-3.5 h-3.5 transition-transform",
+                !collapsedCategories.has("saved") && "rotate-180"
+              )} />
+            </button>
+            
+            {!collapsedCategories.has("saved") && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-fade-in mb-3">
+                {savedStyles.map((style) => {
+                  const isSelected = isCustomMode && customStyleText === style.template;
+                  return (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        setIsCustomMode(true);
+                        onSelectStyle(null);
+                        onCustomStyleChange?.(style.template);
+                      }}
+                      className={cn(
+                        "p-2 rounded-lg text-left transition-all",
+                        isSelected
+                          ? "bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400"
+                          : "bg-card border border-border hover:border-amber-300 hover:bg-amber-50/50"
+                      )}
+                    >
+                      <div className="w-full h-10 rounded-md mb-1 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                        <Pencil className="w-3 h-3 text-amber-400" />
+                      </div>
+                      <span className={cn(
+                        "text-xs font-medium block truncate",
+                        isSelected ? "text-amber-700" : "text-foreground"
+                      )}>
+                        {style.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Favorites Section */}
         {favoriteStyles.length > 0 && (
           <div>
@@ -135,9 +286,13 @@ export function InfographicStyleSelector({ selectedStyle, onSelectStyle }: Infog
                 <StyleButton
                   key={style.id}
                   style={style}
-                  isSelected={selectedStyle?.id === style.id}
+                  isSelected={selectedStyle?.id === style.id && !isCustomMode}
                   isFavorite={true}
-                  onSelect={() => onSelectStyle(style)}
+                  onSelect={() => {
+                    setIsCustomMode(false);
+                    onSelectStyle(style);
+                    onCustomStyleChange?.("");
+                  }}
                   onToggleFavorite={() => toggleFavorite("infographic", style.id)}
                 />
               ))}

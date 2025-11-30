@@ -1,4 +1,4 @@
-import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library, MapPin } from "lucide-react";
+import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library, MapPin, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CharacterCard } from "@/components/CharacterCard";
@@ -7,6 +7,7 @@ import { PresetPicker } from "@/components/PresetPicker";
 import { PhotoToAnchor } from "@/components/PhotoToAnchor";
 import { Character, EnhancedCharacter, Environment, EnhancedEnvironment, DURATIONS } from "@/types/prompt-builder";
 import { CHARACTER_PRESETS, ENVIRONMENT_PRESETS, PresetAnchor } from "@/data/preset-anchors";
+import { VIDEO_STYLE_PRESETS, VideoStylePreset } from "@/data/video-style-presets";
 import { isCharacterComplete } from "@/lib/template-generator";
 import { cn } from "@/lib/utils";
 
@@ -148,11 +149,36 @@ export function SetupStep({
           Video Style
           <span className="text-muted-foreground text-xs font-normal">optional</span>
         </label>
+        
+        {/* Style Presets */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {VIDEO_STYLE_PRESETS.map((preset) => {
+            const isSelected = videoStyle === preset.prompt;
+            const Icon = preset.icon;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => setVideoStyle(isSelected ? "" : preset.prompt)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm",
+                  isSelected
+                    ? "border-primary bg-teal-50 text-primary"
+                    : "border-border hover:border-primary/50 hover:bg-teal-50/50"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {preset.name}
+                {isSelected && <Check className="w-3 h-3 ml-1" />}
+              </button>
+            );
+          })}
+        </div>
+        
         <input
           type="text"
           value={videoStyle}
           onChange={(e) => setVideoStyle(e.target.value)}
-          placeholder="e.g., Mockumentary, vlog confessional, commercial parody..."
+          placeholder="Or describe your own style..."
           className="w-full px-4 py-3 bg-slate-50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
         />
       </Card>
