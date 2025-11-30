@@ -1,4 +1,4 @@
-import { Video, Camera, Tv, Film, Clapperboard, Sparkles, Zap, Heart, GraduationCap, Laugh, Ghost, Palette, Music, Swords } from "lucide-react";
+import { Video, Camera, Tv, Film, Clapperboard, Sparkles, Zap, Heart, GraduationCap, Laugh, Ghost, Palette, Music, Swords, Rewind, Volume2, TreePine, Search, Crown, Rocket, Baby, Skull, Stars, Wand2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface VideoStylePreset {
@@ -107,5 +107,75 @@ export const VIDEO_STYLE_PRESETS: VideoStylePreset[] = [
     icon: GraduationCap,
     description: "Clear, informative explainer style",
     prompt: "Educational style with clean well-lit framing, presenter-facing camera, clear visual hierarchy, animated graphics overlay areas, steady tripod shots, talking-head with B-roll cutaways, neutral background, professional but approachable tone",
+  },
+  {
+    id: "retro-80s",
+    name: "Retro 80s",
+    icon: Rewind,
+    description: "Neon-soaked synthwave nostalgia",
+    prompt: "1980s retro style with neon pink and cyan color palette, VHS scan lines and tracking artifacts, chrome text effects, grid landscapes, lens flares, synthesizer-driven aesthetic, Miami Vice vibes",
+  },
+  {
+    id: "silent-film",
+    name: "Silent Film",
+    icon: Volume2,
+    description: "Classic black & white era",
+    prompt: "Silent film era style with black and white footage, film scratches and dust, vignette edges, exaggerated theatrical acting, intertitle cards for dialogue, piano accompaniment feel, 18fps slightly sped-up motion",
+  },
+  {
+    id: "nature-doc",
+    name: "Nature Documentary",
+    icon: TreePine,
+    description: "David Attenborough wildlife style",
+    prompt: "Nature documentary style with telephoto lens compression, patient observational shots, golden hour wildlife lighting, hushed narrator pacing, slow zooms on subjects, ambient nature sounds, BBC Earth aesthetic",
+  },
+  {
+    id: "true-crime",
+    name: "True Crime",
+    icon: Search,
+    description: "Investigation mystery aesthetic",
+    prompt: "True crime documentary style with dramatic reenactments, evidence photos with zoom, interview talking heads with dark backgrounds, tense string music, newspaper clipping overlays, grainy surveillance footage flashbacks",
+  },
+  {
+    id: "fairytale",
+    name: "Fairytale",
+    icon: Wand2,
+    description: "Magical storybook enchantment",
+    prompt: "Fairytale style with soft dreamy glow, magical particle effects, saturated jewel-tone colors, storybook framing, enchanted forest atmosphere, whimsical camera movements, Disney-inspired warmth",
+  },
+  {
+    id: "sci-fi-epic",
+    name: "Sci-Fi Epic",
+    icon: Rocket,
+    description: "Grand space opera visuals",
+    prompt: "Science fiction epic style with vast establishing shots, sleek futuristic design, blue and orange contrast, lens flares, holographic UI elements, epic orchestral pacing, Blade Runner meets Star Wars aesthetic",
+  },
+  {
+    id: "stop-motion",
+    name: "Stop Motion",
+    icon: Baby,
+    description: "Handcrafted claymation feel",
+    prompt: "Stop motion animation style with visible frame-by-frame movement, slight texture wobble, handcrafted miniature set feel, warm practical lighting, Wes Anderson color palette, Laika Studios craftsmanship",
+  },
+  {
+    id: "noir",
+    name: "Film Noir",
+    icon: Skull,
+    description: "1940s detective mystery",
+    prompt: "Film noir style with high contrast black and white, venetian blind shadow patterns, cigarette smoke, rain-slicked streets, femme fatale framing, jazz undertones, cynical voiceover aesthetic",
+  },
+  {
+    id: "fantasy-epic",
+    name: "Fantasy Epic",
+    icon: Crown,
+    description: "Lord of the Rings grandeur",
+    prompt: "Fantasy epic style with sweeping landscape shots, medieval castle atmosphere, golden hour lighting, dramatic battle framing, orchestral swell pacing, practical armor and weapons, New Zealand vista aesthetic",
+  },
+  {
+    id: "dreamy-surreal",
+    name: "Dreamy Surreal",
+    icon: Stars,
+    description: "Ethereal otherworldly visuals",
+    prompt: "Surrealist dream style with impossible geometry, floating objects, soft focus transitions, non-linear time, pastel and neon color contrasts, underwater movement on land, Salvador Dali meets Terrence Malick",
   },
 ];

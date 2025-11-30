@@ -1,4 +1,4 @@
-import { Ghost, Building2, Rocket, Crown, Sparkles, TreePine, Home, Mountain, Palmtree, Factory, Coffee, Warehouse, Castle, Train, Tent, ShoppingBag, Plane, UtensilsCrossed } from "lucide-react";
+import { Ghost, Building2, Rocket, Crown, Sparkles, TreePine, Home, Mountain, Palmtree, Factory, Coffee, Warehouse, Castle, Train, Tent, ShoppingBag, Plane, UtensilsCrossed, Bird, Gift, Skull, Anchor, Drama, Star, Flame, Snowflake, Glasses, Sword, Gem, Waves, Wine, Radiation, Globe, Moon, Pyramid } from "lucide-react";
 
 export interface PresetAnchor {
   id: string;
@@ -108,6 +108,106 @@ export const CHARACTER_PRESETS: PresetAnchor[] = [
 **Look**: Late 30s, dark circles under eyes, coffee-stained shirt. Hair in hasty ponytail or uncombed. Mysterious stains on shoulder. Diaper bag doubling as purse/briefcase. Phone with cracked screen, kid's stickers on case.
 **Demeanor**: Speaks in half-sentences, distracted. Mumbles children's song lyrics unconsciously. Startles awake from micro-naps. Overshares about child's bodily functions. Forgets own age.
 **Role**: Sleep-deprived parent operating on autopilot and cold coffee.`,
+  },
+  {
+    id: "thanksgiving-turkey",
+    name: "Thanksgiving Turkey",
+    icon: "Bird",
+    category: "character",
+    template: `**Character Anchor — Tom the Turkey**
+**Look**: Plump bronze-feathered turkey with magnificent tail fan displaying iridescent colors. Bright red wattle and snood wobbling with each movement. Comically oversized drumsticks, dignified chest puff. Tiny pilgrim hat perched between feathers, occasionally askew.
+**Demeanor**: Perpetually nervous during November, suspiciously eyes any mention of "dinner." Struts with forced confidence that collapses into panic at oven sounds. Surprisingly articulate when advocating for vegetarian alternatives.
+**Role**: Holiday mascot desperately trying to rebrand Thanksgiving as "Tofurkey Day."`,
+  },
+  {
+    id: "santa-claus",
+    name: "Santa Claus",
+    icon: "Gift",
+    category: "character",
+    template: `**Character Anchor — Kris Kringle**
+**Look**: Jolly rotund figure with snow-white beard flowing to mid-chest, rosy cheeks glowing. Iconic red velvet suit with white fur trim, black leather belt with ornate gold buckle. Half-moon spectacles perched on button nose. Twinkling blue eyes with permanent crow's feet from smiling.
+**Demeanor**: Boundlessly cheerful with deep belly laughs that shake his frame. Speaks with warm wisdom, remembers everyone's name. Occasionally overwhelmed by modern Christmas commercialism. Cookie enthusiast, milk connoisseur.
+**Role**: The legendary gift-giver navigating modern holiday chaos with timeless cheer.`,
+  },
+  {
+    id: "einstein",
+    name: "Albert Einstein",
+    icon: "Glasses",
+    category: "character",
+    template: `**Character Anchor — The Professor**
+**Look**: Wild white hair defying gravity in all directions. Bushy mustache, kind deeply-lined face with penetrating brown eyes. Rumpled cardigan over collared shirt, no tie. Often sockless in worn leather shoes. Chalk dust on fingers, pipe occasionally in hand.
+**Demeanor**: Absent-minded about daily life, laser-focused on ideas. Speaks with German accent, uses simple analogies for complex concepts. Playful sense of humor, sticks tongue out when photographed. Humble despite genius.
+**Role**: History's most famous physicist explaining the universe through everyday examples.`,
+  },
+  {
+    id: "cleopatra",
+    name: "Cleopatra",
+    icon: "Crown",
+    category: "character",
+    template: `**Character Anchor — Queen of the Nile**
+**Look**: Striking Egyptian beauty with kohl-lined almond eyes, golden headdress with cobra. Black hair in elaborate braids adorned with gold beads. Flowing white linen gown with golden collar necklace, asp armband. Regal posture, chin always elevated.
+**Demeanor**: Commands attention without raising voice. Strategic mind behind seductive exterior. Speaks multiple languages fluently. Alternates between deadly serious and wickedly playful. Treats servants kindly, enemies ruthlessly.
+**Role**: Ancient world's most powerful woman navigating politics, romance, and ruling an empire.`,
+  },
+  {
+    id: "napoleon",
+    name: "Napoleon Bonaparte",
+    icon: "Sword",
+    category: "character",
+    template: `**Character Anchor — The Emperor**
+**Look**: Compact 5'6" frame with commanding presence. Bicorne hat worn sideways, grey military coat over white waistcoat. Hand perpetually tucked in jacket. Sharp angular face, intense grey eyes, slightly receding hairline. Impeccable posture despite short stature.
+**Demeanor**: Restless energy, paces while thinking. Speaks rapidly with Corsican-French accent. Obsessed with legacy and maps. Surprisingly charming in person, terrifying in battle. Complex about height jokes.
+**Role**: Military genius and emperor whose ambition reshaped Europe.`,
+  },
+  {
+    id: "caveman",
+    name: "Caveman",
+    icon: "Flame",
+    category: "character",
+    template: `**Character Anchor — Grug the Prehistoric**
+**Look**: Barrel-chested with heavily muscled arms, covered in coarse dark hair. Prominent brow ridge, flat nose, strong jaw. Wears rough animal furs tied with vine rope. Carries wooden club everywhere. Dirt-streaked skin, calloused hands and feet.
+**Demeanor**: Confused by modern technology, fascinated by fire. Communicates with grunts and surprisingly expressive hand gestures. Gentle with animals, protective of tribe. Tries new foods by smashing them first.
+**Role**: Stone Age survivor discovering the bewildering modern world.`,
+  },
+  {
+    id: "pirate-captain",
+    name: "Pirate Captain",
+    icon: "Anchor",
+    category: "character",
+    template: `**Character Anchor — Captain Blackwood**
+**Look**: Weathered face with dramatic scar across left eye, covered by black eyepatch. Tricorn hat with feather, long dark coat over billowing white shirt. Multiple rings, gold tooth glinting. Wild beard with beads and small bones woven in. Peg leg that clicks on wood.
+**Demeanor**: Boisterous and theatrical, speaks in nautical metaphors. Surprisingly well-read and philosophical when drunk. Loyal to crew, merciless to enemies. Has complicated relationship with the sea.
+**Role**: Legendary buccaneer seeking treasure and freedom on the high seas.`,
+  },
+  {
+    id: "alien-ambassador",
+    name: "Alien Ambassador",
+    icon: "Star",
+    category: "character",
+    template: `**Character Anchor — Zyx-7 of the Galactic Council**
+**Look**: Tall slender grey being with oversized almond eyes (no visible iris, just deep black). Smooth hairless head with subtle bioluminescent patterns. Long fingers with extra joint. Wears iridescent diplomatic robes that shift color with mood. Small translation device on collar.
+**Demeanor**: Struggles with human idioms (takes everything literally). Fascinated by mundane Earth activities. Speaks in formal diplomatic tone, occasionally breaks into confused questions. Terrified of cats for unexplained reasons.
+**Role**: Intergalactic diplomat trying to understand humanity's chaotic species.`,
+  },
+  {
+    id: "vampire",
+    name: "Elegant Vampire",
+    icon: "Moon",
+    category: "character",
+    template: `**Character Anchor — Count Vladislav**
+**Look**: Pale aristocratic features with sharp cheekbones, slicked-back dark hair with widow's peak. Red-lined black cape over immaculate Victorian evening wear. Elongated canines visible when speaking. Hypnotic dark eyes with occasional red glint. Silver rings on long fingers.
+**Demeanor**: Old-world manners, speaks with Transylvanian accent. Dramatically formal, offended by garlic mentions. Struggles with modern technology, misses the "old days." Surprisingly lonely, seeks connection.
+**Role**: Centuries-old immortal adapting to modern dating and social media.`,
+  },
+  {
+    id: "pharaoh",
+    name: "Egyptian Pharaoh",
+    icon: "Pyramid",
+    category: "character",
+    template: `**Character Anchor — Ramesses the Great**
+**Look**: Tall regal figure with golden Nemes headdress and Uraeus cobra crown. Heavy kohl around piercing eyes, false ceremonial beard attached. Bare bronzed chest with gold pectoral collar. White pleated shendyt, golden sandals. Crook and flail crossed over chest.
+**Demeanor**: Speaks in third person about himself. Expects worship, confused when not received. Fascinated by building and legacy. Surprisingly curious about other cultures. Dramatic hand gestures.
+**Role**: God-king of ancient Egypt ruling the most powerful civilization on Earth.`,
   },
 ];
 
@@ -255,6 +355,94 @@ export const ENVIRONMENT_PRESETS: PresetAnchor[] = [
 **Audio Atmosphere**: Sizzling grills, orders being called, Latin music from one truck, laughter, cash registers, truck generators humming.
 **Props**: Paper food boats, plastic forks, napkin dispensers, condiment bottles, hand-written specials signs, tip jars, QR code payment signs.`,
   },
+  {
+    id: "mars-colony",
+    name: "Mars Colony",
+    icon: "Rocket",
+    category: "environment",
+    template: `**Environment Anchor — Red Planet Habitat**
+**Setting**: Pressurized dome habitat on rusty Martian surface. Hydroponic farms glowing green against red landscape outside. Modular living quarters with recycled air systems. Rovers parked in airlock bay. Earth visible as tiny blue dot through dome.
+**Lighting**: Harsh orange-red sunlight filtered through dust, artificial blue-white grow lights, status indicator LEDs everywhere.
+**Audio Atmosphere**: Constant air recycler hum, pressure differential warnings, radio communications, boots on metal grating, distant drilling operations.
+**Props**: Space suits on racks, freeze-dried food packets, tablet computers, terraforming plans on wall, family photos from Earth, Martian rock samples.`,
+  },
+  {
+    id: "haunted-mansion",
+    name: "Haunted Mansion",
+    icon: "Ghost",
+    category: "environment",
+    template: `**Environment Anchor — Victorian Horror House**
+**Setting**: Decrepit Victorian mansion with peeling wallpaper revealing older patterns beneath. Grand staircase with missing banisters. Dust-covered furniture under white sheets. Cracked mirrors, portraits with eyes that seem to follow. Cobwebs draped like curtains.
+**Lighting**: Flickering candlelight, moonlight through broken windows, shadows that move independently, sudden lightning flashes.
+**Audio Atmosphere**: Creaking floorboards, distant whispers, clock chiming wrong hours, wind through gaps, chains rattling, music box playing alone.
+**Props**: Ouija board, antique dolls, rusty keys, faded photographs, bloody handprint, candelabra, mysterious locked door.`,
+  },
+  {
+    id: "wild-west-saloon",
+    name: "Wild West Saloon",
+    icon: "Drama",
+    category: "environment",
+    template: `**Environment Anchor — Frontier Watering Hole**
+**Setting**: Dusty wooden saloon with swinging doors. Long bar with brass rail, shelves of whiskey bottles. Player piano in corner, poker tables with cowboys. Wanted posters on walls, spittoons on floor. Saloon girl on balcony overlooking main floor.
+**Lighting**: Harsh afternoon sun through dirty windows, kerosene lamp glow, dusty light beams, warm tungsten tones.
+**Audio Atmosphere**: Piano ragtime, poker chips clinking, boots on wooden floor, glasses clinking, distant gunshots, horse whinnies outside.
+**Props**: Shot glasses, playing cards, sheriff's badge, six-shooter, cowboy hats, lasso, gold nuggets, tobacco spit bucket.`,
+  },
+  {
+    id: "underwater-kingdom",
+    name: "Underwater Kingdom",
+    icon: "Waves",
+    category: "environment",
+    template: `**Environment Anchor — Atlantean Palace**
+**Setting**: Magnificent coral palace with mother-of-pearl walls. Bioluminescent plants lighting pathways. Schools of tropical fish swimming through open archways. Giant clam thrones, kelp forest gardens. Merpeople swimming past elegant architecture.
+**Lighting**: Filtered blue-green sunlight from surface, bioluminescent glow, shimmering caustic light patterns dancing on everything.
+**Audio Atmosphere**: Muffled underwater sounds, whale songs, bubbles rising, current whooshing, distant dolphin clicks, shell wind chimes.
+**Props**: Trident, treasure chests, shipwreck artifacts, pearl jewelry, sea glass, ancient maps on waterproof material, coral formations.`,
+  },
+  {
+    id: "1920s-speakeasy",
+    name: "1920s Speakeasy",
+    icon: "Wine",
+    category: "environment",
+    template: `**Environment Anchor — Prohibition Jazz Club**
+**Setting**: Hidden basement club behind fake bookshelf door. Art deco styling with geometric patterns. Intimate booths with velvet curtains. Jazz band on small stage, cigarette smoke hazing the air. Bar serving drinks in teacups to maintain cover.
+**Lighting**: Warm amber glow, stage spotlight, candles on tables, neon "Open" sign backwards (from inside), dramatic shadows.
+**Audio Atmosphere**: Live jazz music, ice in glasses, whispered conversations, laughter, distant police sirens, flapper heels clicking.
+**Props**: Bootleg liquor bottles, feather boas, Tommy guns hidden under tables, pearl necklaces, fedoras, vintage microphone, cigarette holders.`,
+  },
+  {
+    id: "post-apocalyptic",
+    name: "Post-Apocalyptic Wasteland",
+    icon: "Radiation",
+    category: "environment",
+    template: `**Environment Anchor — Nuclear Aftermath**
+**Setting**: Destroyed city with crumbling skyscrapers and abandoned cars. Overgrown vegetation reclaiming streets. Makeshift survivor camps with corrugated metal shelters. Rusted playground equipment, faded billboards. Ominous clouds on horizon.
+**Lighting**: Sickly yellow-green sky, harsh shadows, dust particles in air, occasional lightning in distance, campfire warmth at night.
+**Audio Atmosphere**: Wind whistling through ruins, distant thunder, Geiger counter clicking, metal creaking, wild dogs howling.
+**Props**: Gas masks, makeshift weapons, canned food, water purification tablets, radiation suits, faded photographs, handwritten survivor notes.`,
+  },
+  {
+    id: "ancient-rome",
+    name: "Roman Colosseum",
+    icon: "Sword",
+    category: "environment",
+    template: `**Environment Anchor — Gladiatorial Arena**
+**Setting**: Massive stone amphitheater filled with roaring crowds in togas. Sandy arena floor stained with combat. Emperor's box with purple canopy. Gladiators emerging from underground tunnels. Lions pacing in cages below.
+**Lighting**: Bright Mediterranean sun, shadows from awning system, torch light in tunnels, dust clouds catching light.
+**Audio Atmosphere**: Crowd roaring and chanting, metal clashing, lions roaring, trumpets announcing, Latin shouting, feet stomping on stone.
+**Props**: Gladius swords, tridents and nets, shields with Roman eagles, laurel wreaths, emperor's thumb gesture, chariot wheels.`,
+  },
+  {
+    id: "north-pole-workshop",
+    name: "Santa's Workshop",
+    icon: "Gift",
+    category: "environment",
+    template: `**Environment Anchor — North Pole Toy Factory**
+**Setting**: Cozy wooden workshop filled with busy elves at workbenches. Conveyor belts carrying wrapped presents. Giant list of nice/naughty names on wall. Reindeer stable visible through frosty window. Hot cocoa station in corner.
+**Lighting**: Warm golden glow from fireplace, twinkling Christmas lights, snow glow through windows, candy cane strip lights.
+**Audio Atmosphere**: Hammering and sawing, jingling bells, elves singing carols, reindeer hooves on roof, distant sleigh bells, crackling fire.
+**Props**: Half-finished toys, wrapped presents, candy canes, nice/naughty list scroll, snow globes, elf shoes with bells, hot cocoa mugs.`,
+  },
 ];
 
 export const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -276,4 +464,21 @@ export const ICON_MAP: Record<string, React.ComponentType<{ className?: string }
   ShoppingBag,
   Plane,
   UtensilsCrossed,
+  Bird,
+  Gift,
+  Skull,
+  Anchor,
+  Drama,
+  Star,
+  Flame,
+  Snowflake,
+  Glasses,
+  Sword,
+  Gem,
+  Waves,
+  Wine,
+  Radiation,
+  Globe,
+  Moon,
+  Pyramid,
 };
