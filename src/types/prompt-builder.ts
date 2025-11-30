@@ -42,7 +42,8 @@ export interface Scene {
   content: string;
   selectedCharacterIds?: (number | string)[];
   selectedEnvironmentId?: number | string;
-  selectedStyleId?: string;
+  selectedStyleIds?: string[];
+  selectedStyleId?: string; // Deprecated, use selectedStyleIds
   styleTemplate?: string;
 }
 
