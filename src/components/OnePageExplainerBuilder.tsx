@@ -59,6 +59,7 @@ const USE_CASES = [
   { value: "clinical-overview", label: "Clinical program overview" },
   { value: "product-explainer", label: "Product / feature explainer" },
   { value: "patient-friendly", label: "Patient-friendly explainer" },
+  { value: "research-explainer", label: "Research explainer" },
   { value: "custom", label: "Custom (other)" },
 ];
 
