@@ -156,6 +156,21 @@ export default function About() {
             </div>
           </section>
 
+          {/* Mid-page CTA */}
+          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-500/10 via-emerald-500/5 to-transparent border border-teal-500/20 p-8 text-center">
+            <div className="relative z-10">
+              <Button asChild size="lg" className="bg-gradient-to-r from-teal-500 to-emerald-500 text-white hover:from-teal-600 hover:to-emerald-600 shadow-lg">
+                <Link to="/auth">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Start creating with TechyMemo
+                </Link>
+              </Button>
+              <p className="text-sm text-muted-foreground mt-3">
+                Explore the tool, then pick a plan that fits
+              </p>
+            </div>
+          </section>
+
           {/* Section 4 */}
           <section className="space-y-4">
             <div className="flex items-center gap-3 mb-2">
