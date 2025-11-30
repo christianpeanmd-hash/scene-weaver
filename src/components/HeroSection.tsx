@@ -59,6 +59,9 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
           <TechyMemoLogo size="md" />
           
           <div className="hidden md:flex items-center gap-6 text-sm">
+            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </Link>
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
               How it works
             </a>

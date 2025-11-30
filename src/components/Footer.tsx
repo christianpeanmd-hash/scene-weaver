@@ -12,6 +12,9 @@ export function Footer() {
           <span className="text-sm font-medium text-foreground">Techy Memo</span>
 
           <nav className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+            <Link to="/about" className="hover:text-foreground transition-colors">
+              About
+            </Link>
             <Link to="/library" className="hover:text-foreground transition-colors">
               Library
             </Link>
