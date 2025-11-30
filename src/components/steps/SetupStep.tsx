@@ -1,10 +1,14 @@
-import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library } from "lucide-react";
+import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CharacterCard } from "@/components/CharacterCard";
-import { Character, EnhancedCharacter, DURATIONS } from "@/types/prompt-builder";
+import { EnvironmentCard } from "@/components/EnvironmentCard";
+import { PresetPicker } from "@/components/PresetPicker";
+import { Character, EnhancedCharacter, Environment, EnhancedEnvironment, DURATIONS } from "@/types/prompt-builder";
+import { CHARACTER_PRESETS, ENVIRONMENT_PRESETS, PresetAnchor } from "@/data/preset-anchors";
 import { isCharacterComplete } from "@/lib/template-generator";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SetupStepProps {
   concept: string;
@@ -14,15 +18,25 @@ interface SetupStepProps {
   videoStyle: string;
   setVideoStyle: (value: string) => void;
   characters: Character[];
+  environments: Environment[];
   expandedChar: number | null;
   setExpandedChar: (value: number | null) => void;
+  expandedEnv: number | null;
+  setExpandedEnv: (value: number | null) => void;
   onAddCharacter: () => void;
   onAddCharacterFromLibrary: (character: EnhancedCharacter) => void;
+  onAddCharacterFromPreset: (preset: PresetAnchor) => void;
   onUpdateCharacter: (id: number, field: keyof Character, value: string) => void;
   onRemoveCharacter: (id: number) => void;
+  onAddEnvironment: () => void;
+  onAddEnvironmentFromLibrary: (environment: EnhancedEnvironment) => void;
+  onAddEnvironmentFromPreset: (preset: PresetAnchor) => void;
+  onUpdateEnvironment: (id: number, field: keyof Environment, value: string) => void;
+  onRemoveEnvironment: (id: number) => void;
   onGenerate: () => void;
   isGenerating: boolean;
   savedCharacters: EnhancedCharacter[];
+  savedEnvironments: EnhancedEnvironment[];
 }
 
 export function SetupStep({
@@ -33,23 +47,37 @@ export function SetupStep({
   videoStyle,
   setVideoStyle,
   characters,
+  environments,
   expandedChar,
   setExpandedChar,
+  expandedEnv,
+  setExpandedEnv,
   onAddCharacter,
   onAddCharacterFromLibrary,
+  onAddCharacterFromPreset,
   onUpdateCharacter,
   onRemoveCharacter,
+  onAddEnvironment,
+  onAddEnvironmentFromLibrary,
+  onAddEnvironmentFromPreset,
+  onUpdateEnvironment,
+  onRemoveEnvironment,
   onGenerate,
   isGenerating,
   savedCharacters,
+  savedEnvironments,
 }: SetupStepProps) {
   const filledCharacters = characters.filter(isCharacterComplete).length;
+  const filledEnvironments = environments.filter(e => e.name && e.setting).length;
   const isReady = concept.trim().length > 0;
   const showWarning = characters.length > 2;
 
-  // Filter out characters already added
-  const availableFromLibrary = savedCharacters.filter(
+  // Filter out characters/environments already added
+  const availableCharsFromLibrary = savedCharacters.filter(
     saved => !characters.some(c => c.name.toLowerCase() === saved.name.toLowerCase())
+  );
+  const availableEnvsFromLibrary = savedEnvironments.filter(
+    saved => !environments.some(e => e.name.toLowerCase() === saved.name.toLowerCase())
   );
 
   return (
@@ -162,7 +190,7 @@ export function SetupStep({
         )}
 
         <div className="p-4 bg-slate-50/50 space-y-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <button
               onClick={onAddCharacter}
               className="flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors"
@@ -170,21 +198,24 @@ export function SetupStep({
               <Plus className="w-4 h-4" />
               Add new character
             </button>
-            
-            {availableFromLibrary.length > 0 && (
-              <span className="text-muted-foreground text-sm">or</span>
-            )}
           </div>
 
+          {/* Character Presets */}
+          <PresetPicker
+            presets={CHARACTER_PRESETS}
+            onSelectPreset={onAddCharacterFromPreset}
+            label="Start from preset template"
+          />
+
           {/* Character Library Quick Pick */}
-          {availableFromLibrary.length > 0 && (
+          {availableCharsFromLibrary.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Library className="w-3 h-3" />
-                Quick add from library:
+                Quick add from your library:
               </div>
               <div className="flex flex-wrap gap-2">
-                {availableFromLibrary.slice(0, 5).map((char) => (
+                {availableCharsFromLibrary.slice(0, 5).map((char) => (
                   <button
                     key={char.id}
                     onClick={() => onAddCharacterFromLibrary(char)}
@@ -193,9 +224,9 @@ export function SetupStep({
                     {char.name}
                   </button>
                 ))}
-                {availableFromLibrary.length > 5 && (
+                {availableCharsFromLibrary.length > 5 && (
                   <span className="px-3 py-1.5 text-sm text-muted-foreground">
-                    +{availableFromLibrary.length - 5} more
+                    +{availableCharsFromLibrary.length - 5} more
                   </span>
                 )}
               </div>
@@ -208,6 +239,87 @@ export function SetupStep({
               <p className="text-sm text-amber-700">
                 AI generators work best with 1–2 characters.
               </p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Environments - Optional */}
+      <Card className="overflow-hidden">
+        <div className="p-5 border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <MapPin className="w-4 h-4 text-primary" />
+              Environment
+              <span className="text-muted-foreground text-xs font-normal">optional</span>
+            </label>
+            {filledEnvironments > 0 && (
+              <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                {filledEnvironments} defined
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Define your setting for consistent scene locations
+          </p>
+        </div>
+
+        {environments.length > 0 && (
+          <div className="divide-y divide-border/50">
+            {environments.map((env) => (
+              <EnvironmentCard
+                key={env.id}
+                environment={env}
+                isExpanded={expandedEnv === env.id}
+                onToggle={() => setExpandedEnv(expandedEnv === env.id ? null : env.id)}
+                onUpdate={(field, value) => onUpdateEnvironment(env.id, field, value)}
+                onRemove={() => onRemoveEnvironment(env.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="p-4 bg-slate-50/50 space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <button
+              onClick={onAddEnvironment}
+              className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add new environment
+            </button>
+          </div>
+
+          {/* Environment Presets */}
+          <PresetPicker
+            presets={ENVIRONMENT_PRESETS}
+            onSelectPreset={onAddEnvironmentFromPreset}
+            label="Start from preset template"
+          />
+
+          {/* Environment Library Quick Pick */}
+          {availableEnvsFromLibrary.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Library className="w-3 h-3" />
+                Quick add from your library:
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {availableEnvsFromLibrary.slice(0, 5).map((env) => (
+                  <button
+                    key={env.id}
+                    onClick={() => onAddEnvironmentFromLibrary(env)}
+                    className="px-3 py-1.5 bg-white border border-border rounded-full text-sm text-foreground hover:border-primary hover:bg-emerald-50 transition-all"
+                  >
+                    {env.name}
+                  </button>
+                ))}
+                {availableEnvsFromLibrary.length > 5 && (
+                  <span className="px-3 py-1.5 text-sm text-muted-foreground">
+                    +{availableEnvsFromLibrary.length - 5} more
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>

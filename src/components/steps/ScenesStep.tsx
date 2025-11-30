@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SceneCard } from "@/components/SceneCard";
-import { Character, Scene, EnhancedCharacter } from "@/types/prompt-builder";
+import { Character, Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { isCharacterComplete } from "@/lib/template-generator";
 
 interface ScenesStepProps {
@@ -9,11 +9,12 @@ interface ScenesStepProps {
   duration: number | null;
   characters: Character[];
   savedCharacters: EnhancedCharacter[];
+  savedEnvironments: EnhancedEnvironment[];
   scenes: Scene[];
   copiedId: number | null;
   generatingSceneId: number | null;
   onViewTemplate: () => void;
-  onUpdateScene: (id: number, field: keyof Scene, value: string | number[]) => void;
+  onUpdateScene: (id: number, field: keyof Scene, value: string | number[] | number | undefined) => void;
   onGenerateScene: (id: number) => void;
   onCopyScene: (id: number, content: string) => void;
   onRemoveScene: (id: number) => void;
@@ -25,6 +26,7 @@ export function ScenesStep({
   duration,
   characters,
   savedCharacters,
+  savedEnvironments,
   scenes,
   copiedId,
   generatingSceneId,
@@ -42,7 +44,7 @@ export function ScenesStep({
     if (!scene) return;
     const currentIds = scene.selectedCharacterIds || [];
     if (!currentIds.includes(character.id)) {
-      onUpdateScene(sceneId, "selectedCharacterIds" as keyof Scene, [...currentIds, character.id]);
+      onUpdateScene(sceneId, "selectedCharacterIds", [...currentIds, character.id]);
     }
   };
 
@@ -50,7 +52,11 @@ export function ScenesStep({
     const scene = scenes.find(s => s.id === sceneId);
     if (!scene) return;
     const currentIds = scene.selectedCharacterIds || [];
-    onUpdateScene(sceneId, "selectedCharacterIds" as keyof Scene, currentIds.filter(id => id !== charId));
+    onUpdateScene(sceneId, "selectedCharacterIds", currentIds.filter(id => id !== charId));
+  };
+
+  const handleSelectEnvironment = (sceneId: number, envId: number) => {
+    onUpdateScene(sceneId, "selectedEnvironmentId", envId);
   };
 
   return (
@@ -82,13 +88,18 @@ export function ScenesStep({
             </span>
           ))}
         </div>
-        {savedCharacters.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-primary-foreground/20">
+        <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-primary-foreground/20">
+          {savedCharacters.length > 0 && (
             <span className="text-xs text-teal-100">
               {savedCharacters.length} character{savedCharacters.length !== 1 ? 's' : ''} in library
             </span>
-          </div>
-        )}
+          )}
+          {savedEnvironments.length > 0 && (
+            <span className="text-xs text-teal-100">
+              {savedEnvironments.length} environment{savedEnvironments.length !== 1 ? 's' : ''} in library
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Scenes */}
@@ -101,9 +112,11 @@ export function ScenesStep({
             copied={copiedId === scene.id}
             isGenerating={generatingSceneId === scene.id}
             savedCharacters={savedCharacters}
+            savedEnvironments={savedEnvironments}
             onUpdate={(field, value) => onUpdateScene(scene.id, field, value)}
             onSelectCharacter={(char) => handleSelectCharacter(scene.id, char)}
             onDeselectCharacter={(charId) => handleDeselectCharacter(scene.id, charId)}
+            onSelectEnvironment={(envId) => handleSelectEnvironment(scene.id, envId)}
             onGenerate={() => onGenerateScene(scene.id)}
             onCopy={() => onCopyScene(scene.id, scene.content)}
             onRemove={() => onRemoveScene(scene.id)}

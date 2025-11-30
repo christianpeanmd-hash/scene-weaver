@@ -14,6 +14,24 @@ export interface EnhancedCharacter extends Character {
   createdAt: number;
 }
 
+export interface Environment {
+  id: number;
+  name: string;
+  setting: string;
+  lighting: string;
+  audio: string;
+  props: string;
+}
+
+export interface EnhancedEnvironment extends Environment {
+  enhancedSetting?: string;
+  enhancedLighting?: string;
+  enhancedAudio?: string;
+  enhancedProps?: string;
+  sourceTemplate?: string;
+  createdAt: number;
+}
+
 export interface Scene {
   id: number;
   title: string;
@@ -21,6 +39,7 @@ export interface Scene {
   generated: boolean;
   content: string;
   selectedCharacterIds?: number[];
+  selectedEnvironmentId?: number;
 }
 
 export interface Duration {
