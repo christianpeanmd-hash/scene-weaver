@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { IllustrationStyle } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImagePromptBuilderProps {
   onSwitchToVideo: () => void;
@@ -27,6 +28,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isApplyingStyle, setIsApplyingStyle] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -143,7 +145,6 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       setGeneratedPrompt(prompt);
       
       // Then generate the image using the prompt
-      const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase.functions.invoke("generate-ai-image", {
         body: { prompt, type: "image" },
       });
@@ -160,6 +161,56 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       toast.error(error instanceof Error ? error.message : "Failed to generate image");
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const handleApplyStyleToImage = async () => {
+    if (!uploadedImage) {
+      toast.error("Please upload an image first");
+      return;
+    }
+    if (!selectedStyle && !customStyleText.trim()) {
+      toast.error("Please select a style");
+      return;
+    }
+
+    setIsApplyingStyle(true);
+    setGeneratedImageUrl(null);
+    
+    try {
+      // Build the style instruction
+      const styleInstruction = selectedStyle 
+        ? `Transform this photo into the "${selectedStyle.name}" style: ${selectedStyle.look}. ${selectedStyle.useCase ? `This style is best for: ${selectedStyle.useCase}.` : ''}`
+        : `Transform this photo using this style: ${customStyleText}`;
+      
+      const brandContext = getBrandContext();
+      const fullPrompt = brandContext 
+        ? `${styleInstruction} ${brandContext}` 
+        : styleInstruction;
+      
+      setGeneratedPrompt(fullPrompt);
+      
+      // Use edit mode to restyle the actual image
+      const { data, error } = await supabase.functions.invoke("generate-ai-image", {
+        body: { 
+          prompt: fullPrompt, 
+          editMode: true,
+          sourceImageBase64: uploadedImage,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.imageUrl) {
+        setGeneratedImageUrl(data.imageUrl);
+        toast.success("Style applied!");
+      } else {
+        throw new Error("No image returned");
+      }
+    } catch (error) {
+      console.error("Error applying style:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to apply style");
+    } finally {
+      setIsApplyingStyle(false);
     }
   };
 
@@ -294,12 +345,36 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
 
             {/* Generate Buttons */}
             <div className="space-y-3">
+              {/* Primary action: Apply style to uploaded photo */}
+              {uploadedImage && (
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  disabled={(!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage || isApplyingStyle}
+                  onClick={handleApplyStyleToImage}
+                >
+                  {isApplyingStyle ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      Applying Style...
+                    </>
+                  ) : (
+                    <>
+                      <Palette className="w-4 h-4" />
+                      Apply Style to Image
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {/* Secondary actions */}
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="outline"
                   size="lg"
                   className="w-full"
-                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage || isApplyingStyle}
                   onClick={handleGenerate}
                 >
                   {isGenerating ? (
@@ -316,15 +391,18 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                 </Button>
                 
                 <Button
-                  variant="hero"
+                  variant={uploadedImage ? "outline" : "hero"}
                   size="lg"
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                  className={cn(
+                    "w-full",
+                    !uploadedImage && "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  )}
+                  disabled={(!uploadedImage && !subjectDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage || isApplyingStyle}
                   onClick={handleGenerateImageDirectly}
                 >
                   {isGeneratingImage ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
                       Creating...
                     </>
                   ) : (
@@ -336,7 +414,10 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                 </Button>
               </div>
               <p className="text-xs text-center text-muted-foreground">
-                Get a prompt to use elsewhere, or generate an image directly
+                {uploadedImage 
+                  ? "Apply style directly, or get a prompt / generate new image"
+                  : "Get a prompt to use elsewhere, or generate an image directly"
+                }
               </p>
             </div>
           </div>
