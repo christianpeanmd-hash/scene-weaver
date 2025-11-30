@@ -68,6 +68,213 @@ export type Database = {
         }
         Relationships: []
       }
+      library_brands: {
+        Row: {
+          additional_notes: string | null
+          colors: string[] | null
+          created_at: string
+          description: string | null
+          fonts: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          colors?: string[] | null
+          created_at?: string
+          description?: string | null
+          fonts?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_notes?: string | null
+          colors?: string[] | null
+          created_at?: string
+          description?: string | null
+          fonts?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      library_characters: {
+        Row: {
+          created_at: string
+          demeanor: string | null
+          enhanced_demeanor: string | null
+          enhanced_look: string | null
+          enhanced_role: string | null
+          id: string
+          look: string | null
+          name: string
+          role: string | null
+          source_template: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          demeanor?: string | null
+          enhanced_demeanor?: string | null
+          enhanced_look?: string | null
+          enhanced_role?: string | null
+          id?: string
+          look?: string | null
+          name: string
+          role?: string | null
+          source_template?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          demeanor?: string | null
+          enhanced_demeanor?: string | null
+          enhanced_look?: string | null
+          enhanced_role?: string | null
+          id?: string
+          look?: string | null
+          name?: string
+          role?: string | null
+          source_template?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      library_environments: {
+        Row: {
+          audio: string | null
+          created_at: string
+          enhanced_audio: string | null
+          enhanced_lighting: string | null
+          enhanced_props: string | null
+          enhanced_setting: string | null
+          id: string
+          lighting: string | null
+          name: string
+          props: string | null
+          setting: string | null
+          source_template: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio?: string | null
+          created_at?: string
+          enhanced_audio?: string | null
+          enhanced_lighting?: string | null
+          enhanced_props?: string | null
+          enhanced_setting?: string | null
+          id?: string
+          lighting?: string | null
+          name: string
+          props?: string | null
+          setting?: string | null
+          source_template?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio?: string | null
+          created_at?: string
+          enhanced_audio?: string | null
+          enhanced_lighting?: string | null
+          enhanced_props?: string | null
+          enhanced_setting?: string | null
+          id?: string
+          lighting?: string | null
+          name?: string
+          props?: string | null
+          setting?: string | null
+          source_template?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      library_photos: {
+        Row: {
+          created_at: string
+          id: string
+          image_base64: string
+          name: string
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_base64: string
+          name: string
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_base64?: string
+          name?: string
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      library_scene_styles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_preset: boolean | null
+          name: string
+          team_id: string | null
+          template: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_preset?: boolean | null
+          name: string
+          team_id?: string | null
+          template: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_preset?: boolean | null
+          name?: string
+          team_id?: string | null
+          template?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -104,6 +311,68 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_email: string | null
+          joined_at: string | null
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          joined_at?: string | null
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          joined_at?: string | null
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -168,6 +437,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
     }

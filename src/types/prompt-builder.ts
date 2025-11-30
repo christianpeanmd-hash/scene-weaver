@@ -1,5 +1,5 @@
 export interface Character {
-  id: number;
+  id: number | string;
   name: string;
   look: string;
   demeanor: string;
@@ -12,10 +12,11 @@ export interface EnhancedCharacter extends Character {
   enhancedRole?: string;
   sourceTemplate?: string;
   createdAt: number;
+  isShared?: boolean;
 }
 
 export interface Environment {
-  id: number;
+  id: number | string;
   name: string;
   setting: string;
   lighting: string;
@@ -30,16 +31,17 @@ export interface EnhancedEnvironment extends Environment {
   enhancedProps?: string;
   sourceTemplate?: string;
   createdAt: number;
+  isShared?: boolean;
 }
 
 export interface Scene {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   generated: boolean;
   content: string;
-  selectedCharacterIds?: number[];
-  selectedEnvironmentId?: number;
+  selectedCharacterIds?: (number | string)[];
+  selectedEnvironmentId?: number | string;
   selectedStyleId?: string;
   styleTemplate?: string;
 }

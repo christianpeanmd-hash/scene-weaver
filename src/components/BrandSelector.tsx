@@ -131,7 +131,7 @@ export function BrandSelector({
     }
   };
 
-  const handleSaveBrand = () => {
+  const handleSaveBrand = async () => {
     if (!newBrandName.trim()) {
       toast.error("Please enter a brand name");
       return;
@@ -141,7 +141,7 @@ export function BrandSelector({
       return;
     }
 
-    const brand = saveBrand({
+    const brand = await saveBrand({
       name: newBrandName.trim(),
       description: newBrandDescription.trim(),
       colors: newBrandColors.trim()
@@ -150,9 +150,11 @@ export function BrandSelector({
       fonts: newBrandFonts.trim() || undefined,
     });
 
-    onSelectBrand(brand);
+    if (brand) {
+      onSelectBrand(brand);
+      toast.success("Brand saved to library!");
+    }
     resetForm();
-    toast.success("Brand saved to library!");
   };
 
   const resetForm = () => {

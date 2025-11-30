@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 
 interface CharacterPickerProps {
   savedCharacters: EnhancedCharacter[];
-  selectedIds: number[];
+  selectedIds: (number | string)[];
   onSelect: (character: EnhancedCharacter) => void;
-  onDeselect: (id: number) => void;
+  onDeselect: (id: number | string) => void;
 }
 
 export function CharacterPicker({
@@ -23,8 +23,8 @@ export function CharacterPicker({
     return null;
   }
 
-  const selectedChars = savedCharacters.filter(c => selectedIds.includes(c.id));
-  const unselectedChars = savedCharacters.filter(c => !selectedIds.includes(c.id));
+  const selectedChars = savedCharacters.filter(c => selectedIds.includes(c.id as any));
+  const unselectedChars = savedCharacters.filter(c => !selectedIds.includes(c.id as any));
 
   return (
     <div className="space-y-2">
