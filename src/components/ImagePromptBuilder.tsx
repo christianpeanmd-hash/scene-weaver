@@ -104,6 +104,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   useEffect(() => {
     const quickApplyImage = sessionStorage.getItem("quickApplyImage");
     const quickApplyStyle = sessionStorage.getItem("quickApplyStyle");
+    const editPrompt = sessionStorage.getItem("editPrompt");
     
     if (quickApplyImage) {
       setUploadedImage(quickApplyImage);
@@ -113,6 +114,14 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
         sessionStorage.removeItem("quickApplyStyle");
         setPendingQuickApplyStyle(quickApplyStyle);
       }
+    }
+    
+    // Load prompt for editing
+    if (editPrompt) {
+      setCustomStyleText(editPrompt);
+      setGeneratedPrompt(editPrompt);
+      sessionStorage.removeItem("editPrompt");
+      toast.info("Prompt loaded - modify and regenerate!");
     }
   }, []);
 
