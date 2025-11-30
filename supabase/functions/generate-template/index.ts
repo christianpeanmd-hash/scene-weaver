@@ -49,12 +49,17 @@ async function checkUserLimit(req: Request): Promise<{ allowed: boolean; error?:
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const authHeader = req.headers.get('authorization');
   
+  console.log('Auth header present:', !!authHeader, authHeader ? 'starts with Bearer:' : '', authHeader?.startsWith('Bearer '));
+  
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
   
   // Check if authenticated user
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.replace('Bearer ', '');
+    console.log('Token length:', token.length);
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    
+    console.log('Auth getUser result:', user ? `User found: ${user.id}` : 'No user', error ? `Error: ${error.message}` : 'No error');
     
     if (user && !error) {
       // Get user's profile with subscription info
