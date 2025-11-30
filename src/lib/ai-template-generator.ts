@@ -1,11 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Character, Scene } from "@/types/prompt-builder";
+import { Character, Environment } from "@/types/prompt-builder";
 
 interface GenerateTemplateParams {
   concept: string;
   duration: number | null;
   videoStyle: string;
   characters: Character[];
+  environments?: Environment[];
 }
 
 interface GenerateSceneParams extends GenerateTemplateParams {
@@ -21,6 +22,7 @@ export async function generateAITemplate(params: GenerateTemplateParams): Promis
       duration: params.duration || 10,
       videoStyle: params.videoStyle,
       characters: params.characters.filter(c => c.name.trim() && c.look.trim() && c.demeanor.trim()),
+      environments: params.environments?.filter(e => e.name.trim() && e.setting.trim()) || [],
     },
   });
 
@@ -44,6 +46,7 @@ export async function generateAIScene(params: GenerateSceneParams): Promise<stri
       duration: params.duration || 10,
       videoStyle: params.videoStyle,
       characters: params.characters.filter(c => c.name.trim() && c.look.trim() && c.demeanor.trim()),
+      environments: params.environments?.filter(e => e.name.trim() && e.setting.trim()) || [],
       sceneTitle: params.sceneTitle,
       sceneDescription: params.sceneDescription,
     },

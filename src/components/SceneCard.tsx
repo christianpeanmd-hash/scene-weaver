@@ -1,6 +1,6 @@
-import { Clapperboard, Copy, Check, Trash2, Wand2 } from "lucide-react";
+import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Scene, EnhancedCharacter } from "@/types/prompt-builder";
+import { Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { CharacterPicker } from "./CharacterPicker";
 import { cn } from "@/lib/utils";
 
@@ -10,9 +10,11 @@ interface SceneCardProps {
   copied: boolean;
   isGenerating?: boolean;
   savedCharacters: EnhancedCharacter[];
-  onUpdate: (field: keyof Scene, value: string) => void;
+  savedEnvironments: EnhancedEnvironment[];
+  onUpdate: (field: keyof Scene, value: string | number[] | number | undefined) => void;
   onSelectCharacter: (character: EnhancedCharacter) => void;
   onDeselectCharacter: (id: number) => void;
+  onSelectEnvironment: (envId: number) => void;
   onGenerate: () => void;
   onCopy: () => void;
   onRemove: () => void;
@@ -24,13 +26,17 @@ export function SceneCard({
   copied,
   isGenerating = false,
   savedCharacters,
+  savedEnvironments,
   onUpdate,
   onSelectCharacter,
   onDeselectCharacter,
+  onSelectEnvironment,
   onGenerate,
   onCopy,
   onRemove,
 }: SceneCardProps) {
+  const selectedEnv = savedEnvironments.find(e => e.id === scene.selectedEnvironmentId);
+
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden animate-slide-up">
       <div className="p-4 border-b border-border/50 flex items-center justify-between">
@@ -83,6 +89,32 @@ export function SceneCard({
             onSelect={onSelectCharacter}
             onDeselect={onDeselectCharacter}
           />
+
+          {/* Environment Picker */}
+          {savedEnvironments.length > 0 && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                <MapPin className="w-3 h-3" />
+                Environment
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {savedEnvironments.map((env) => (
+                  <button
+                    key={env.id}
+                    onClick={() => onSelectEnvironment(env.id)}
+                    className={cn(
+                      "px-3 py-1.5 border rounded-full text-sm transition-all",
+                      scene.selectedEnvironmentId === env.id
+                        ? "bg-emerald-100 border-emerald-300 text-emerald-700"
+                        : "bg-white border-border text-foreground hover:border-emerald-300 hover:bg-emerald-50"
+                    )}
+                  >
+                    {env.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="text-xs text-muted-foreground font-medium">What Happens</label>

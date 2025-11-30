@@ -12,11 +12,20 @@ interface Character {
   role: string;
 }
 
+interface Environment {
+  name: string;
+  setting: string;
+  lighting: string;
+  audio: string;
+  props: string;
+}
+
 interface GenerateRequest {
   concept: string;
   duration: number;
   videoStyle: string;
   characters: Character[];
+  environments?: Environment[];
   type: 'template' | 'scene';
   sceneTitle?: string;
   sceneDescription?: string;
@@ -57,6 +66,10 @@ const getTemplatePrompt = (req: GenerateRequest) => {
     ? req.characters.map(c => `- ${c.name}: Look="${c.look}", Demeanor="${c.demeanor}", Role="${c.role || 'unspecified'}"`).join('\n')
     : 'No characters specified - invent 1-2 appropriate characters based on the concept.';
 
+  const envDesc = req.environments && req.environments.length > 0
+    ? req.environments.map(e => `- ${e.name}: Setting="${e.setting}", Lighting="${e.lighting}", Audio="${e.audio}", Props="${e.props}"`).join('\n')
+    : 'No environment specified - invent an appropriate setting based on the concept.';
+
   const durationInfo = req.duration === 8
     ? '8 seconds (Veo) - 4 beats: 0-2s (Establish), 2-4s (Action/Turn), 4-6s (Escalation), 6-8s (Punchline)'
     : req.duration === 10
@@ -70,6 +83,8 @@ const getTemplatePrompt = (req: GenerateRequest) => {
 **Video Style**: ${req.videoStyle || 'Invent an appropriate style based on the concept'}
 **Characters**:
 ${charDesc}
+**Environment**:
+${envDesc}
 
 Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholders allowed:
 
@@ -89,6 +104,16 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 
 ---
 
+## Environment Anchor
+
+**Environment: [Location Name]**
+* **Setting**: [Detailed visual description of the location - architecture, colors, textures, atmosphere, key visual elements]
+* **Lighting**: [Quality, color temperature, sources - natural/artificial, mood]
+* **Audio Atmosphere**: [Ambient sounds, background noise, environmental audio cues]
+* **Props**: [Key objects in the scene with visual details]
+
+---
+
 **Video Style:** [Style description]; 16:9, [camera approach], **[music note - usually "no music"]**.
 
 ---
@@ -96,8 +121,8 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 #### 📍 Scene Setup
 
 * **Aspect / Camera**: Horizontal 16:9, [specific camera techniques]
-* **Setting**: [Detailed location - textures, colors, objects, lighting quality, atmosphere. What we SEE.]
-* **Lighting**: [Quality, color temperature, mood - e.g., "Warm cafe overheads; soft morning light through windows"]
+* **Setting**: [Incorporate environment details - textures, colors, objects, lighting quality, atmosphere. What we SEE.]
+* **Lighting**: [Expand on environment lighting - quality, color temperature, mood]
 * **Props**: • [Prop 1 with detail] • [Prop 2 with detail] • [Prop 3 with detail]
 * **Cast**: [Character names with emotional arcs: "Name (start state → transition → end state)"]
 
@@ -145,6 +170,10 @@ const getScenePrompt = (req: GenerateRequest) => {
     ? req.characters.map(c => `- ${c.name}: Look="${c.look}", Demeanor="${c.demeanor}", Role="${c.role || 'unspecified'}"`).join('\n')
     : 'Use characters from the main concept or invent appropriate ones.';
 
+  const envDesc = req.environments && req.environments.length > 0
+    ? req.environments.map(e => `- ${e.name}: Setting="${e.setting}", Lighting="${e.lighting}", Audio="${e.audio}", Props="${e.props}"`).join('\n')
+    : 'Use setting appropriate for the scene.';
+
   const durationInfo = req.duration === 8
     ? '8 seconds (Veo) - 4 beats: 0-2s, 2-4s, 4-6s, 6-8s'
     : req.duration === 10
@@ -160,10 +189,13 @@ const getScenePrompt = (req: GenerateRequest) => {
 **Video Style**: ${req.videoStyle || 'Match to scene tone'}
 **Characters**:
 ${charDesc}
+**Environment**:
+${envDesc}
 
 Generate the scene in the same detailed format as the main template. Include:
 - Scene title and logline
 - Character blocks (if using characters)
+- Environment block with detailed setting, lighting, audio atmosphere, and props
 - Video style line
 - Complete Scene Setup
 - Full Visual Breakdown with SPECIFIC actions for each time beat
