@@ -96,7 +96,7 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight animate-slide-up">
             Production-ready prompts for{" "}
-            <span className="gradient-text">AI media</span>
+            <span className="gradient-text">AI media and infographics</span>
           </h1>
           <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             Build consistent characters, environments, and scenes for Veo, Sora, Midjourney, and more.
