@@ -5,13 +5,15 @@ interface SEOProps {
   description: string;
   canonical?: string;
   type?: string;
+  noIndex?: boolean;
 }
 
 export function SEO({ 
   title, 
   description, 
   canonical,
-  type = "website" 
+  type = "website",
+  noIndex = false
 }: SEOProps) {
   const siteName = "TechyMemo";
   const fullTitle = `${title} | ${siteName}`;
@@ -20,6 +22,7 @@ export function SEO({
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {noIndex && <meta name="robots" content="noindex, nofollow" />}
       
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />
