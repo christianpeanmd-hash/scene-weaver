@@ -1,10 +1,13 @@
-import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin } from "lucide-react";
+import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { CharacterPicker } from "./CharacterPicker";
 import { SceneStylePicker } from "./SceneStylePicker";
 import { SceneStylePreset, SCENE_STYLE_PRESETS } from "@/data/scene-style-presets";
 import { SceneStyle } from "@/hooks/useSceneStyleLibrary";
+import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import { useSubscription } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
 
 interface SceneCardProps {
@@ -15,6 +18,7 @@ interface SceneCardProps {
   savedCharacters: EnhancedCharacter[];
   savedEnvironments: EnhancedEnvironment[];
   savedSceneStyles: SceneStyle[];
+  sceneId?: string;
   onUpdate: (field: keyof Scene, value: string | (string | number)[] | number | undefined) => void;
   onSelectCharacter: (character: EnhancedCharacter) => void;
   onDeselectCharacter: (id: number | string) => void;
@@ -34,6 +38,7 @@ export function SceneCard({
   savedCharacters,
   savedEnvironments,
   savedSceneStyles,
+  sceneId,
   onUpdate,
   onSelectCharacter,
   onDeselectCharacter,
@@ -45,6 +50,20 @@ export function SceneCard({
   onRemove,
 }: SceneCardProps) {
   const selectedEnv = savedEnvironments.find(e => e.id === scene.selectedEnvironmentId);
+  const { tier } = useSubscription();
+  const videoGen = useVideoGeneration();
+  const isPremium = tier === 'pro' || tier === 'studio';
+
+  const handleGenerateVideo = async () => {
+    if (!scene.content) return;
+    
+    await videoGen.generateVideo({
+      prompt: scene.content,
+      duration: 5,
+      aspectRatio: '16:9',
+      sceneId: sceneId,
+    });
+  };
 
   const handleSelectPreset = (preset: SceneStylePreset) => {
     onSelectStyle(preset.id, preset.template);
@@ -184,10 +203,80 @@ export function SceneCard({
           </Button>
         </div>
       ) : (
-        <div className="p-4 max-h-[300px] overflow-y-auto bg-slate-50">
-          <pre className="text-muted-foreground text-sm whitespace-pre-wrap font-mono leading-relaxed">
-            {scene.content}
-          </pre>
+        <div className="p-4 space-y-4">
+          {/* Video Generation Progress */}
+          {videoGen.isGenerating && (
+            <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 rounded-lg border border-purple-200/50 dark:border-purple-800/50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Generating video...</p>
+                  <p className="text-xs text-muted-foreground capitalize">Status: {videoGen.status}</p>
+                </div>
+              </div>
+              {videoGen.progress > 0 && (
+                <Progress value={videoGen.progress} className="h-2" />
+              )}
+            </div>
+          )}
+
+          {/* Generated Video */}
+          {videoGen.videoUrl && (
+            <div className="space-y-3">
+              <div className="relative rounded-lg overflow-hidden bg-black">
+                <video 
+                  src={videoGen.videoUrl} 
+                  controls 
+                  className="w-full"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = videoGen.videoUrl!;
+                    link.download = `${scene.title || 'scene'}-video.mp4`;
+                    link.click();
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => videoGen.reset()}
+                >
+                  New Video
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Scene Prompt */}
+          <div className="max-h-[200px] overflow-y-auto bg-slate-50 dark:bg-slate-900 rounded-lg p-3">
+            <pre className="text-muted-foreground text-sm whitespace-pre-wrap font-mono leading-relaxed">
+              {scene.content}
+            </pre>
+          </div>
+
+          {/* Video Generation Button for Premium */}
+          {isPremium && !videoGen.videoUrl && !videoGen.isGenerating && (
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              onClick={handleGenerateVideo}
+            >
+              <Film className="w-4 h-4 mr-2" />
+              Generate Video with Runway ML
+            </Button>
+          )}
         </div>
       )}
     </div>

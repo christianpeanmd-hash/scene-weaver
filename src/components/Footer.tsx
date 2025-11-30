@@ -12,11 +12,14 @@ export function Footer() {
           <span className="text-sm font-medium text-foreground">Techy Memo</span>
 
           <nav className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+            <Link to="/library" className="hover:text-foreground transition-colors">
+              Library
+            </Link>
+            <Link to="/videos" className="hover:text-foreground transition-colors">
+              Videos
+            </Link>
             <a href="#pricing" className="hover:text-foreground transition-colors">
               Pricing
-            </a>
-            <a href="#tutorials" className="hover:text-foreground transition-colors">
-              Tutorials
             </a>
             <button
               onClick={() => setIsContactOpen(true)}
@@ -24,12 +27,6 @@ export function Footer() {
             >
               Contact
             </button>
-            <Link to="/terms" className="hover:text-foreground transition-colors">
-              Terms
-            </Link>
-            <Link to="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </Link>
           </nav>
         </div>
       </div>
