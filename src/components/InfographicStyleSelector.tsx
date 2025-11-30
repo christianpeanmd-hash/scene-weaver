@@ -25,6 +25,8 @@ import minimalistBwPreview from "@/assets/infographic-previews/minimalist-bw.jpg
 import sketchStylePreview from "@/assets/infographic-previews/sketch-style.jpg";
 import landmarkMapPreview from "@/assets/infographic-previews/landmark-map.jpg";
 import megaInfographicPreview from "@/assets/infographic-previews/mega-infographic.jpg";
+import whiteboardPreview from "@/assets/infographic-previews/whiteboard.jpg";
+import visualAbstractPreview from "@/assets/infographic-previews/visual-abstract.jpg";
 
 interface InfographicStyleSelectorProps {
   selectedStyle: InfographicStyle | null;
@@ -52,6 +54,8 @@ const STYLE_PREVIEW_IMAGES: Record<string, string> = {
   "sketch-style": sketchStylePreview,
   "landmark-map": landmarkMapPreview,
   "mega-infographic": megaInfographicPreview,
+  "whiteboard": whiteboardPreview,
+  "visual-abstract": visualAbstractPreview,
 };
 
 // Visual preview configurations for each style type (fallback when no image)
@@ -62,6 +66,8 @@ const STYLE_PREVIEWS: Record<string, {
 }> = {
   "explainer": { bg: "from-blue-100 to-indigo-50", accent: "bg-blue-500", layout: "steps" },
   "educational": { bg: "from-violet-100 to-purple-50", accent: "bg-violet-500", layout: "grid" },
+  "whiteboard": { bg: "from-gray-50 to-white", accent: "bg-blue-600", layout: "custom" },
+  "visual-abstract": { bg: "from-purple-200 to-blue-200", accent: "bg-purple-500", layout: "custom" },
   "step-by-step": { bg: "from-teal-100 to-cyan-50", accent: "bg-teal-500", layout: "steps" },
   "data-driven": { bg: "from-emerald-100 to-green-50", accent: "bg-emerald-500", layout: "chart" },
   "comparison": { bg: "from-amber-100 to-yellow-50", accent: "bg-amber-500", layout: "columns" },
