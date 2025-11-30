@@ -262,12 +262,16 @@ const getTemplatePrompt = (req: GenerateRequest) => {
 **Concept**: ${req.concept}
 **Duration**: ${durationInfo}
 **Video Style**: ${req.videoStyle || 'Invent an appropriate style based on the concept'}
-**Characters**:
+
+## PROVIDED CHARACTER ANCHORS (USE THESE EXACT DESCRIPTIONS):
 ${charDesc}
-**Environment**:
+
+## PROVIDED ENVIRONMENT ANCHORS (USE THESE EXACT DESCRIPTIONS):
 ${envDesc}
 
-Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholders allowed:
+CRITICAL: You MUST copy the character Look, Demeanor, and Role descriptions EXACTLY as provided above into the Character Anchor sections. Do NOT invent new character descriptions - use the EXACT text given. If no characters are specified, then invent appropriate ones.
+
+Generate the template in this EXACT format:
 
 ### 🎬 [Punchy 3-5 word scene title]
 
@@ -277,21 +281,21 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 
 ## Characters
 
-[For each character, write:]
-**Character Anchor: [Name]**
-* **Look**: [Detailed physical appearance - clothing colors, textures, distinctive features, accessories, hair, skin tone, any unique characteristics]
-* **Demeanor**: [How they move, speak, react. Personality traits, emotional baseline, vocal quality]
-* **Role**: [Their function in this scene]
+[For EACH character provided above, copy their details EXACTLY:]
+**Character Anchor: [Name from input]**
+* **Look**: [COPY the exact Look description from the input above - do not modify]
+* **Demeanor**: [COPY the exact Demeanor description from the input above - do not modify]
+* **Role**: [COPY the exact Role description from the input above - do not modify]
 
 ---
 
 ## Environment Anchor
 
-**Environment: [Location Name]**
-* **Setting**: [Detailed visual description of the location - architecture, colors, textures, atmosphere, key visual elements]
-* **Lighting**: [Quality, color temperature, sources - natural/artificial, mood]
-* **Audio Atmosphere**: [Ambient sounds, background noise, environmental audio cues]
-* **Props**: [Key objects in the scene with visual details]
+**Environment: [Location Name from input, or invent if not provided]**
+* **Setting**: [COPY the exact Setting from input, or invent if not provided]
+* **Lighting**: [COPY the exact Lighting from input, or invent if not provided]
+* **Audio Atmosphere**: [COPY the exact Audio from input, or invent if not provided]
+* **Props**: [COPY the exact Props from input, or invent if not provided]
 
 ---
 
@@ -302,7 +306,7 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 #### 📍 Scene Setup
 
 * **Aspect / Camera**: Horizontal 16:9, [specific camera techniques]
-* **Setting**: [Incorporate environment details - textures, colors, objects, lighting quality, atmosphere. What we SEE.]
+* **Setting**: [Expand on the environment setting above - textures, colors, objects, lighting quality, atmosphere. What we SEE.]
 * **Lighting**: [Expand on environment lighting - quality, color temperature, mood]
 * **Props**: • [Prop 1 with detail] • [Prop 2 with detail] • [Prop 3 with detail]
 * **Cast**: [Character names with emotional arcs: "Name (start state → transition → end state)"]
@@ -313,9 +317,9 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 
 | Time | Action & Framing |
 |------|------------------|
-[For each time beat, write a SPECIFIC action with shot type, subject, and action. Include dialogue in quotes. Example:]
-| **0–2 s** | Medium on Tara reading long order ticket; slight eye twitch, exhale. |
-| **2–4 s** | Quick over-shoulder: wrong milk grabbed, syrup pumps miscounted. |
+[For each time beat, write a SPECIFIC action with shot type, subject, and action. The character must match the Look and Demeanor from their anchor. Include dialogue in quotes. Example:]
+| **0–2 s** | Medium on [Character Name exactly as anchored] doing [action matching their demeanor]. |
+| **2–4 s** | Quick over-shoulder: [specific visual action]. |
 [Continue for all beats based on duration]
 
 ---
@@ -323,11 +327,11 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 #### 🔊 Audio Breakdown
 
 * **Dialogue**
-  "[Actual line 1 - under 10 words]"
+  "[Actual line 1 - under 10 words, matching character's demeanor]"
   "[Actual line 2]"
   "[Button/punchline line]"
 * **SFX**
-  [Time range] – [Specific ambient sounds]
+  [Time range] – [Specific ambient sounds matching environment]
   [Time range] – [Action-specific sounds]
 * **Music**
   None (ambient sound only).
@@ -336,14 +340,14 @@ Generate the template in this EXACT format. FILL IN ALL DETAILS - no placeholder
 
 #### 🎛 Direction Notes
 
-* **Performance**: [Specific acting direction for each character - physical cues, emotional transitions, timing]
+* **Performance**: [Specific acting direction for each character - must align with their anchored demeanor]
 * **Camera**: [Movement priorities, emphasis moments, handheld intensity]
 * **Graphics**: None.
 * **Color Grade**: [Mood-appropriate grading]. Documentary clean.
 
 ---
 
-Remember: Every element must be SPECIFIC and FILMABLE. No abstract concepts.`;
+Remember: Character descriptions must match EXACTLY what was provided in the anchors. Every other element must be SPECIFIC and FILMABLE.`;
 };
 
 const getScenePrompt = (req: GenerateRequest) => {
