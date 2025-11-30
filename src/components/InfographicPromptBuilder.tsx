@@ -354,11 +354,11 @@ export function InfographicPromptBuilder() {
             />
 
             {/* Generate Buttons */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 variant="hero"
                 size="xl"
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                className="flex-1 min-w-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
                 onClick={handleGenerate}
               >
@@ -377,7 +377,7 @@ export function InfographicPromptBuilder() {
               <Button
                 variant="hero"
                 size="xl"
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                className="flex-1 min-w-0 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
                 disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
                 onClick={handleGenerateImageDirectly}
               >
