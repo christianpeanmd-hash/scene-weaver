@@ -1,4 +1,4 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt, BarChart3 } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt, BarChart3, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type BuilderType = "video" | "image" | "infographic";
+export type BuilderType = "video" | "image" | "animate" | "infographic";
 
 interface HeroSectionProps {
   activeBuilder: BuilderType;
@@ -202,6 +202,18 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
             >
               <Video className="w-4 h-4" />
               <span>Video</span>
+            </button>
+            <button
+              onClick={() => onSelectBuilder("animate")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                activeBuilder === "animate"
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <Play className="w-4 h-4" />
+              <span>Animate</span>
             </button>
             <button
               onClick={() => onSelectBuilder("image")}

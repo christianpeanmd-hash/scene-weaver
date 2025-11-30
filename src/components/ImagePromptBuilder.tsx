@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Info, Play, ArrowRight } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -241,19 +241,6 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
-                  </div>
-                  
-                  {/* Animation Tip */}
-                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <Play className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <div className="text-xs">
-                        <p className="font-medium text-blue-700 dark:text-blue-300">Want to animate this image?</p>
-                        <p className="text-blue-600 dark:text-blue-400 mt-1">
-                          Drop it directly into <strong>Sora</strong> or <strong>Veo</strong> and describe the motion you want.
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}

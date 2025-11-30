@@ -1,4 +1,4 @@
-import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library, MapPin, Check, Play, Image, ArrowRight } from "lucide-react";
+import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library, MapPin, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CharacterCard } from "@/components/CharacterCard";
@@ -10,7 +10,6 @@ import { CHARACTER_PRESETS, ENVIRONMENT_PRESETS, PresetAnchor } from "@/data/pre
 import { VIDEO_STYLE_PRESETS, VideoStylePreset } from "@/data/video-style-presets";
 import { isCharacterComplete } from "@/lib/template-generator";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 interface SetupStepProps {
   concept: string;
@@ -77,7 +76,6 @@ export function SetupStep({
   const filledEnvironments = environments.filter(e => e.name && e.setting).length;
   const isReady = concept.trim().length > 0;
   const showWarning = characters.length > 2;
-  const [showAnimationTip, setShowAnimationTip] = useState(true);
 
   // Filter out characters/environments already added
   const availableCharsFromLibrary = savedCharacters.filter(
@@ -89,51 +87,6 @@ export function SetupStep({
 
   return (
     <div className="space-y-5">
-      {/* Image Animation Tip */}
-      {showAnimationTip && (
-        <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200 dark:border-blue-800 animate-fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
-              <Play className="w-5 h-5 text-blue-500" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-medium text-foreground">Want to animate an existing image?</h3>
-                <button
-                  onClick={() => setShowAnimationTip(false)}
-                  className="text-muted-foreground hover:text-foreground p-1"
-                >
-                  ×
-                </button>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Skip the prompt builder! Drop your image directly into <strong className="text-foreground">Sora</strong> or <strong className="text-foreground">Veo</strong> and describe the motion.
-              </p>
-              <div className="mt-3 p-3 bg-white/60 dark:bg-background/40 rounded-lg border border-blue-100 dark:border-blue-900">
-                <p className="text-xs font-medium text-foreground mb-2 flex items-center gap-1">
-                  <Image className="w-3 h-3" />
-                  Quick Image Animation Tips:
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li className="flex items-start gap-2">
-                    <ArrowRight className="w-3 h-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                    <span>Upload your image to Sora/Veo, then add a motion prompt</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <ArrowRight className="w-3 h-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                    <span>Example: "The subject slowly turns their head and smiles"</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <ArrowRight className="w-3 h-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                    <span>Keep motion subtle for realistic results</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Concept - Required */}
       <Card className="p-5">
         <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
