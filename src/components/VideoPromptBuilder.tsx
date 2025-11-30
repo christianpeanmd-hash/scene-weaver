@@ -6,12 +6,14 @@ import { ProgressSteps, StepKey } from "./ProgressSteps";
 import { SetupStep } from "./steps/SetupStep";
 import { TemplateStep } from "./steps/TemplateStep";
 import { ScenesStep } from "./steps/ScenesStep";
+import { FreeLimitModal } from "./FreeLimitModal";
 import { Character, Scene, EnhancedCharacter, Environment, EnhancedEnvironment } from "@/types/prompt-builder";
-import { generateAITemplate, generateAIScene } from "@/lib/ai-template-generator";
+import { generateAITemplate, generateAIScene, RateLimitError } from "@/lib/ai-template-generator";
 import { isCharacterComplete } from "@/lib/template-generator";
 import { useCharacterLibrary, parseCharactersFromTemplate } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, parseEnvironmentFromTemplate } from "@/hooks/useEnvironmentLibrary";
 import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PresetAnchor } from "@/data/preset-anchors";
 
 interface VideoPromptBuilderProps {
@@ -36,6 +38,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
   const { savedCharacters, saveCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment } = useEnvironmentLibrary();
   const { savedStyles: savedSceneStyles, saveStyle: saveSceneStyle } = useSceneStyleLibrary();
+  const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
 
   // Character handlers
   const addCharacter = () => {
@@ -267,7 +270,11 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
       setStep("template");
     } catch (error) {
       console.error("Error generating template:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate template");
+      if (error instanceof RateLimitError) {
+        handleRateLimitError();
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to generate template");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -349,7 +356,11 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
       toast.success("Scene generated successfully!");
     } catch (error) {
       console.error("Error generating scene:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate scene");
+      if (error instanceof RateLimitError) {
+        handleRateLimitError();
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to generate scene");
+      }
     } finally {
       setGeneratingSceneId(null);
     }
@@ -367,6 +378,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
   };
 
   return (
+    <>
     <div className="pb-8 md:pb-12">
       <div className="max-w-3xl mx-auto px-4 md:px-6">
         {/* Progress Steps */}
@@ -445,5 +457,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
         )}
       </div>
     </div>
+    <FreeLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
+    </>
   );
 }

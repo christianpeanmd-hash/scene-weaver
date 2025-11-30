@@ -7,9 +7,11 @@ import { AIToolLinks } from "./AIToolLinks";
 import { InfographicStyleSelector } from "./InfographicStyleSelector";
 import { BrandSelector } from "./BrandSelector";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
+import { FreeLimitModal } from "./FreeLimitModal";
 import { INFOGRAPHIC_STYLES, InfographicStyle } from "@/data/infographic-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { supabase } from "@/integrations/supabase/client";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 export function InfographicPromptBuilder() {
   const [uploadedDocument, setUploadedDocument] = useState<{ name: string; content: string } | null>(null);
@@ -25,6 +27,8 @@ export function InfographicPromptBuilder() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
 
   // Handle image upload
   const handleImageUpload = useCallback((file: File) => {
@@ -222,6 +226,7 @@ export function InfographicPromptBuilder() {
   };
 
   return (
+    <>
     <div className="pb-8 md:pb-12">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-6">
@@ -503,5 +508,7 @@ export function InfographicPromptBuilder() {
         </div>
       </div>
     </div>
+    <FreeLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
+    </>
   );
 }
