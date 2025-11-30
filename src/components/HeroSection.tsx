@@ -1,4 +1,5 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library } from "lucide-react";
+import { Link } from "react-router-dom";
 import { MemoableLogo } from "./MemoableLogo";
 import { cn } from "@/lib/utils";
 
@@ -19,9 +20,19 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
       </div>
 
       <div className="relative max-w-4xl mx-auto px-4 pt-8 pb-8 md:pt-12 md:pb-10">
-        {/* Logo */}
-        <div className="flex justify-center mb-6 animate-fade-in">
+        {/* Top Bar with Logo and Library Link */}
+        <div className="flex items-center justify-between mb-6 animate-fade-in">
+          <div className="flex-1" />
           <MemoableLogo size="lg" showSubtitle />
+          <div className="flex-1 flex justify-end">
+            <Link
+              to="/library"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+            >
+              <Library className="w-4 h-4" />
+              <span className="hidden sm:inline">My Library</span>
+            </Link>
+          </div>
         </div>
 
         {/* Tagline */}
