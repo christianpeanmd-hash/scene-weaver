@@ -1,0 +1,243 @@
+export interface IllustrationStyle {
+  id: string;
+  name: string;
+  category: "editorial" | "explainer" | "humor" | "futurism" | "artistic";
+  look: string;
+  feel: string;
+  useCase: string;
+  promptTemplate: string;
+  // For generating style-specific previews with AI
+  previewPrompt: string;
+}
+
+export const ILLUSTRATION_STYLES: IllustrationStyle[] = [
+  // Editorial / Gravitas
+  {
+    id: "editorial-collage",
+    name: "Editorial Collage",
+    category: "editorial",
+    look: "Mixed-media, bold cutouts layered with textures, halftone patterns, and abstract shapes",
+    feel: "Intellectual, provocative, serious op-ed energy",
+    useCase: "Policy analysis, systemic critiques, thought leadership",
+    promptTemplate: "Bold editorial collage, combining hand-drawn elements with abstract geometric overlays and muted newspaper-style colors (burgundy, navy, cream). {subject}",
+    previewPrompt: "Bold editorial collage style portrait, mixed media cutouts, halftone patterns, burgundy navy cream palette",
+  },
+  {
+    id: "watercolor-minimalism",
+    name: "Watercolor Minimalism",
+    category: "editorial",
+    look: "Soft watercolor washes with minimalist ink linework",
+    feel: "Human, empathetic, gentle—balances tech-heavy narratives with warmth",
+    useCase: "Patient stories, equity-focused content, wellness themes",
+    promptTemplate: "Minimalist watercolor editorial illustration, soft brushstrokes with sparse black ink lines, human-centered warmth. {subject}",
+    previewPrompt: "Minimalist watercolor portrait, soft pastel washes, delicate black ink outlines, gentle aesthetic",
+  },
+  {
+    id: "ink-wash",
+    name: "Ink Wash / Zen",
+    category: "editorial",
+    look: "Black ink brushstrokes, minimal composition, sumi-e inspired",
+    feel: "Calm, elegant, thoughtful, contemplative",
+    useCase: "Reflective essays, philosophy, mindfulness content",
+    promptTemplate: "Japanese ink wash (sumi-e) illustration, monochrome brushstrokes, minimalist vignette with graceful negative space. {subject}",
+    previewPrompt: "Sumi-e ink wash portrait, flowing black brushstrokes, white background, zen aesthetic",
+  },
+  {
+    id: "surrealist-editorial",
+    name: "Surrealist Editorial",
+    category: "editorial",
+    look: "Dreamlike juxtapositions, floating objects, distorted perspectives",
+    feel: "Thought-provoking, Magritte/Escher-inspired wonder",
+    useCase: "Abstract concepts, imagination pieces, unconventional takes",
+    promptTemplate: "Surrealist editorial illustration inspired by Magritte, dreamlike juxtapositions and floating elements, muted earth tones. {subject}",
+    previewPrompt: "Surrealist portrait in Magritte style, floating objects, dreamlike composition, muted colors",
+  },
+
+  // Explainers / Strategy
+  {
+    id: "modern-flat-vector",
+    name: "Modern Flat Vector",
+    category: "explainer",
+    look: "Crisp, geometric, playful but professional, Stripe/Airbnb aesthetic",
+    feel: "Startup-y, clean, easily brandable",
+    useCase: "Pitch decks, product explainers, landing pages",
+    promptTemplate: "Modern flat vector illustration, geometric shapes, bold gradients, clean startup aesthetic with vibrant colors. {subject}",
+    previewPrompt: "Flat vector style portrait, geometric shapes, bold gradient colors, clean modern aesthetic",
+  },
+  {
+    id: "isometric-blueprint",
+    name: "Isometric Blueprint",
+    category: "explainer",
+    look: "3D isometric diagrams with clean lines and pastel blocks",
+    feel: "Systematic, explanatory, conveys complexity in structured form",
+    useCase: "Systems thinking, workflow diagrams, architecture",
+    promptTemplate: "Isometric blueprint-style illustration, pastel blocks and clean technical lines, futuristic system design aesthetic. {subject}",
+    previewPrompt: "Isometric 3D portrait, pastel blocks, clean lines, architectural blueprint style",
+  },
+  {
+    id: "infographic-comic",
+    name: "Infographic Comic",
+    category: "explainer",
+    look: "Blends comic strip style with data viz—characters interacting with charts",
+    feel: "Engaging, clarifies complex ideas quickly",
+    useCase: "Explaining processes, workflow diagrams, educational content",
+    promptTemplate: "Playful infographic meets comic illustration, clean lines, clear panels, simplified data elements embedded in narrative. {subject}",
+    previewPrompt: "Comic infographic style portrait, clean lines, speech bubbles, chart elements, playful",
+  },
+  {
+    id: "scientific-diagram",
+    name: "Scientific Diagram",
+    category: "explainer",
+    look: "Clean medical diagrams with subtle gradients, annotations, and labels",
+    feel: "Authoritative, precise, trustworthy, journal aesthetic",
+    useCase: "Clinical concepts, technical explanations, medical content",
+    promptTemplate: "Scientific diagram style illustration, crisp lines, neutral colors, medical journal aesthetic with clear labels and annotations. {subject}",
+    previewPrompt: "Scientific diagram portrait, clean lines, annotations, neutral colors, medical textbook style",
+  },
+
+  // Humor / Satire
+  {
+    id: "satirical-caricature",
+    name: "Satirical Caricature",
+    category: "humor",
+    look: "Exaggerated characters, big heads, sharp features, black-and-white linework",
+    feel: "Punchy, satirical, calls out power structures",
+    useCase: "Political commentary, social satire, humorous takes",
+    promptTemplate: "Single-panel political cartoon style illustration, exaggerated human features, minimal props, ironic humor, bold linework. {subject}",
+    previewPrompt: "Political caricature portrait, exaggerated features, bold black lines, satirical style",
+  },
+  {
+    id: "line-drawing-xkcd",
+    name: "Line-Drawing Humor",
+    category: "humor",
+    look: "Thin hand-drawn lines, stick-figure or simplified characters, XKCD-inspired",
+    feel: "Witty, self-aware, stripped of ornament—emphasizes the idea",
+    useCase: "Quick humor, memes, dry wit content",
+    promptTemplate: "Minimal line-drawing cartoon in the style of XKCD, simplified characters, dry humor, thin black lines on white. {subject}",
+    previewPrompt: "XKCD style line drawing portrait, simple stick figure, thin black lines, white background",
+  },
+  {
+    id: "pop-art",
+    name: "Pop Art",
+    category: "humor",
+    look: "Bright, saturated colors, halftone textures, Warhol/Lichtenstein-inspired",
+    feel: "Energetic, eye-catching, comic-pop vibrancy",
+    useCase: "Social media content, bold statements, attention-grabbing",
+    promptTemplate: "High-contrast pop art illustration inspired by Lichtenstein, bright saturated colors, halftone dots, bold comic energy. {subject}",
+    previewPrompt: "Pop art portrait, Lichtenstein style, halftone dots, bright primary colors, comic aesthetic",
+  },
+  {
+    id: "3d-claymation",
+    name: "3D Claymation",
+    category: "humor",
+    look: "Chunky 3D forms, clay-like textures, slightly imperfect edges, Play-Doh feel",
+    feel: "Playful, modern, instantly engaging",
+    useCase: "Social media, memes, approachable content",
+    promptTemplate: "3D claymation illustration, hand-modeled textures, chunky forms, playful and slightly imperfect, soft lighting. {subject}",
+    previewPrompt: "Claymation 3D portrait, Play-Doh texture, chunky forms, soft studio lighting, playful",
+  },
+  {
+    id: "childrens-book",
+    name: "Children's Book",
+    category: "humor",
+    look: "Playful hand-drawn figures, pastel colors, textured paper effect",
+    feel: "Warm, accessible, empathetic, whimsical",
+    useCase: "Broad audiences, softening heavy topics, approachable",
+    promptTemplate: "Children's book style illustration, playful hand-drawn characters, pastel palette, soft texture, whimsical and warm. {subject}",
+    previewPrompt: "Children's book illustration portrait, hand-drawn, pastel colors, soft paper texture, whimsical",
+  },
+
+  // Futurism / Vision
+  {
+    id: "retro-futurist",
+    name: "Retro-Futurist Poster",
+    category: "futurism",
+    look: "Flat design, bold blocks of color, geometric forms, 1950s NASA/WHO posters",
+    feel: "Nostalgic yet forward-looking, optimism or irony",
+    useCase: "Tech optimism/pessimism, AI themes, vision pieces",
+    promptTemplate: "Mid-century modern poster illustration, bold typography, geometric shapes, limited color palette (orange, teal, mustard), retro-futurist. {subject}",
+    previewPrompt: "Retro-futurist poster portrait, mid-century modern, bold geometric shapes, orange teal mustard palette",
+  },
+  {
+    id: "futuristic-neon",
+    name: "Futuristic Neon",
+    category: "futurism",
+    look: "Cyberpunk aesthetic, glowing neon elements, data streams",
+    feel: "Tech-forward, electric, immersive",
+    useCase: "AI themes, digital innovation, tech narratives",
+    promptTemplate: "Futuristic neon cyberpunk illustration, glowing lights, dark background with electric blue and magenta accents, data aesthetic. {subject}",
+    previewPrompt: "Cyberpunk neon portrait, glowing blue magenta lights, dark background, futuristic",
+  },
+  {
+    id: "brutalist-poster",
+    name: "Brutalist Poster",
+    category: "futurism",
+    look: "Harsh typography, blocky forms, flat primary colors, utilitarian",
+    feel: "Urgent, confrontational, activist edge",
+    useCase: "Calls to action, bold statements, reform pieces",
+    promptTemplate: "Bold brutalist poster illustration, heavy sans-serif aesthetic, flat color blocks in red, black, and beige, urgent activist energy. {subject}",
+    previewPrompt: "Brutalist poster portrait, bold blocks, red black beige, stark geometric, activist style",
+  },
+  {
+    id: "minimal-gradient",
+    name: "Minimal Gradient",
+    category: "futurism",
+    look: "Clean shapes, smooth gradients, lots of whitespace, Apple Keynote aesthetic",
+    feel: "Modern, aspirational, tech-forward elegance",
+    useCase: "Branding, presentations, futuristic optimism",
+    promptTemplate: "Minimal abstract illustration with smooth gradients, floating spheres and clean whitespace, Apple keynote aesthetic, soft lighting. {subject}",
+    previewPrompt: "Minimal gradient portrait, smooth color gradients, floating shapes, clean whitespace, Apple aesthetic",
+  },
+
+  // Artistic
+  {
+    id: "japanese-woodblock",
+    name: "Japanese Woodblock",
+    category: "artistic",
+    look: "Flat perspective, textured brushwork, flowing outlines, ukiyo-e inspired",
+    feel: "Artistic, contemplative, timeless beauty",
+    useCase: "Cultural themes, humanizing stories, artistic content",
+    promptTemplate: "Modern ukiyo-e woodblock print style, flowing outlines, textured colors, flat perspective, Japanese artistic tradition. {subject}",
+    previewPrompt: "Ukiyo-e woodblock print portrait, flowing lines, flat perspective, textured colors",
+  },
+  {
+    id: "vintage-engraving",
+    name: "Vintage Engraving",
+    category: "artistic",
+    look: "Etching-style linework, cross-hatching, aged parchment background",
+    feel: "Historical, authoritative, archival elegance",
+    useCase: "Classic themes, historical references, timeless content",
+    promptTemplate: "Vintage anatomical engraving style, black ink cross-hatching on parchment, 19th-century aesthetic, detailed linework. {subject}",
+    previewPrompt: "Vintage engraving portrait, cross-hatching, black ink, parchment background, 19th century style",
+  },
+  {
+    id: "painterly-concept",
+    name: "Painterly Concept Art",
+    category: "artistic",
+    look: "Digital oil-paint style, textured brushwork, chiaroscuro lighting",
+    feel: "Thoughtful, high-art, evokes gravitas and depth",
+    useCase: "Visionary pieces, elevated content, artistic statements",
+    promptTemplate: "Painterly digital concept art, chiaroscuro lighting, textured brushwork, subdued tones, evokes depth and artistic gravitas. {subject}",
+    previewPrompt: "Painterly concept art portrait, oil paint texture, chiaroscuro lighting, subdued tones",
+  },
+  {
+    id: "newspaper-halftone",
+    name: "Newspaper Halftone",
+    category: "artistic",
+    look: "Black-and-white halftone print, newsprint textures, gritty",
+    feel: "Old-school journalism, authentic, raw truth",
+    useCase: "Hard truths, investigative themes, authentic voice",
+    promptTemplate: "Halftone monochrome editorial illustration, rough ink textures, vintage newspaper aesthetic, gritty authenticity. {subject}",
+    previewPrompt: "Newspaper halftone portrait, black and white, halftone dots, newsprint texture, journalistic",
+  },
+];
+
+export const STYLE_CATEGORIES = [
+  { id: "editorial", name: "Editorial & Gravitas", icon: "Newspaper" },
+  { id: "explainer", name: "Explainers & Strategy", icon: "BarChart3" },
+  { id: "humor", name: "Humor & Satire", icon: "Smile" },
+  { id: "futurism", name: "Futurism & Vision", icon: "Rocket" },
+  { id: "artistic", name: "Artistic & Classic", icon: "Palette" },
+] as const;
+
+export type StyleCategory = typeof STYLE_CATEGORIES[number]["id"];
