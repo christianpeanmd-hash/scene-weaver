@@ -127,6 +127,10 @@ export function OnePageExplainerBuilder() {
   const [customBrandTokens, setCustomBrandTokens] = useState("");
   const [tone, setTone] = useState("");
   
+  // Export customization
+  const [logoUrl, setLogoUrl] = useState("");
+  const [footerText, setFooterText] = useState("");
+  
   // Save brand dialog state
   const [saveBrandDialogOpen, setSaveBrandDialogOpen] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
@@ -539,7 +543,9 @@ export function OnePageExplainerBuilder() {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: var(--font-family); font-size: 11pt; line-height: 1.5; color: #1f2937; background: #fff; }
         .page { max-width: 8.5in; margin: 0 auto; padding: 0.5in; }
-        .header { background: var(--primary); color: white; padding: 1.5rem 2rem; margin: -0.5in -0.5in 1.5rem; }
+        .header { background: var(--primary); color: white; padding: 1.5rem 2rem; margin: -0.5in -0.5in 1.5rem; display: flex; align-items: center; gap: 1rem; }
+        .header-logo { max-height: 50px; max-width: 120px; object-fit: contain; }
+        .header-content { flex: 1; }
         .header h1 { font-size: 1.75rem; margin-bottom: 0.25rem; font-weight: 700; }
         .header .tagline { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
         .section { margin-bottom: 1.25rem; }
@@ -552,14 +558,18 @@ export function OnePageExplainerBuilder() {
         .cta { background: #f1f5f9; border-top: 3px solid var(--primary); padding: 1rem 1.5rem; margin-top: 1.5rem; }
         .cta h3 { color: var(--primary); margin-bottom: 0.25rem; }
         .cta-button { display: inline-block; background: var(--accent); color: white; padding: 0.5rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: 600; margin-top: 0.5rem; }
+        .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center; font-size: 0.8rem; color: #6b7280; }
         @media print { .page { max-width: none; padding: 0; } }
     </style>
 </head>
 <body>
     <div class="page">
         <div class="header">
-            <h1>${result.title}</h1>
-            <p class="tagline">${result.subtitle}</p>
+            ${logoUrl ? `<img src="${logoUrl}" alt="Logo" class="header-logo" />` : ''}
+            <div class="header-content">
+                <h1>${result.title}</h1>
+                <p class="tagline">${result.subtitle}</p>
+            </div>
         </div>
         
         ${result.sections.map(section => `
@@ -583,6 +593,8 @@ export function OnePageExplainerBuilder() {
             <p>${result.cta.body}</p>
             <a href="${result.cta.suggested_link_anchor}" class="cta-button">${result.cta.button_text}</a>
         </div>
+        
+        ${footerText ? `<div class="footer">${footerText}</div>` : ''}
     </div>
 </body>
 </html>`;
@@ -651,7 +663,9 @@ export function OnePageExplainerBuilder() {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: ${fontFamily}; font-size: 10pt; line-height: 1.4; color: #1f2937; background: #fff; }
         .page { max-width: 100%; }
-        .header { background: ${colors.primary}; color: white; padding: 1rem 1.5rem; margin-bottom: 1rem; }
+        .header { background: ${colors.primary}; color: white; padding: 1rem 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+        .header-logo { max-height: 40px; max-width: 100px; object-fit: contain; }
+        .header-content { flex: 1; }
         .header h1 { font-size: 1.5rem; margin-bottom: 0.15rem; font-weight: 700; }
         .header .tagline { color: rgba(255,255,255,0.85); font-size: 0.85rem; }
         .section { margin-bottom: 0.75rem; }
@@ -666,13 +680,17 @@ export function OnePageExplainerBuilder() {
         .cta h3 { color: ${colors.primary}; margin-bottom: 0.15rem; font-size: 0.9rem; }
         .cta p { font-size: 0.8rem; }
         .cta-button { display: inline-block; background: ${colors.accent}; color: white; padding: 0.35rem 1rem; border-radius: 3px; text-decoration: none; font-weight: 600; margin-top: 0.35rem; font-size: 0.8rem; }
+        .footer { margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid #e5e7eb; text-align: center; font-size: 0.7rem; color: #6b7280; }
     </style>
 </head>
 <body>
     <div class="page">
         <div class="header">
-            <h1>${result.title}</h1>
-            <p class="tagline">${result.subtitle}</p>
+            ${logoUrl ? `<img src="${logoUrl}" alt="Logo" class="header-logo" />` : ''}
+            <div class="header-content">
+                <h1>${result.title}</h1>
+                <p class="tagline">${result.subtitle}</p>
+            </div>
         </div>
         
         ${result.sections.map(section => `
@@ -696,6 +714,8 @@ export function OnePageExplainerBuilder() {
             <p>${result.cta.body}</p>
             <a href="${result.cta.suggested_link_anchor}" class="cta-button">${result.cta.button_text}</a>
         </div>
+        
+        ${footerText ? `<div class="footer">${footerText}</div>` : ''}
     </div>
     <script>
         window.onload = function() {
@@ -1183,6 +1203,31 @@ export function OnePageExplainerBuilder() {
                     brandName={currentBrandPreview?.name}
                     onColorsExtracted={handleColorsExtracted}
                   />
+                  
+                  {/* Export Customization */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Export Options</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="logoUrl" className="text-xs">Logo URL (optional)</Label>
+                      <Input
+                        id="logoUrl"
+                        placeholder="https://example.com/logo.png"
+                        value={logoUrl}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="footerText" className="text-xs">Footer text (optional)</Label>
+                      <Input
+                        id="footerText"
+                        placeholder="© 2024 Company Name • contact@example.com"
+                        value={footerText}
+                        onChange={(e) => setFooterText(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
                   
                   <div className="space-y-2">
                     <Label>Tone</Label>
