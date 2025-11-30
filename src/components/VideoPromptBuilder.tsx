@@ -196,12 +196,12 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     saveEnvironment(enhanced);
   };
 
-  const removeEnvironment = (id: number) => {
+  const removeEnvironment = (id: number | string) => {
     setEnvironments(environments.filter((e) => e.id !== id));
     if (expandedEnv === id) setExpandedEnv(null);
   };
 
-  const updateEnvironment = (id: number, field: keyof Environment, value: string) => {
+  const updateEnvironment = (id: number | string, field: keyof Environment, value: string) => {
     setEnvironments(environments.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
   };
 
@@ -290,11 +290,11 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     setScenes([...scenes, newScene]);
   };
 
-  const updateScene = (id: number, field: keyof Scene, value: string | number[] | number | undefined) => {
+  const updateScene = (id: number | string, field: keyof Scene, value: string | (string | number)[] | number | undefined) => {
     setScenes(scenes.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
-  const handleGenerateScene = async (id: number) => {
+  const handleGenerateScene = async (id: number | string) => {
     const scene = scenes.find((s) => s.id === id);
     if (!scene || !scene.description.trim()) return;
 
@@ -355,7 +355,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     }
   };
 
-  const removeScene = (id: number) => {
+  const removeScene = (id: number | string) => {
     setScenes(scenes.filter((s) => s.id !== id));
   };
 
@@ -429,7 +429,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
             savedEnvironments={savedEnvironments}
             savedSceneStyles={savedSceneStyles}
             scenes={scenes}
-            copiedId={typeof copiedId === "number" ? copiedId : null}
+            copiedId={copiedId}
             generatingSceneId={generatingSceneId}
             onViewTemplate={() => setStep("template")}
             onUpdateScene={updateScene}

@@ -15,10 +15,10 @@ interface SceneCardProps {
   savedCharacters: EnhancedCharacter[];
   savedEnvironments: EnhancedEnvironment[];
   savedSceneStyles: SceneStyle[];
-  onUpdate: (field: keyof Scene, value: string | number[] | number | undefined) => void;
+  onUpdate: (field: keyof Scene, value: string | (string | number)[] | number | undefined) => void;
   onSelectCharacter: (character: EnhancedCharacter) => void;
-  onDeselectCharacter: (id: number) => void;
-  onSelectEnvironment: (envId: number) => void;
+  onDeselectCharacter: (id: number | string) => void;
+  onSelectEnvironment: (envId: number | string) => void;
   onSelectStyle: (styleId: string, template: string) => void;
   onSaveStyle: (style: Omit<SceneStyle, "id" | "createdAt">) => void;
   onGenerate: () => void;
