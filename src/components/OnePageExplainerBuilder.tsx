@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette, Upload, File, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -135,6 +135,11 @@ export function OnePageExplainerBuilder() {
   });
   const [viewMode, setViewMode] = useState<"preview" | "json">("preview");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  
+  // File upload state
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isParsingFile, setIsParsingFile] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   // Compute current brand preview colors
   const currentBrandPreview = useMemo(() => {
@@ -199,6 +204,101 @@ export function OnePageExplainerBuilder() {
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  // File upload handlers
+  const handleFileUpload = useCallback(async (file: File) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'text/markdown',
+    ];
+    
+    const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt', '.md'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      toast.error("Please upload a PDF, Word document, or text file");
+      return;
+    }
+    
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File must be under 20MB");
+      return;
+    }
+    
+    setUploadedFile(file);
+    setIsParsingFile(true);
+    
+    try {
+      // For text files, read directly
+      if (file.type === 'text/plain' || file.type === 'text/markdown' || fileExtension === '.txt' || fileExtension === '.md') {
+        const text = await file.text();
+        setSourceContent(prev => prev ? prev + "\n\n--- Uploaded from " + file.name + " ---\n\n" + text : text);
+        toast.success(`Loaded content from ${file.name}`);
+      } else {
+        // For PDF/Word, we need to use the backend to parse
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Convert file to base64 for the edge function
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          
+          try {
+            const { data, error } = await supabase.functions.invoke("parse-document", {
+              body: {
+                fileBase64: base64,
+                fileName: file.name,
+                fileType: file.type || fileExtension,
+              },
+            });
+            
+            if (error) throw error;
+            
+            if (data?.text) {
+              setSourceContent(prev => prev ? prev + "\n\n--- Uploaded from " + file.name + " ---\n\n" + data.text : data.text);
+              toast.success(`Extracted ${data.text.length.toLocaleString()} characters from ${file.name}`);
+            } else {
+              throw new Error("No text extracted from document");
+            }
+          } catch (err) {
+            console.error("Error parsing document:", err);
+            toast.error("Failed to parse document. Try pasting the content directly.");
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error("Error reading file:", error);
+      toast.error("Failed to read file");
+    } finally {
+      setIsParsingFile(false);
+    }
+  }, []);
+
+  const handleFileDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [handleFileUpload]);
+
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [handleFileUpload]);
+
+  const clearUploadedFile = () => {
+    setUploadedFile(null);
   };
 
   const handleSelectBrand = (value: string) => {
@@ -484,14 +584,25 @@ export function OnePageExplainerBuilder() {
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">1-Page Explainer</h2>
         <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
           Give us the long version—Techy Memo turns it into a sharp, branded one-pager your audience can actually read.
         </p>
-        <p className="text-xs text-muted-foreground">
-          Perfect for investor one-pagers, internal strategy explainers, clinical program overviews, or patient-friendly summaries.
-        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
+            Investor One-Pagers
+          </span>
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            Internal Strategy
+          </span>
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            Clinical Overviews
+          </span>
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            Patient Summaries
+          </span>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -513,6 +624,71 @@ export function OnePageExplainerBuilder() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <CardContent className="space-y-4 pt-0">
+                  {/* File Upload Zone */}
+                  <div
+                    className={cn(
+                      "border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer",
+                      isDraggingFile
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50 hover:bg-muted/30"
+                    )}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+                    onDragLeave={() => setIsDraggingFile(false)}
+                    onDrop={handleFileDrop}
+                    onClick={() => document.getElementById('file-upload-input')?.click()}
+                  >
+                    <input
+                      id="file-upload-input"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt,.md"
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                    />
+                    {isParsingFile ? (
+                      <div className="flex items-center justify-center gap-2 py-2">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        <span className="text-sm text-muted-foreground">Extracting text...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex justify-center">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <Upload className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium text-foreground">
+                          Drop a PDF or Word doc here
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          or click to browse • PDF, DOCX, DOC, TXT supported
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Show uploaded file */}
+                  {uploadedFile && (
+                    <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                      <File className="w-4 h-4 text-primary" />
+                      <span className="text-sm text-foreground flex-1 truncate">{uploadedFile.name}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); clearUploadedFile(); }}
+                        className="p-1 hover:bg-muted rounded"
+                      >
+                        <X className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span className="bg-card px-2 text-muted-foreground">or paste directly</span>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="source">Paste your document, notes, or transcript</Label>
                     <Textarea
@@ -520,7 +696,7 @@ export function OnePageExplainerBuilder() {
                       placeholder="Paste up to ~10,000 characters. This can be a paper, meeting notes, voice memo transcript, or rough draft."
                       value={sourceContent}
                       onChange={(e) => setSourceContent(e.target.value)}
-                      className="min-h-[200px] resize-y"
+                      className="min-h-[180px] resize-y"
                     />
                     <p className="text-xs text-muted-foreground">{sourceContent.length.toLocaleString()} characters</p>
                   </div>
