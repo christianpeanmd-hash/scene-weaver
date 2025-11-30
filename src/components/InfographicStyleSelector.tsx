@@ -5,12 +5,30 @@ import { INFOGRAPHIC_STYLES, INFOGRAPHIC_CATEGORIES, InfographicStyle } from "@/
 import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
 import { cn } from "@/lib/utils";
 
+// Import preview images
+import explainerPreview from "@/assets/infographic-previews/explainer.jpg";
+import dataPreview from "@/assets/infographic-previews/data-driven.jpg";
+import timelinePreview from "@/assets/infographic-previews/timeline.jpg";
+import comparisonPreview from "@/assets/infographic-previews/comparison.jpg";
+import checklistPreview from "@/assets/infographic-previews/checklist.jpg";
+import processPreview from "@/assets/infographic-previews/process-flow.jpg";
+
 interface InfographicStyleSelectorProps {
   selectedStyle: InfographicStyle | null;
   onSelectStyle: (style: InfographicStyle) => void;
 }
 
-// Visual preview configurations for each style type
+// Preview images for styles that have them
+const STYLE_PREVIEW_IMAGES: Record<string, string> = {
+  "explainer": explainerPreview,
+  "data-driven": dataPreview,
+  "timeline": timelinePreview,
+  "comparison": comparisonPreview,
+  "checklist": checklistPreview,
+  "process-flow": processPreview,
+};
+
+// Visual preview configurations for each style type (fallback when no image)
 const STYLE_PREVIEWS: Record<string, { 
   bg: string; 
   accent: string;
@@ -34,17 +52,30 @@ const STYLE_PREVIEWS: Record<string, {
   "minimalist-bw": { bg: "from-gray-200 to-gray-100", accent: "bg-gray-800", layout: "grid" },
   "sketch-style": { bg: "from-amber-100 to-orange-50", accent: "bg-amber-600", layout: "custom" },
   "landmark-map": { bg: "from-sky-100 to-cyan-50", accent: "bg-sky-600", layout: "map" },
-  "mega-infographic": { bg: "from-gradient-to-r from-violet-100 via-fuchsia-100 to-pink-100", accent: "bg-gradient-to-r from-violet-500 to-pink-500", layout: "custom" },
+  "mega-infographic": { bg: "from-violet-100 to-pink-100", accent: "bg-violet-500", layout: "custom" },
 };
 
 export function InfographicStyleSelector({ selectedStyle, onSelectStyle }: InfographicStyleSelectorProps) {
   const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  // Start with all categories collapsed, user expands what they want
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   
   const favoriteStyles = INFOGRAPHIC_STYLES.filter((s) => favorites.infographic.includes(s.id));
 
   const getStylesByCategory = (categoryId: string) => 
     INFOGRAPHIC_STYLES.filter((s) => s.category === categoryId && !favorites.infographic.includes(s.id));
+
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -87,13 +118,13 @@ export function InfographicStyleSelector({ selectedStyle, onSelectStyle }: Infog
           const styles = getStylesByCategory(category.id);
           if (styles.length === 0) return null;
           
-          const isExpanded = expandedCategory === category.id || !expandedCategory;
+          const isCollapsed = collapsedCategories.has(category.id);
           
           return (
             <div key={category.id}>
               <button
-                onClick={() => setExpandedCategory(isExpanded && expandedCategory ? null : category.id)}
-                className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors"
+                onClick={() => toggleCategory(category.id)}
+                className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors py-1"
               >
                 <span className="flex items-center gap-1.5">
                   <span>{category.icon}</span>
@@ -102,11 +133,11 @@ export function InfographicStyleSelector({ selectedStyle, onSelectStyle }: Infog
                 </span>
                 <ChevronDown className={cn(
                   "w-3.5 h-3.5 transition-transform",
-                  isExpanded && "rotate-180"
+                  !isCollapsed && "rotate-180"
                 )} />
               </button>
               
-              {isExpanded && (
+              {!isCollapsed && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-fade-in">
                   {styles.map((style) => (
                     <StyleButton
@@ -142,6 +173,7 @@ function StyleButton({
   onToggleFavorite: () => void;
 }) {
   const preview = STYLE_PREVIEWS[style.id] || { bg: "from-slate-200 to-slate-100", accent: "bg-slate-500", layout: "grid" };
+  const previewImage = STYLE_PREVIEW_IMAGES[style.id];
 
   return (
     <button
@@ -170,12 +202,21 @@ function StyleButton({
         )} />
       </button>
 
-      {/* Visual preview that represents the layout type */}
+      {/* Visual preview - use image if available, otherwise use layout preview */}
       <div className={cn(
-        "w-full h-14 rounded-md mb-2 bg-gradient-to-br relative overflow-hidden p-1.5",
-        preview.bg
+        "w-full h-16 rounded-md mb-2 relative overflow-hidden",
+        !previewImage && "bg-gradient-to-br p-1.5",
+        !previewImage && preview.bg
       )}>
-        <LayoutPreview layout={preview.layout} accent={preview.accent} />
+        {previewImage ? (
+          <img 
+            src={previewImage} 
+            alt={style.name}
+            className="w-full h-full object-cover rounded-sm"
+          />
+        ) : (
+          <LayoutPreview layout={preview.layout} accent={preview.accent} />
+        )}
       </div>
       
       <div className="flex items-start justify-between gap-1">
@@ -200,7 +241,7 @@ function StyleButton({
   );
 }
 
-// Visual layout preview component
+// Visual layout preview component (fallback when no image)
 function LayoutPreview({ layout, accent }: { layout: string; accent: string }) {
   switch (layout) {
     case "steps":
@@ -237,7 +278,7 @@ function LayoutPreview({ layout, accent }: { layout: string; accent: string }) {
       );
     case "timeline":
       return (
-        <div className="h-full flex items-center">
+        <div className="h-full flex items-center relative">
           <div className={cn("w-full h-0.5 rounded-full", accent, "opacity-60")} />
           <div className="absolute inset-x-1 flex justify-between">
             {[0, 1, 2, 3].map((i) => (
