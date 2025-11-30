@@ -12,7 +12,7 @@ export interface GeneratedImage {
 }
 
 const LOCAL_STORAGE_KEY = "generated_images_gallery";
-const MAX_LOCAL_IMAGES = 20;
+const MAX_LOCAL_IMAGES = 5; // Reduced to prevent quota issues with large base64 images
 
 export function useGeneratedImagesGallery() {
   const { user } = useAuth();
@@ -91,10 +91,21 @@ export function useGeneratedImagesGallery() {
       setImages(prev => [data, ...prev]);
       return data;
     } else {
-      // Save to localStorage
+      // Save to localStorage with quota error handling
       setImages(prev => {
         const updated = [newImage, ...prev].slice(0, MAX_LOCAL_IMAGES);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        } catch (e) {
+          // Quota exceeded - clear old images and try with just the new one
+          console.warn("localStorage quota exceeded, clearing old images");
+          try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([newImage]));
+          } catch {
+            // Still failing - just skip localStorage
+            console.warn("Unable to save to localStorage");
+          }
+        }
         return updated;
       });
       return newImage;
