@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AIToolLinks } from "./AIToolLinks";
 import { InfographicStyleSelector } from "./InfographicStyleSelector";
+import { BrandSelector } from "./BrandSelector";
 import { INFOGRAPHIC_STYLES, InfographicStyle } from "@/data/infographic-styles";
+import { Brand } from "@/hooks/useBrandLibrary";
 import { supabase } from "@/integrations/supabase/client";
 
 export function InfographicPromptBuilder() {
   const [uploadedDocument, setUploadedDocument] = useState<{ name: string; content: string } | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<InfographicStyle | null>(null);
   const [topicDescription, setTopicDescription] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [customBrandText, setCustomBrandText] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -76,6 +80,10 @@ export function InfographicPromptBuilder() {
 
     setIsGenerating(true);
     try {
+      const brandContext = selectedBrand 
+        ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
+        : customBrandText.trim() || undefined;
+
       const { data, error } = await supabase.functions.invoke('generate-image-prompt', {
         body: {
           type: 'infographic',
@@ -84,6 +92,7 @@ export function InfographicPromptBuilder() {
           stylePromptTemplate: selectedStyle.promptTemplate,
           topic: topicDescription,
           documentContent: uploadedDocument?.content,
+          brandContext,
         },
       });
 
@@ -204,6 +213,14 @@ export function InfographicPromptBuilder() {
             <InfographicStyleSelector
               selectedStyle={selectedStyle}
               onSelectStyle={setSelectedStyle}
+            />
+
+            {/* Brand Selector */}
+            <BrandSelector
+              selectedBrand={selectedBrand}
+              onSelectBrand={setSelectedBrand}
+              customBrandText={customBrandText}
+              onCustomBrandChange={setCustomBrandText}
             />
 
             {/* Generate Button */}

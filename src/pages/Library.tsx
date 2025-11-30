@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCharacterLibrary } from "@/hooks/useCharacterLibrary";
 import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironmentLibrary";
 import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
+import { useBrandLibrary, Brand } from "@/hooks/useBrandLibrary";
 import { EnhancedCharacter } from "@/types/prompt-builder";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -17,10 +18,12 @@ export default function Library() {
   const { savedCharacters, saveCharacter, removeCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment, removeEnvironment } = useEnvironmentLibrary();
   const { savedStyles, saveStyle, removeStyle } = useSceneStyleLibrary();
+  const { brands, saveBrand, updateBrand, removeBrand } = useBrandLibrary();
 
   const [editingCharacter, setEditingCharacter] = useState<EnhancedCharacter | null>(null);
   const [editingEnvironment, setEditingEnvironment] = useState<EnhancedEnvironment | null>(null);
   const [editingStyle, setEditingStyle] = useState<SceneStyle | null>(null);
+  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -58,6 +61,19 @@ export default function Library() {
     }
   };
 
+  const handleSaveBrand = () => {
+    if (editingBrand) {
+      updateBrand(editingBrand.id, {
+        name: editingBrand.name,
+        description: editingBrand.description,
+        colors: editingBrand.colors,
+        fonts: editingBrand.fonts,
+      });
+      setEditingBrand(null);
+      toast.success("Brand updated!");
+    }
+  };
+
   const handleDeleteCharacter = (id: number, name: string) => {
     if (confirm(`Delete "${name}" from your library?`)) {
       removeCharacter(id);
@@ -76,6 +92,13 @@ export default function Library() {
     if (confirm(`Delete "${name}" from your library?`)) {
       removeStyle(id);
       toast.success("Scene style deleted");
+    }
+  };
+
+  const handleDeleteBrand = (id: string, name: string) => {
+    if (confirm(`Delete "${name}" from your library?`)) {
+      removeBrand(id);
+      toast.success("Brand deleted");
     }
   };
 
@@ -103,7 +126,7 @@ export default function Library() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <Tabs defaultValue="characters" className="space-y-6">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
+          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4">
             <TabsTrigger value="characters" className="gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Characters</span>
@@ -131,6 +154,16 @@ export default function Library() {
               {savedStyles.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
                   {savedStyles.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="brands" className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">Brands</span>
+              <span className="sm:hidden">Brand</span>
+              {brands.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                  {brands.length}
                 </span>
               )}
             </TabsTrigger>
@@ -218,6 +251,36 @@ export default function Library() {
                     onDelete={() => handleDeleteStyle(style.id, style.name)}
                     onChange={(field, value) =>
                       setEditingStyle((prev) => prev ? { ...prev, [field]: value } : null)
+                    }
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Brands Tab */}
+          <TabsContent value="brands" className="space-y-4">
+            {brands.length === 0 ? (
+              <EmptyState
+                icon={Sparkles}
+                title="No brands saved"
+                description="Create brand kits in the Image or Infographic builder to save them here"
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {brands.map((brand) => (
+                  <BrandCard
+                    key={brand.id}
+                    brand={brand}
+                    isEditing={editingBrand?.id === brand.id}
+                    editingData={editingBrand?.id === brand.id ? editingBrand : null}
+                    onEdit={() => setEditingBrand({ ...brand })}
+                    onCancel={() => setEditingBrand(null)}
+                    onSave={handleSaveBrand}
+                    onDelete={() => handleDeleteBrand(brand.id, brand.name)}
+                    onChange={(field, value) =>
+                      setEditingBrand((prev) => prev ? { ...prev, [field]: value } : null)
                     }
                     formatDate={formatDate}
                   />
@@ -525,6 +588,121 @@ function StyleCard({
         <div className="pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="w-3 h-3" />
           <span>Added {formatDate(style.createdAt)}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Brand Card Component
+function BrandCard({
+  brand,
+  isEditing,
+  editingData,
+  onEdit,
+  onCancel,
+  onSave,
+  onDelete,
+  onChange,
+  formatDate,
+}: {
+  brand: Brand;
+  isEditing: boolean;
+  editingData: Brand | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onChange: (field: string, value: string | string[]) => void;
+  formatDate: (t: number) => string;
+}) {
+  const data = isEditing && editingData ? editingData : brand;
+
+  return (
+    <Card className={cn("overflow-hidden transition-all", isEditing && "ring-2 ring-primary")}>
+      <div className="p-4 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          {isEditing ? (
+            <input
+              value={data.name}
+              onChange={(e) => onChange("name", e.target.value)}
+              className="font-semibold bg-card border border-border rounded px-2 py-1 text-foreground"
+            />
+          ) : (
+            <h3 className="font-semibold text-foreground">{data.name}</h3>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {isEditing ? (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onCancel}>
+                <X className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onSave} className="text-emerald-600">
+                <Save className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onEdit}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onDelete} className="text-rose-500">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="p-4 space-y-3">
+        <Field
+          label="Description"
+          value={data.description}
+          isEditing={isEditing}
+          onChange={(v) => onChange("description", v)}
+        />
+        {(data.colors?.length || isEditing) && (
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Colors</label>
+            {isEditing ? (
+              <input
+                value={data.colors?.join(", ") || ""}
+                onChange={(e) => onChange("colors", e.target.value.split(",").map(c => c.trim()))}
+                placeholder="Comma-separated colors"
+                className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {data.colors?.map((color, i) => (
+                  <span 
+                    key={i} 
+                    className="px-2 py-1 rounded text-xs font-mono bg-muted"
+                    style={{ 
+                      backgroundColor: color.startsWith('#') ? `${color}20` : undefined,
+                      borderLeft: color.startsWith('#') ? `3px solid ${color}` : undefined
+                    }}
+                  >
+                    {color}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {(data.fonts || isEditing) && (
+          <Field
+            label="Typography"
+            value={data.fonts || ""}
+            isEditing={isEditing}
+            onChange={(v) => onChange("fonts", v)}
+          />
+        )}
+        <div className="pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>Added {formatDate(brand.createdAt)}</span>
         </div>
       </div>
     </Card>

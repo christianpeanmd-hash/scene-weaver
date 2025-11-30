@@ -4,8 +4,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StyleSelector } from "./StyleSelector";
+import { BrandSelector } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
 import { IllustrationStyle } from "@/data/illustration-styles";
+import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
 
 interface ImagePromptBuilderProps {
@@ -17,6 +19,8 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [selectedStyle, setSelectedStyle] = useState<IllustrationStyle | null>(null);
   const [customStyleText, setCustomStyleText] = useState("");
   const [subjectDescription, setSubjectDescription] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [customBrandText, setCustomBrandText] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -65,11 +69,16 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
 
     setIsGenerating(true);
     try {
+      const brandContext = selectedBrand 
+        ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
+        : customBrandText.trim() || undefined;
+
       const prompt = await generateImagePrompt({
         style: selectedStyle,
         customStyle: customStyleText.trim() || undefined,
         imageBase64: uploadedImage,
         subjectDescription,
+        brandContext,
       });
       setGeneratedPrompt(prompt);
       toast.success("Prompt generated!");
@@ -187,6 +196,14 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
               onSelectStyle={setSelectedStyle}
               customStyleText={customStyleText}
               onCustomStyleChange={setCustomStyleText}
+            />
+
+            {/* Brand Selector */}
+            <BrandSelector
+              selectedBrand={selectedBrand}
+              onSelectBrand={setSelectedBrand}
+              customBrandText={customBrandText}
+              onCustomBrandChange={setCustomBrandText}
             />
 
             {/* Generate Button */}

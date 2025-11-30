@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye } from "lucide-react";
+import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye, Star } from "lucide-react";
+import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
 import { Card } from "@/components/ui/card";
 import { ILLUSTRATION_STYLES, STYLE_CATEGORIES, IllustrationStyle, StyleCategory } from "@/data/illustration-styles";
 import { cn } from "@/lib/utils";
@@ -69,9 +70,12 @@ export function StyleSelector({
   customStyleText = "",
   onCustomStyleChange 
 }: StyleSelectorProps) {
-  const [expandedCategory, setExpandedCategory] = useState<StyleCategory | "custom" | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<StyleCategory | "custom" | "favorites" | null>(null);
   const [previewStyle, setPreviewStyle] = useState<IllustrationStyle | null>(null);
   const [isCustomMode, setIsCustomMode] = useState(false);
+  const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
+
+  const favoriteStyles = ILLUSTRATION_STYLES.filter((s) => favorites.illustration.includes(s.id));
 
   const stylesByCategory = STYLE_CATEGORIES.map((category) => ({
     ...category,
@@ -109,6 +113,82 @@ export function StyleSelector({
       </div>
 
       <div className="divide-y divide-border/50">
+        {/* Favorites Section */}
+        {favoriteStyles.length > 0 && (
+          <div>
+            <button
+              onClick={() => setExpandedCategory(expandedCategory === "favorites" ? null : "favorites")}
+              className={cn(
+                "w-full p-4 flex items-center justify-between transition-colors",
+                expandedCategory === "favorites" ? "bg-amber-50/50 dark:bg-amber-950/20" : "hover:bg-muted/50"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium text-foreground">Favorites</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {favoriteStyles.length} saved
+                  </span>
+                </div>
+              </div>
+              <ChevronDown className={cn(
+                "w-5 h-5 text-muted-foreground transition-transform",
+                expandedCategory === "favorites" && "rotate-180"
+              )} />
+            </button>
+
+            {expandedCategory === "favorites" && (
+              <div className="p-3 pt-0 bg-amber-50/30 dark:bg-amber-950/10 animate-fade-in">
+                <div className="grid grid-cols-2 gap-2">
+                  {favoriteStyles.map((style) => {
+                    const isSelected = selectedStyle?.id === style.id && !isCustomMode;
+                    const previewImage = STYLE_PREVIEWS[style.id];
+                    
+                    return (
+                      <button
+                        key={style.id}
+                        onClick={() => handlePresetSelect(style)}
+                        className={cn(
+                          "p-2 rounded-lg text-left transition-all group relative",
+                          isSelected
+                            ? "bg-purple-100 dark:bg-purple-900/30 border-2 border-purple-400"
+                            : "bg-card border border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
+                        )}
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite("illustration", style.id);
+                          }}
+                          className="absolute top-1 right-1 z-10 p-1 rounded-full bg-card/80 hover:bg-card"
+                        >
+                          <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        </button>
+                        <div className="w-full h-16 rounded-md mb-2 overflow-hidden bg-muted">
+                          {previewImage ? (
+                            <img src={previewImage} alt={style.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-muted to-muted-foreground/10" />
+                          )}
+                        </div>
+                        <span className={cn(
+                          "text-xs font-medium block truncate",
+                          isSelected ? "text-purple-700 dark:text-purple-300" : "text-foreground"
+                        )}>
+                          {style.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Custom Style Option */}
         <div>
           <button
@@ -221,12 +301,28 @@ export function StyleSelector({
                           className={cn(
                             "p-2 rounded-lg text-left transition-all group relative",
                             isSelected
-                              ? "bg-purple-100 border-2 border-purple-400"
-                              : "bg-white border border-border hover:border-purple-300 hover:bg-purple-50/50"
+                              ? "bg-purple-100 dark:bg-purple-900/30 border-2 border-purple-400"
+                              : "bg-card border border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
                           )}
                         >
+                          {/* Favorite toggle */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite("illustration", style.id);
+                            }}
+                            className="absolute top-1 right-1 z-10 p-1 rounded-full bg-card/80 hover:bg-card opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Star className={cn(
+                              "w-3 h-3",
+                              isFavorite("illustration", style.id) 
+                                ? "text-amber-500 fill-amber-500" 
+                                : "text-muted-foreground"
+                            )} />
+                          </button>
+
                           {/* Style preview thumbnail */}
-                          <div className="w-full h-16 rounded-md mb-2 overflow-hidden bg-slate-100">
+                          <div className="w-full h-16 rounded-md mb-2 overflow-hidden bg-muted">
                             {previewImage ? (
                               <img 
                                 src={previewImage} 
@@ -234,7 +330,7 @@ export function StyleSelector({
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-100" />
+                              <div className="w-full h-full bg-gradient-to-br from-muted to-muted-foreground/10" />
                             )}
                           </div>
                           
@@ -242,7 +338,7 @@ export function StyleSelector({
                             <div className="flex-1 min-w-0">
                               <span className={cn(
                                 "text-xs font-medium block truncate",
-                                isSelected ? "text-purple-700" : "text-foreground"
+                                isSelected ? "text-purple-700 dark:text-purple-300" : "text-foreground"
                               )}>
                                 {style.name}
                               </span>
