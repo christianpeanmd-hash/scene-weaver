@@ -1,5 +1,5 @@
-import { Check, FileText, Star, ChevronDown, Pencil, Save } from "lucide-react";
-import { useState } from "react";
+import { Check, FileText, Star, ChevronDown, Pencil, Save, Upload, Wand2, Image } from "lucide-react";
+import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { INFOGRAPHIC_STYLES, INFOGRAPHIC_CATEGORIES, InfographicStyle } from "@/data/infographic-styles";
@@ -7,6 +7,7 @@ import { useFavoriteStyles } from "@/hooks/useFavoriteStyles";
 import { useSceneStyleLibrary } from "@/hooks/useSceneStyleLibrary";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import preview images
 import explainerPreview from "@/assets/infographic-previews/explainer.jpg";
@@ -105,8 +106,56 @@ export function InfographicStyleSelector({
   );
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [styleName, setStyleName] = useState("");
+  const [isExtractingStyle, setIsExtractingStyle] = useState(false);
+  const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   
   const favoriteStyles = INFOGRAPHIC_STYLES.filter((s) => favorites.infographic.includes(s.id));
+
+  const handleStyleImageUpload = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setStyleReferenceImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleExtractStyle = async () => {
+    if (!styleReferenceImage) {
+      toast.error("Please upload a style reference image first");
+      return;
+    }
+
+    setIsExtractingStyle(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image-prompt", {
+        body: { 
+          type: 'extract-style-from-photo',
+          imageBase64: styleReferenceImage,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.name && data?.stylePrompt) {
+        onCustomStyleChange?.(data.stylePrompt);
+        setStyleName(data.name);
+        setIsCustomMode(true);
+        onSelectStyle(null);
+        toast.success(`Style "${data.name}" extracted! You can now save it.`);
+      } else {
+        throw new Error("Failed to extract style");
+      }
+    } catch (error) {
+      console.error("Error extracting style:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to extract style");
+    } finally {
+      setIsExtractingStyle(false);
+    }
+  };
 
   const getStylesByCategory = (categoryId: string) => 
     INFOGRAPHIC_STYLES.filter((s) => s.category === categoryId && !favorites.infographic.includes(s.id));
@@ -166,6 +215,80 @@ export function InfographicStyleSelector({
           
           {!collapsedCategories.has("custom") && (
             <div className="space-y-2 animate-fade-in mb-3">
+              {/* Photo to Style */}
+              <div className="p-3 bg-card border border-dashed border-border rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Image className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-medium text-foreground">Create from Reference Image</span>
+                </div>
+                
+                {!styleReferenceImage ? (
+                  <label className="cursor-pointer block">
+                    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors">
+                      <Upload className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Upload style reference</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleStyleImageUpload(file);
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <img 
+                        src={styleReferenceImage} 
+                        alt="Style reference" 
+                        className="w-full h-24 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => setStyleReferenceImage(null)}
+                        className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full"
+                      >
+                        <span className="sr-only">Remove</span>
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <Button
+                      variant="soft"
+                      size="sm"
+                      className="w-full"
+                      disabled={isExtractingStyle}
+                      onClick={handleExtractStyle}
+                    >
+                      {isExtractingStyle ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin mr-2" />
+                          Extracting...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-3 h-3 mr-2" />
+                          Extract Style Prompt
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Upload any infographic to extract its style as a reusable prompt
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-x-0 top-1/2 border-t border-border" />
+                <div className="relative flex justify-center">
+                  <span className="bg-muted/30 px-2 text-xs text-muted-foreground">or describe manually</span>
+                </div>
+              </div>
+
               <textarea
                 value={customStyleText}
                 onChange={(e) => {
@@ -179,7 +302,7 @@ export function InfographicStyleSelector({
                 }}
                 placeholder="Describe your infographic style... e.g., 'Clean minimalist design with a blue/white color scheme, sans-serif typography, and simple iconography'"
                 rows={3}
-                className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all resize-none"
+                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all resize-none"
               />
               
               {customStyleText && customStyleText.length > 20 && (
@@ -189,7 +312,7 @@ export function InfographicStyleSelector({
                     value={styleName}
                     onChange={(e) => setStyleName(e.target.value)}
                     placeholder="Style name..."
-                    className="flex-1 px-3 py-2 bg-white border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400"
+                    className="flex-1 px-3 py-2 bg-card border border-border rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400"
                   />
                   <Button
                     variant="soft"
@@ -203,6 +326,7 @@ export function InfographicStyleSelector({
                       });
                       toast.success(`Saved "${styleName}" to your style library`);
                       setStyleName("");
+                      setStyleReferenceImage(null);
                     }}
                   >
                     <Save className="w-4 h-4 mr-1" />
