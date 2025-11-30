@@ -1,18 +1,19 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SceneCard } from "@/components/SceneCard";
-import { Character, Scene } from "@/types/prompt-builder";
+import { Character, Scene, EnhancedCharacter } from "@/types/prompt-builder";
 import { isCharacterComplete } from "@/lib/template-generator";
 
 interface ScenesStepProps {
   concept: string;
   duration: number | null;
   characters: Character[];
+  savedCharacters: EnhancedCharacter[];
   scenes: Scene[];
   copiedId: number | null;
   generatingSceneId: number | null;
   onViewTemplate: () => void;
-  onUpdateScene: (id: number, field: keyof Scene, value: string) => void;
+  onUpdateScene: (id: number, field: keyof Scene, value: string | number[]) => void;
   onGenerateScene: (id: number) => void;
   onCopyScene: (id: number, content: string) => void;
   onRemoveScene: (id: number) => void;
@@ -23,6 +24,7 @@ export function ScenesStep({
   concept,
   duration,
   characters,
+  savedCharacters,
   scenes,
   copiedId,
   generatingSceneId,
@@ -34,6 +36,22 @@ export function ScenesStep({
   onAddScene,
 }: ScenesStepProps) {
   const filledChars = characters.filter(isCharacterComplete);
+
+  const handleSelectCharacter = (sceneId: number, character: EnhancedCharacter) => {
+    const scene = scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+    const currentIds = scene.selectedCharacterIds || [];
+    if (!currentIds.includes(character.id)) {
+      onUpdateScene(sceneId, "selectedCharacterIds" as keyof Scene, [...currentIds, character.id]);
+    }
+  };
+
+  const handleDeselectCharacter = (sceneId: number, charId: number) => {
+    const scene = scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+    const currentIds = scene.selectedCharacterIds || [];
+    onUpdateScene(sceneId, "selectedCharacterIds" as keyof Scene, currentIds.filter(id => id !== charId));
+  };
 
   return (
     <div className="space-y-5">
@@ -64,6 +82,13 @@ export function ScenesStep({
             </span>
           ))}
         </div>
+        {savedCharacters.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-primary-foreground/20">
+            <span className="text-xs text-teal-100">
+              {savedCharacters.length} character{savedCharacters.length !== 1 ? 's' : ''} in library
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Scenes */}
@@ -75,7 +100,10 @@ export function ScenesStep({
             index={index}
             copied={copiedId === scene.id}
             isGenerating={generatingSceneId === scene.id}
+            savedCharacters={savedCharacters}
             onUpdate={(field, value) => onUpdateScene(scene.id, field, value)}
+            onSelectCharacter={(char) => handleSelectCharacter(scene.id, char)}
+            onDeselectCharacter={(charId) => handleDeselectCharacter(scene.id, charId)}
             onGenerate={() => onGenerateScene(scene.id)}
             onCopy={() => onCopyScene(scene.id, scene.content)}
             onRemove={() => onRemoveScene(scene.id)}

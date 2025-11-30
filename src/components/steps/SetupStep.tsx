@@ -1,8 +1,8 @@
-import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle } from "lucide-react";
+import { Sparkles, Clock, Clapperboard, User, Plus, AlertTriangle, Library } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CharacterCard } from "@/components/CharacterCard";
-import { Character, DURATIONS } from "@/types/prompt-builder";
+import { Character, EnhancedCharacter, DURATIONS } from "@/types/prompt-builder";
 import { isCharacterComplete } from "@/lib/template-generator";
 import { cn } from "@/lib/utils";
 
@@ -17,10 +17,12 @@ interface SetupStepProps {
   expandedChar: number | null;
   setExpandedChar: (value: number | null) => void;
   onAddCharacter: () => void;
+  onAddCharacterFromLibrary: (character: EnhancedCharacter) => void;
   onUpdateCharacter: (id: number, field: keyof Character, value: string) => void;
   onRemoveCharacter: (id: number) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  savedCharacters: EnhancedCharacter[];
 }
 
 export function SetupStep({
@@ -34,14 +36,21 @@ export function SetupStep({
   expandedChar,
   setExpandedChar,
   onAddCharacter,
+  onAddCharacterFromLibrary,
   onUpdateCharacter,
   onRemoveCharacter,
   onGenerate,
   isGenerating,
+  savedCharacters,
 }: SetupStepProps) {
   const filledCharacters = characters.filter(isCharacterComplete).length;
   const isReady = concept.trim().length > 0;
   const showWarning = characters.length > 2;
+
+  // Filter out characters already added
+  const availableFromLibrary = savedCharacters.filter(
+    saved => !characters.some(c => c.name.toLowerCase() === saved.name.toLowerCase())
+  );
 
   return (
     <div className="space-y-5">
@@ -152,16 +161,49 @@ export function SetupStep({
           </div>
         )}
 
-        <div className="p-4 bg-slate-50/50">
-          <button
-            onClick={onAddCharacter}
-            className="flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add a character
-          </button>
+        <div className="p-4 bg-slate-50/50 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={onAddCharacter}
+              className="flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add new character
+            </button>
+            
+            {availableFromLibrary.length > 0 && (
+              <span className="text-muted-foreground text-sm">or</span>
+            )}
+          </div>
+
+          {/* Character Library Quick Pick */}
+          {availableFromLibrary.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Library className="w-3 h-3" />
+                Quick add from library:
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {availableFromLibrary.slice(0, 5).map((char) => (
+                  <button
+                    key={char.id}
+                    onClick={() => onAddCharacterFromLibrary(char)}
+                    className="px-3 py-1.5 bg-white border border-border rounded-full text-sm text-foreground hover:border-primary hover:bg-teal-50 transition-all"
+                  >
+                    {char.name}
+                  </button>
+                ))}
+                {availableFromLibrary.length > 5 && (
+                  <span className="px-3 py-1.5 text-sm text-muted-foreground">
+                    +{availableFromLibrary.length - 5} more
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {showWarning && (
-            <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
               <p className="text-sm text-amber-700">
                 AI generators work best with 1–2 characters.

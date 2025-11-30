@@ -6,12 +6,21 @@ export interface Character {
   role: string;
 }
 
+export interface EnhancedCharacter extends Character {
+  enhancedLook?: string;
+  enhancedDemeanor?: string;
+  enhancedRole?: string;
+  sourceTemplate?: string;
+  createdAt: number;
+}
+
 export interface Scene {
   id: number;
   title: string;
   description: string;
   generated: boolean;
   content: string;
+  selectedCharacterIds?: number[];
 }
 
 export interface Duration {

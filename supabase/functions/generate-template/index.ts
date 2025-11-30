@@ -24,6 +24,8 @@ interface GenerateRequest {
 
 const SYSTEM_PROMPT = `You are an expert video production template writer optimized for AI video generators (Veo 3, Sora). Your job is to create highly specific, structured prompts that produce consistent, high-quality video output.
 
+CRITICAL: ALL OUTPUT MUST BE IN ENGLISH ONLY. Do not use Chinese, Japanese, Korean, or any other non-English characters. Every word, description, and detail must be written in English.
+
 ## Core Principles
 1. **Specificity Over Ambiguity**: Use concrete, visual details. "Messy bun escaping from faded black cap, dark circles under eyes, coffee-stained green apron" NOT "tired-looking barista"
 2. **Constraint Over Freedom**: Limit variables for consistency. Simpler settings, defined actions.
@@ -37,6 +39,7 @@ const SYSTEM_PROMPT = `You are an expert video production template writer optimi
 - Detailed backgrounds
 - Props that require reading
 - Phrases like "Meanwhile...", "Later that day...", "Thinking about..."
+- ANY non-English text or characters
 
 ## Audio Rules
 - Dialogue: Under 10 words per line, max 2-4 lines total
@@ -47,7 +50,7 @@ const SYSTEM_PROMPT = `You are an expert video production template writer optimi
 - DEFAULT: No on-screen text, captions, or overlays
 - AI generators struggle with text rendering — avoid it
 
-When generating, INVENT all details based on the concept. Every bracketed placeholder must be filled with specific, visual, filmable content.`;
+When generating, INVENT all details based on the concept. Every bracketed placeholder must be filled with specific, visual, filmable content. ALL IN ENGLISH.`;
 
 const getTemplatePrompt = (req: GenerateRequest) => {
   const charDesc = req.characters.length > 0

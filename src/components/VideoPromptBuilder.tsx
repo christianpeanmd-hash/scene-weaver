@@ -6,9 +6,10 @@ import { ProgressSteps, StepKey } from "./ProgressSteps";
 import { SetupStep } from "./steps/SetupStep";
 import { TemplateStep } from "./steps/TemplateStep";
 import { ScenesStep } from "./steps/ScenesStep";
-import { Character, Scene } from "@/types/prompt-builder";
+import { Character, Scene, EnhancedCharacter } from "@/types/prompt-builder";
 import { generateAITemplate, generateAIScene } from "@/lib/ai-template-generator";
 import { isCharacterComplete } from "@/lib/template-generator";
+import { useCharacterLibrary, parseCharactersFromTemplate } from "@/hooks/useCharacterLibrary";
 
 export function VideoPromptBuilder() {
   const [step, setStep] = useState<StepKey>("setup");
@@ -23,11 +24,26 @@ export function VideoPromptBuilder() {
   const [expandedChar, setExpandedChar] = useState<number | null>(null);
   const [generatingSceneId, setGeneratingSceneId] = useState<number | null>(null);
 
+  const { savedCharacters, saveCharacter } = useCharacterLibrary();
+
   const addCharacter = () => {
     const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
     const newChar: Character = { id: newId, name: "", look: "", demeanor: "", role: "" };
     setCharacters([...characters, newChar]);
     setExpandedChar(newId);
+  };
+
+  const addCharacterFromLibrary = (enhanced: EnhancedCharacter) => {
+    const newId = characters.length > 0 ? Math.max(...characters.map((c) => c.id)) + 1 : 1;
+    const newChar: Character = {
+      id: newId,
+      name: enhanced.name,
+      look: enhanced.enhancedLook || enhanced.look,
+      demeanor: enhanced.enhancedDemeanor || enhanced.demeanor,
+      role: enhanced.enhancedRole || enhanced.role,
+    };
+    setCharacters([...characters, newChar]);
+    toast.success(`Added ${enhanced.name} from library`);
   };
 
   const removeCharacter = (id: number) => {
@@ -49,8 +65,33 @@ export function VideoPromptBuilder() {
         characters,
       });
       setTemplate(generatedTemplate);
+
+      // Parse and save enhanced characters from the generated template
+      const parsedChars = parseCharactersFromTemplate(generatedTemplate);
+      parsedChars.forEach((parsed) => {
+        if (parsed.name) {
+          const enhanced: EnhancedCharacter = {
+            id: Date.now() + Math.random(),
+            name: parsed.name,
+            look: parsed.look || "",
+            demeanor: parsed.demeanor || "",
+            role: parsed.role || "",
+            enhancedLook: parsed.enhancedLook,
+            enhancedDemeanor: parsed.enhancedDemeanor,
+            enhancedRole: parsed.enhancedRole,
+            sourceTemplate: concept,
+            createdAt: Date.now(),
+          };
+          saveCharacter(enhanced);
+        }
+      });
+
+      if (parsedChars.length > 0) {
+        toast.success(`Template generated! ${parsedChars.length} character(s) saved to library.`);
+      } else {
+        toast.success("Template generated successfully!");
+      }
       setStep("template");
-      toast.success("Template generated successfully!");
     } catch (error) {
       console.error("Error generating template:", error);
       toast.error(error instanceof Error ? error.message : "Failed to generate template");
@@ -70,11 +111,12 @@ export function VideoPromptBuilder() {
       description: "",
       generated: false,
       content: "",
+      selectedCharacterIds: [],
     };
     setScenes([...scenes, newScene]);
   };
 
-  const updateScene = (id: number, field: keyof Scene, value: string) => {
+  const updateScene = (id: number, field: keyof Scene, value: string | number[]) => {
     setScenes(scenes.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
@@ -82,13 +124,25 @@ export function VideoPromptBuilder() {
     const scene = scenes.find((s) => s.id === id);
     if (!scene || !scene.description.trim()) return;
 
+    // Get selected characters from library for this scene
+    const sceneCharacters = scene.selectedCharacterIds
+      ?.map((charId) => savedCharacters.find((c) => c.id === charId))
+      .filter((c): c is EnhancedCharacter => !!c)
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        look: c.enhancedLook || c.look,
+        demeanor: c.enhancedDemeanor || c.demeanor,
+        role: c.enhancedRole || c.role,
+      })) || characters;
+
     setGeneratingSceneId(id);
     try {
       const generatedContent = await generateAIScene({
         concept,
         duration,
         videoStyle,
-        characters,
+        characters: sceneCharacters.length > 0 ? sceneCharacters : characters,
         sceneTitle: scene.title,
         sceneDescription: scene.description,
       });
@@ -156,10 +210,12 @@ export function VideoPromptBuilder() {
             expandedChar={expandedChar}
             setExpandedChar={setExpandedChar}
             onAddCharacter={addCharacter}
+            onAddCharacterFromLibrary={addCharacterFromLibrary}
             onUpdateCharacter={updateCharacter}
             onRemoveCharacter={removeCharacter}
             onGenerate={handleGenerateTemplate}
             isGenerating={isGenerating}
+            savedCharacters={savedCharacters}
           />
         )}
 
@@ -178,6 +234,7 @@ export function VideoPromptBuilder() {
             concept={concept}
             duration={duration}
             characters={characters}
+            savedCharacters={savedCharacters}
             scenes={scenes}
             copiedId={typeof copiedId === "number" ? copiedId : null}
             generatingSceneId={generatingSceneId}
