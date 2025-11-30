@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette, Upload, File, X, FileDown } from "lucide-react";
+import { FileText, Sparkles, Copy, Download, ChevronDown, ChevronUp, Check, Loader2, Eye, Code, Star, Save, Palette, Upload, File, X, FileDown, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -1257,62 +1258,121 @@ export function OnePageExplainerBuilder() {
                   <p className="text-xs mt-1">Fill in the form and click Generate</p>
                 </div>
               ) : viewMode === "preview" ? (
-                <div className="space-y-4 text-sm">
-                  {/* Title Block */}
-                  <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-lg border-l-4 border-primary">
-                    <h3 className="text-lg font-bold text-foreground">{result.title}</h3>
-                    <p className="text-muted-foreground mt-1">{result.subtitle}</p>
-                    <p className="text-xs text-muted-foreground mt-2">Audience: {result.audience}</p>
-                  </div>
+                (() => {
+                  // Get brand colors for preview styling
+                  let previewColors = { primary: "#1a365d", secondary: "#3B82F6", accent: "#F59E0B" };
+                  
+                  if (selectedSavedBrandId) {
+                    const savedBrand = savedBrands.find(b => b.id === selectedSavedBrandId);
+                    if (savedBrand?.colors && savedBrand.colors.length >= 3) {
+                      previewColors = {
+                        primary: savedBrand.colors[0],
+                        secondary: savedBrand.colors[1],
+                        accent: savedBrand.colors[2],
+                      };
+                    }
+                  } else if (brandStyle && brandStyle !== "custom") {
+                    const selectedBrand = BRAND_STYLES.find(b => b.value === brandStyle);
+                    if (selectedBrand?.colors) {
+                      previewColors = selectedBrand.colors;
+                    }
+                  } else if (result.brand_tokens_used) {
+                    if (result.brand_tokens_used.primary_color) previewColors.primary = result.brand_tokens_used.primary_color;
+                    if (result.brand_tokens_used.secondary_color) previewColors.secondary = result.brand_tokens_used.secondary_color;
+                    if (result.brand_tokens_used.accent_color) previewColors.accent = result.brand_tokens_used.accent_color;
+                  } else if (brandStyle === "custom" && customBrandTokens) {
+                    const colorMatches = customBrandTokens.match(/#[0-9A-Fa-f]{6}/g);
+                    if (colorMatches && colorMatches.length >= 3) {
+                      previewColors = {
+                        primary: colorMatches[0],
+                        secondary: colorMatches[1],
+                        accent: colorMatches[2],
+                      };
+                    }
+                  }
 
-                  {/* Sections */}
-                  {result.sections.map((section) => (
-                    <div key={section.id} className="space-y-1">
-                      <h4 className="font-semibold text-foreground border-b border-border pb-1">{section.heading}</h4>
-                      <p className="text-muted-foreground">{section.body}</p>
-                      {section.bullets.length > 0 && (
-                        <ul className="list-disc list-inside space-y-0.5 text-muted-foreground ml-2">
-                          {section.bullets.map((bullet, i) => (
-                            <li key={i}>{bullet}</li>
-                          ))}
-                        </ul>
+                  return (
+                    <div className="space-y-4 text-sm">
+                      {/* Title Block - with brand primary color */}
+                      <div 
+                        className="p-4 rounded-lg text-white"
+                        style={{ backgroundColor: previewColors.primary }}
+                      >
+                        <h3 className="text-lg font-bold">{result.title}</h3>
+                        <p className="mt-1 opacity-90">{result.subtitle}</p>
+                        <p className="text-xs mt-2 opacity-75">Audience: {result.audience}</p>
+                      </div>
+
+                      {/* Sections */}
+                      {result.sections.map((section) => (
+                        <div key={section.id} className="space-y-1">
+                          <h4 
+                            className="font-semibold pb-1 border-b-2"
+                            style={{ color: previewColors.primary, borderColor: previewColors.accent }}
+                          >
+                            {section.heading}
+                          </h4>
+                          <p className="text-muted-foreground">{section.body}</p>
+                          {section.bullets.length > 0 && (
+                            <ul className="list-disc list-inside space-y-0.5 text-muted-foreground ml-2">
+                              {section.bullets.map((bullet, i) => (
+                                <li key={i}>{bullet}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Callout - with brand accent color */}
+                      {result.callout_box.title && (
+                        <div 
+                          className="p-3 rounded-r-lg"
+                          style={{ 
+                            backgroundColor: `${previewColors.accent}15`,
+                            borderLeft: `4px solid ${previewColors.accent}` 
+                          }}
+                        >
+                          <h5 className="font-semibold" style={{ color: previewColors.primary }}>{result.callout_box.title}</h5>
+                          <p className="text-muted-foreground text-xs mt-1">{result.callout_box.body}</p>
+                          {result.callout_box.bullets.length > 0 && (
+                            <ul className="list-disc list-inside text-xs text-muted-foreground mt-1">
+                              {result.callout_box.bullets.map((b, i) => (
+                                <li key={i}>{b}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
+
+                      {/* CTA - with brand colors */}
+                      <div 
+                        className="p-4 rounded-lg"
+                        style={{ 
+                          backgroundColor: '#f8fafc',
+                          borderTop: `3px solid ${previewColors.primary}` 
+                        }}
+                      >
+                        <h5 className="font-semibold" style={{ color: previewColors.primary }}>{result.cta.heading}</h5>
+                        <p className="text-muted-foreground text-sm mt-1">{result.cta.body}</p>
+                        <div className="mt-2">
+                          <span 
+                            className="inline-block px-3 py-1 rounded text-xs font-medium text-white"
+                            style={{ backgroundColor: previewColors.accent }}
+                          >
+                            {result.cta.button_text}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Design Notes */}
+                      {result.visual_layout.design_notes && (
+                        <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                          <strong>Layout hints:</strong> {result.visual_layout.design_notes}
+                        </div>
                       )}
                     </div>
-                  ))}
-
-                  {/* Callout */}
-                  {result.callout_box.title && (
-                    <div className="bg-accent/10 border-l-4 border-accent p-3 rounded-r-lg">
-                      <h5 className="font-semibold text-foreground">{result.callout_box.title}</h5>
-                      <p className="text-muted-foreground text-xs mt-1">{result.callout_box.body}</p>
-                      {result.callout_box.bullets.length > 0 && (
-                        <ul className="list-disc list-inside text-xs text-muted-foreground mt-1">
-                          {result.callout_box.bullets.map((b, i) => (
-                            <li key={i}>{b}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-
-                  {/* CTA */}
-                  <div className="bg-muted/50 p-4 rounded-lg border-t-2 border-primary">
-                    <h5 className="font-semibold text-foreground">{result.cta.heading}</h5>
-                    <p className="text-muted-foreground text-sm mt-1">{result.cta.body}</p>
-                    <div className="mt-2">
-                      <span className="inline-block bg-primary text-primary-foreground px-3 py-1 rounded text-xs font-medium">
-                        {result.cta.button_text}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Design Notes */}
-                  {result.visual_layout.design_notes && (
-                    <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
-                      <strong>Layout hints:</strong> {result.visual_layout.design_notes}
-                    </div>
-                  )}
-                </div>
+                  );
+                })()
               ) : (
                 <pre className="text-xs bg-muted/50 p-3 rounded-lg overflow-auto max-h-[450px]">
                   {JSON.stringify(result, null, 2)}
@@ -1321,54 +1381,48 @@ export function OnePageExplainerBuilder() {
             </CardContent>
           </Card>
 
-          {/* Export Actions */}
+          {/* Export Actions - Simplified */}
           {result && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => copyToClipboard(getPlainText(), "text")}
-                className="flex-1 min-w-0"
+                className="flex-1"
               >
-                {copiedField === "text" ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
-                Copy Text
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(JSON.stringify(result, null, 2), "json")}
-                className="flex-1 min-w-0"
-              >
-                {copiedField === "json" ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
-                Copy JSON
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadAsMarkdown}
-                className="flex-1 min-w-0"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Markdown
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadAsHTML}
-                className="flex-1 min-w-0"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                HTML
+                {copiedField === "text" ? <Check className="w-3 h-3 mr-1.5" /> : <Copy className="w-3 h-3 mr-1.5" />}
+                Copy
               </Button>
               <Button
                 variant="default"
                 size="sm"
                 onClick={downloadAsPDF}
-                className="flex-1 min-w-0"
+                className="flex-1"
               >
-                <FileDown className="w-3 h-3 mr-1" />
-                Save as PDF
+                <FileDown className="w-3 h-3 mr-1.5" />
+                Save PDF
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={downloadAsHTML}>
+                    <Download className="w-3 h-3 mr-2" />
+                    Download HTML
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={downloadAsMarkdown}>
+                    <Download className="w-3 h-3 mr-2" />
+                    Download Markdown
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => copyToClipboard(JSON.stringify(result, null, 2), "json")}>
+                    <Copy className="w-3 h-3 mr-2" />
+                    Copy JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>
