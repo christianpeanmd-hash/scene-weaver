@@ -100,7 +100,9 @@ export function InfographicStyleSelector({
 }: InfographicStyleSelectorProps) {
   const { favorites, toggleFavorite, isFavorite } = useFavoriteStyles();
   const { savedStyles, saveStyle } = useSceneStyleLibrary("infographic");
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    new Set(["custom", "saved", ...INFOGRAPHIC_CATEGORIES.map(c => c.id)])
+  );
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [styleName, setStyleName] = useState("");
   
