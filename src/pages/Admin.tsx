@@ -173,8 +173,9 @@ export default function Admin() {
         {/* Header */}
         <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <TechyMemoLogo className="h-8 w-8" />
+              <div className="h-6 w-px bg-border" />
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold">Admin Dashboard</h1>
                 <Badge variant="outline" className="gap-1">
