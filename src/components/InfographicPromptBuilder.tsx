@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard } from "lucide-react";
+import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +21,8 @@ export function InfographicPromptBuilder() {
   const [customBrandText, setCustomBrandText] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -114,46 +116,92 @@ export function InfographicPromptBuilder() {
     if (file) handleDocumentUpload(file);
   }, [handleDocumentUpload]);
 
-  const handleGenerate = async () => {
+  const generatePrompt = async (): Promise<string | null> => {
     if (!selectedStyle && !customStyleText.trim()) {
       toast.error("Please select an infographic style or describe a custom style");
-      return;
+      return null;
     }
 
     if (!topicDescription.trim() && !uploadedDocument) {
       toast.error("Please describe your topic or upload a document");
-      return;
+      return null;
     }
 
+    const brandContext = selectedBrand 
+      ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
+      : customBrandText.trim() || undefined;
+
+    const { data, error } = await supabase.functions.invoke('generate-image-prompt', {
+      body: {
+        type: 'infographic',
+        styleId: selectedStyle?.id || 'custom',
+        styleName: selectedStyle?.name || 'Custom Style',
+        stylePromptTemplate: selectedStyle?.promptTemplate || customStyleText,
+        customStyleDescription: customStyleText || undefined,
+        topic: topicDescription,
+        documentContent: uploadedDocument?.content,
+        brandContext,
+      },
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+
+    return data.prompt;
+  };
+
+  const handleGenerate = async () => {
     setIsGenerating(true);
+    setGeneratedImageUrl(null);
     try {
-      const brandContext = selectedBrand 
-        ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
-        : customBrandText.trim() || undefined;
-
-      const { data, error } = await supabase.functions.invoke('generate-image-prompt', {
-        body: {
-          type: 'infographic',
-          styleId: selectedStyle?.id || 'custom',
-          styleName: selectedStyle?.name || 'Custom Style',
-          stylePromptTemplate: selectedStyle?.promptTemplate || customStyleText,
-          customStyleDescription: customStyleText || undefined,
-          topic: topicDescription,
-          documentContent: uploadedDocument?.content,
-          brandContext,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      setGeneratedPrompt(data.prompt);
-      toast.success("Infographic prompt generated!");
+      const prompt = await generatePrompt();
+      if (prompt) {
+        setGeneratedPrompt(prompt);
+        toast.success("Infographic prompt generated!");
+      }
     } catch (error) {
       console.error("Error generating prompt:", error);
       toast.error(error instanceof Error ? error.message : "Failed to generate prompt");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateImageDirectly = async () => {
+    setIsGeneratingImage(true);
+    setGeneratedImageUrl(null);
+    try {
+      // First generate the prompt if we don't have one
+      let prompt = generatedPrompt;
+      if (!prompt) {
+        prompt = await generatePrompt() || "";
+        if (prompt) {
+          setGeneratedPrompt(prompt);
+        }
+      }
+      
+      if (!prompt) {
+        setIsGeneratingImage(false);
+        return;
+      }
+
+      // Now generate the image
+      const { data, error } = await supabase.functions.invoke("generate-ai-image", {
+        body: { prompt, type: "infographic" },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.imageUrl) {
+        setGeneratedImageUrl(data.imageUrl);
+        toast.success("Infographic generated!");
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -305,36 +353,57 @@ export function InfographicPromptBuilder() {
               onCustomBrandChange={setCustomBrandText}
             />
 
-            {/* Generate Button */}
-            <Button
-              variant="hero"
-              size="xl"
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating}
-              onClick={handleGenerate}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin-slow" />
-                  Generating Prompt...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  Generate Infographic Prompt
-                </>
-              )}
-            </Button>
+            {/* Generate Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="hero"
+                size="xl"
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                onClick={handleGenerate}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin-slow" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-5 h-5" />
+                    Generate Prompt
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="hero"
+                size="xl"
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                onClick={handleGenerateImageDirectly}
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin-slow" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-5 h-5" />
+                    Generate Image
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Right Column - Result */}
           <div className="space-y-5">
-            {/* Generated Prompt */}
+            {/* Generated Prompt/Image */}
             <Card className="h-full flex flex-col">
               <div className="p-4 border-b border-border/50 flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  Generated Prompt
+                  Generated Prompt / Image
                 </label>
                 {generatedPrompt && (
                   <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
@@ -348,7 +417,41 @@ export function InfographicPromptBuilder() {
               </div>
               
               <div className="flex-1 p-4 bg-muted/30">
-                {generatedPrompt ? (
+                {generatedImageUrl ? (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <img
+                        src={generatedImageUrl}
+                        alt="Generated infographic"
+                        className="w-full rounded-lg border border-border"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                        onClick={() => setGeneratedImageUrl(null)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {generatedPrompt && (
+                      <details className="text-sm">
+                        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                          View prompt used
+                        </summary>
+                        <pre className="mt-2 text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-3 rounded-lg border border-border max-h-32 overflow-y-auto">
+                          {generatedPrompt}
+                        </pre>
+                      </details>
+                    )}
+                    
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2">Use prompt in other tools:</p>
+                      <AIToolLinks type="infographic" />
+                    </div>
+                  </div>
+                ) : generatedPrompt ? (
                   <div className="space-y-4">
                     <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
                       {generatedPrompt}
@@ -370,7 +473,7 @@ export function InfographicPromptBuilder() {
                         <FileText className="w-8 h-8 text-slate-400" />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Your infographic prompt will appear here
+                        Your infographic prompt or image will appear here
                       </p>
                       <p className="text-xs text-muted-foreground/70 mt-1">
                         Select a style and click Generate
