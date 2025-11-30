@@ -42,6 +42,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isApplyingStyle, setIsApplyingStyle] = useState(false);
+  const [applyingStyleId, setApplyingStyleId] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -265,14 +266,15 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
     if (!style) return;
     
-    setSelectedStyle(style);
-    
     // Immediately trigger apply
     if (!uploadedImage) {
       toast.error("Please upload an image first");
       return;
     }
 
+    // Update selection and show loading on this specific button
+    setSelectedStyle(style);
+    setApplyingStyleId(styleId);
     setIsApplyingStyle(true);
     setGeneratedImageUrl(null);
     
@@ -308,6 +310,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       }
     } finally {
       setIsApplyingStyle(false);
+      setApplyingStyleId(null);
     }
   };
 
@@ -398,23 +401,32 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
                   <div className="flex items-center gap-2 mb-2">
                     <Zap className="w-3.5 h-3.5 text-amber-500" />
                     <span className="text-xs font-medium text-muted-foreground">Quick Apply</span>
+                    {applyingStyleId && (
+                      <span className="text-[10px] text-purple-500 animate-pulse">applying...</span>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {QUICK_STYLES.map((styleId) => {
                       const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
                       if (!style) return null;
+                      const isThisApplying = applyingStyleId === styleId;
                       return (
                         <button
                           key={styleId}
                           onClick={() => handleQuickApply(styleId)}
-                          disabled={isApplyingStyle || isGenerating || isGeneratingImage}
+                          disabled={isGenerating || isGeneratingImage}
                           className={cn(
-                            "px-2.5 py-1 text-xs rounded-full border transition-all",
-                            selectedStyle?.id === styleId
-                              ? "bg-purple-100 dark:bg-purple-900/30 border-purple-400 text-purple-700 dark:text-purple-300"
-                              : "bg-card border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-foreground"
+                            "px-2.5 py-1 text-xs rounded-full border transition-all flex items-center gap-1",
+                            isThisApplying
+                              ? "bg-purple-200 dark:bg-purple-800/50 border-purple-500 text-purple-800 dark:text-purple-200"
+                              : selectedStyle?.id === styleId
+                                ? "bg-purple-100 dark:bg-purple-900/30 border-purple-400 text-purple-700 dark:text-purple-300"
+                                : "bg-card border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-foreground"
                           )}
                         >
+                          {isThisApplying && (
+                            <div className="w-3 h-3 border-2 border-purple-400 border-t-purple-700 rounded-full animate-spin" />
+                          )}
                           {style.name.split(' ')[0]}
                         </button>
                       );
