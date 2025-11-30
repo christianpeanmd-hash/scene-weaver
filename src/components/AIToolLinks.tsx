@@ -23,13 +23,20 @@ const IMAGE_TOOLS: AITool[] = [
   { name: "Firefly", url: "https://firefly.adobe.com", color: "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30", textColor: "text-amber-600" },
 ];
 
+const INFOGRAPHIC_TOOLS: AITool[] = [
+  { name: "Gemini (Nano Banana)", url: "https://aistudio.google.com", color: "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30", textColor: "text-amber-600" },
+  { name: "ChatGPT", url: "https://chatgpt.com", color: "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30", textColor: "text-emerald-600" },
+  { name: "Napkin AI", url: "https://napkin.ai", color: "bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30", textColor: "text-violet-600" },
+  { name: "Canva", url: "https://canva.com", color: "bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30", textColor: "text-blue-600" },
+];
+
 interface AIToolLinksProps {
-  type: "video" | "image";
+  type: "video" | "image" | "infographic";
   className?: string;
 }
 
 export function AIToolLinks({ type, className }: AIToolLinksProps) {
-  const tools = type === "video" ? VIDEO_TOOLS : IMAGE_TOOLS;
+  const tools = type === "video" ? VIDEO_TOOLS : type === "image" ? IMAGE_TOOLS : INFOGRAPHIC_TOOLS;
 
   return (
     <div className={cn("space-y-2", className)}>

@@ -1,9 +1,27 @@
 import { useState } from "react";
-import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Plus, Pencil, Eye } from "lucide-react";
+import { ChevronDown, Newspaper, BarChart3, Smile, Rocket, Palette, Check, Pencil, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ILLUSTRATION_STYLES, STYLE_CATEGORIES, IllustrationStyle, StyleCategory } from "@/data/illustration-styles";
 import { cn } from "@/lib/utils";
+
+// Import style preview images
+import editorialCollagePreview from "@/assets/style-previews/editorial-collage-preview.jpg";
+import watercolorMinimalism from "@/assets/style-previews/watercolor-minimalism.jpg";
+import inkWash from "@/assets/style-previews/ink-wash.jpg";
+import surrealistEditorial from "@/assets/style-previews/surrealist-editorial.jpg";
+import modernFlatVector from "@/assets/style-previews/modern-flat-vector.jpg";
+import isometricBlueprint from "@/assets/style-previews/isometric-blueprint.jpg";
+import scientificDiagram from "@/assets/style-previews/scientific-diagram.jpg";
+import satiricalCaricature from "@/assets/style-previews/satirical-caricature.jpg";
+import lineDrawingXkcd from "@/assets/style-previews/line-drawing-xkcd.jpg";
+import popArt from "@/assets/style-previews/pop-art.jpg";
+import claymation from "@/assets/style-previews/3d-claymation.jpg";
+import childrensBook from "@/assets/style-previews/childrens-book.jpg";
+import retroFuturist from "@/assets/style-previews/retro-futurist.jpg";
+import futuristicNeon from "@/assets/style-previews/futuristic-neon.jpg";
+import minimalGradient from "@/assets/style-previews/minimal-gradient.jpg";
+import japaneseWoodblock from "@/assets/style-previews/japanese-woodblock.jpg";
+import vintageEngraving from "@/assets/style-previews/vintage-engraving.jpg";
 
 const CATEGORY_ICONS = {
   Newspaper,
@@ -13,29 +31,29 @@ const CATEGORY_ICONS = {
   Palette,
 };
 
-// Preview images for styles (we'll use placeholders that represent the style)
-const STYLE_PREVIEW_COLORS: Record<string, { bg: string; accent: string }> = {
-  "editorial-collage": { bg: "from-burgundy-500/20 to-navy-500/20", accent: "bg-amber-700" },
-  "watercolor-minimalism": { bg: "from-rose-200/40 to-sky-200/40", accent: "bg-slate-400" },
-  "ink-wash": { bg: "from-slate-200 to-slate-100", accent: "bg-slate-800" },
-  "surrealist-editorial": { bg: "from-amber-200/30 to-slate-300/30", accent: "bg-amber-600" },
-  "modern-flat-vector": { bg: "from-violet-400/30 to-pink-400/30", accent: "bg-violet-500" },
-  "isometric-blueprint": { bg: "from-cyan-200/40 to-blue-200/40", accent: "bg-cyan-600" },
-  "infographic-comic": { bg: "from-yellow-200/40 to-orange-200/40", accent: "bg-orange-500" },
-  "scientific-diagram": { bg: "from-slate-100 to-blue-50", accent: "bg-blue-600" },
-  "satirical-caricature": { bg: "from-slate-200 to-slate-100", accent: "bg-slate-900" },
-  "line-drawing-xkcd": { bg: "from-white to-slate-50", accent: "bg-slate-800" },
-  "pop-art": { bg: "from-yellow-300/50 to-pink-400/50", accent: "bg-red-500" },
-  "3d-claymation": { bg: "from-orange-200/40 to-pink-200/40", accent: "bg-orange-400" },
-  "childrens-book": { bg: "from-pink-200/40 to-yellow-200/40", accent: "bg-pink-400" },
-  "retro-futurist": { bg: "from-orange-300/40 to-teal-300/40", accent: "bg-orange-500" },
-  "futuristic-neon": { bg: "from-purple-900/40 to-cyan-900/40", accent: "bg-cyan-400" },
-  "brutalist-poster": { bg: "from-red-200/40 to-slate-200/40", accent: "bg-red-600" },
-  "minimal-gradient": { bg: "from-purple-100/40 to-pink-100/40", accent: "bg-purple-400" },
-  "japanese-woodblock": { bg: "from-amber-100/40 to-rose-100/40", accent: "bg-amber-700" },
-  "vintage-engraving": { bg: "from-amber-100 to-amber-50", accent: "bg-slate-800" },
-  "painterly-concept": { bg: "from-amber-200/30 to-slate-300/30", accent: "bg-amber-800" },
-  "newspaper-halftone": { bg: "from-slate-200 to-slate-100", accent: "bg-slate-700" },
+// Map style IDs to their preview images
+const STYLE_PREVIEWS: Record<string, string> = {
+  "editorial-collage": editorialCollagePreview,
+  "watercolor-minimalism": watercolorMinimalism,
+  "ink-wash": inkWash,
+  "surrealist-editorial": surrealistEditorial,
+  "modern-flat-vector": modernFlatVector,
+  "isometric-blueprint": isometricBlueprint,
+  "infographic-comic": modernFlatVector, // Reuse similar style
+  "scientific-diagram": scientificDiagram,
+  "satirical-caricature": satiricalCaricature,
+  "line-drawing-xkcd": lineDrawingXkcd,
+  "pop-art": popArt,
+  "3d-claymation": claymation,
+  "childrens-book": childrensBook,
+  "retro-futurist": retroFuturist,
+  "futuristic-neon": futuristicNeon,
+  "brutalist-poster": retroFuturist, // Reuse similar style
+  "minimal-gradient": minimalGradient,
+  "japanese-woodblock": japaneseWoodblock,
+  "vintage-engraving": vintageEngraving,
+  "painterly-concept": surrealistEditorial, // Reuse similar style
+  "newspaper-halftone": editorialCollagePreview, // Reuse similar style
 };
 
 interface StyleSelectorProps {
@@ -192,7 +210,7 @@ export function StyleSelector({
                   <div className="grid grid-cols-2 gap-2">
                     {category.styles.map((style) => {
                       const isSelected = selectedStyle?.id === style.id && !isCustomMode;
-                      const colors = STYLE_PREVIEW_COLORS[style.id] || { bg: "from-slate-200 to-slate-100", accent: "bg-slate-500" };
+                      const previewImage = STYLE_PREVIEWS[style.id];
                       
                       return (
                         <button
@@ -201,36 +219,37 @@ export function StyleSelector({
                           onMouseEnter={() => setPreviewStyle(style)}
                           onMouseLeave={() => setPreviewStyle(null)}
                           className={cn(
-                            "p-3 rounded-lg text-left transition-all group relative",
+                            "p-2 rounded-lg text-left transition-all group relative",
                             isSelected
                               ? "bg-purple-100 border-2 border-purple-400"
                               : "bg-white border border-border hover:border-purple-300 hover:bg-purple-50/50"
                           )}
                         >
-                          {/* Mini style preview */}
-                          <div className={cn(
-                            "w-full h-12 rounded-md mb-2 bg-gradient-to-br relative overflow-hidden",
-                            colors.bg
-                          )}>
-                            <div className={cn("absolute bottom-1 right-1 w-4 h-4 rounded-full", colors.accent)} />
-                            <div className={cn("absolute top-1 left-1 w-6 h-1 rounded-full", colors.accent, "opacity-60")} />
+                          {/* Style preview thumbnail */}
+                          <div className="w-full h-16 rounded-md mb-2 overflow-hidden bg-slate-100">
+                            {previewImage ? (
+                              <img 
+                                src={previewImage} 
+                                alt={style.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-100" />
+                            )}
                           </div>
                           
-                          <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start justify-between gap-1">
                             <div className="flex-1 min-w-0">
                               <span className={cn(
-                                "text-sm font-medium block truncate",
+                                "text-xs font-medium block truncate",
                                 isSelected ? "text-purple-700" : "text-foreground"
                               )}>
                                 {style.name}
                               </span>
-                              <span className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                                {style.feel}
-                              </span>
                             </div>
                             {isSelected && (
-                              <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                                <Check className="w-3 h-3 text-white" />
+                              <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                                <Check className="w-2.5 h-2.5 text-white" />
                               </div>
                             )}
                           </div>

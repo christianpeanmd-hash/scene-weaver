@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { VideoPromptBuilder } from "@/components/VideoPromptBuilder";
 import { ImagePromptBuilder } from "@/components/ImagePromptBuilder";
-import { HeroSection } from "@/components/HeroSection";
-
-type BuilderType = "video" | "image";
+import { InfographicPromptBuilder } from "@/components/InfographicPromptBuilder";
+import { HeroSection, BuilderType } from "@/components/HeroSection";
 
 const Index = () => {
   const [activeBuilder, setActiveBuilder] = useState<BuilderType>("video");
@@ -18,10 +17,14 @@ const Index = () => {
 
       {/* Builder Content */}
       <div className="relative">
-        {activeBuilder === "video" ? (
+        {activeBuilder === "video" && (
           <VideoPromptBuilder onSwitchToImage={() => setActiveBuilder("image")} />
-        ) : (
+        )}
+        {activeBuilder === "image" && (
           <ImagePromptBuilder onSwitchToVideo={() => setActiveBuilder("video")} />
+        )}
+        {activeBuilder === "infographic" && (
+          <InfographicPromptBuilder />
         )}
       </div>
     </div>

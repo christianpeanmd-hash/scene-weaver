@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface ImagePromptRequest {
-  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo';
+  type?: 'image-prompt' | 'character-from-photo' | 'environment-from-photo' | 'infographic';
   styleName?: string;
   stylePromptTemplate?: string;
   styleLook?: string;
@@ -14,6 +14,10 @@ interface ImagePromptRequest {
   customStyle?: string;
   imageBase64?: string;
   subjectDescription?: string;
+  // Infographic-specific
+  styleId?: string;
+  topic?: string;
+  documentContent?: string;
 }
 
 const IMAGE_PROMPT_SYSTEM = `You are an expert at writing image generation prompts for AI tools like Midjourney, DALL-E, Stable Diffusion, and Firefly.
@@ -57,6 +61,19 @@ OUTPUT FORMAT (JSON):
 
 Be specific and filmable. ALL IN ENGLISH.`;
 
+const INFOGRAPHIC_SYSTEM = `You are an expert at creating detailed infographic prompts for AI tools like Google Gemini (Nano Banana), ChatGPT with DALL-E, and Canva AI.
+
+Your job is to transform topics and documents into comprehensive infographic generation prompts that produce clear, informative, visually appealing results.
+
+RULES:
+1. Create prompts that are specific and detailed
+2. Include visual style guidance (colors, layout, typography hints)
+3. Structure information logically for visual presentation
+4. Include aspect ratio recommendations
+5. Add quality modifiers for best results
+6. ALL OUTPUT MUST BE IN ENGLISH ONLY
+7. Make prompts ready to paste directly into AI tools`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -83,6 +100,31 @@ serve(async (req) => {
       systemPrompt = ENVIRONMENT_SYSTEM;
       userPrompt = "Analyze this photo and create a detailed environment anchor description.";
       responseFormat = 'json';
+    } else if (body.type === 'infographic') {
+      systemPrompt = INFOGRAPHIC_SYSTEM;
+      
+      const hasDocContent = body.documentContent && body.documentContent.trim();
+      const docContent = body.documentContent || '';
+      
+      userPrompt = `Create a detailed infographic prompt for the following:
+
+STYLE: ${body.styleName}
+TEMPLATE APPROACH: ${body.stylePromptTemplate}
+
+${body.topic ? `TOPIC/FOCUS: ${body.topic}` : ''}
+
+${hasDocContent ? `SOURCE DOCUMENT CONTENT:
+${docContent.substring(0, 3000)}${docContent.length > 3000 ? '...[truncated]' : ''}` : ''}
+
+Generate a complete, ready-to-use infographic prompt that:
+1. Follows the style template approach but expands it with specific details
+2. ${hasDocContent ? 'Extracts and organizes key information from the document' : 'Develops the topic comprehensively'}
+3. Includes specific visual style guidance (colors, layout structure, typography)
+4. Specifies aspect ratio (16:9 for presentations, 9:16 for social media vertical)
+5. Adds quality and detail modifiers
+6. Is ready to paste directly into Gemini AI Studio, ChatGPT, or similar tools
+
+Return ONLY the prompt text, ready to use.`;
     } else {
       systemPrompt = IMAGE_PROMPT_SYSTEM;
       

@@ -1,10 +1,12 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText } from "lucide-react";
 import { MemoableLogo } from "./MemoableLogo";
 import { cn } from "@/lib/utils";
 
+export type BuilderType = "video" | "image" | "infographic";
+
 interface HeroSectionProps {
-  activeBuilder: "video" | "image";
-  onSelectBuilder: (builder: "video" | "image") => void;
+  activeBuilder: BuilderType;
+  onSelectBuilder: (builder: BuilderType) => void;
 }
 
 export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps) {
@@ -16,55 +18,67 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-emerald-500/15 to-teal-500/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
       </div>
 
-      <div className="relative max-w-4xl mx-auto px-4 pt-8 pb-10 md:pt-12 md:pb-14">
+      <div className="relative max-w-4xl mx-auto px-4 pt-8 pb-8 md:pt-12 md:pb-10">
         {/* Logo */}
-        <div className="flex justify-center mb-6 md:mb-8 animate-fade-in">
+        <div className="flex justify-center mb-6 animate-fade-in">
           <MemoableLogo size="lg" showSubtitle />
         </div>
 
         {/* Tagline */}
-        <div className="text-center space-y-4 mb-8 md:mb-10">
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight animate-slide-up">
-            Create stunning prompts for
-            <span className="block gradient-text">AI-generated media</span>
+        <div className="text-center mb-8">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight animate-slide-up">
+            Production-ready prompts for{" "}
+            <span className="gradient-text">AI media</span>
           </h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             Build consistent characters, environments, and scenes for Veo, Sora, Midjourney, and more.
           </p>
         </div>
 
         {/* Builder Toggle */}
         <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="inline-flex p-1.5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border shadow-lg">
+          <div className="inline-flex p-1 bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg">
             <button
               onClick={() => onSelectBuilder("video")}
               className={cn(
-                "flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm md:text-base transition-all duration-300",
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
                 activeBuilder === "video"
-                  ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-primary"
+                  ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <Video className="w-4 h-4 md:w-5 md:h-5" />
-              <span>Video Prompts</span>
+              <Video className="w-4 h-4" />
+              <span>Video</span>
             </button>
             <button
               onClick={() => onSelectBuilder("image")}
               className={cn(
-                "flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm md:text-base transition-all duration-300",
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
                 activeBuilder === "image"
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
-              <Image className="w-4 h-4 md:w-5 md:h-5" />
-              <span>Image Prompts</span>
+              <Image className="w-4 h-4" />
+              <span>Image</span>
+            </button>
+            <button
+              onClick={() => onSelectBuilder("infographic")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300",
+                activeBuilder === "infographic"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Infographic</span>
             </button>
           </div>
         </div>
 
         {/* Feature badges */}
-        <div className="flex flex-wrap justify-center gap-3 mt-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+        <div className="flex flex-wrap justify-center gap-2 mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <FeatureBadge icon={Sparkles} label="AI-Powered" />
           <FeatureBadge icon={Wand2} label="Production-Ready" />
           <FeatureBadge icon={ArrowRight} label="Copy & Go" />
@@ -76,8 +90,8 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
 
 function FeatureBadge({ icon: Icon, label }: { icon: typeof Sparkles; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-card/60 backdrop-blur-sm border border-border/50 rounded-full text-xs md:text-sm text-muted-foreground">
-      <Icon className="w-3.5 h-3.5 text-primary" />
+    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-card/60 backdrop-blur-sm border border-border/50 rounded-full text-xs text-muted-foreground">
+      <Icon className="w-3 h-3 text-primary" />
       <span>{label}</span>
     </div>
   );
