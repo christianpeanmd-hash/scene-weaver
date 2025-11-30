@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { TechyMemoLogo } from "./MemoableLogo";
@@ -14,6 +14,7 @@ import { useCharacterLibrary, parseCharactersFromTemplate } from "@/hooks/useCha
 import { useEnvironmentLibrary, parseEnvironmentFromTemplate } from "@/hooks/useEnvironmentLibrary";
 import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useVideoBuilderState } from "@/hooks/useVideoBuilderState";
 import { PresetAnchor } from "@/data/preset-anchors";
 
 interface VideoPromptBuilderProps {
@@ -21,19 +22,54 @@ interface VideoPromptBuilderProps {
 }
 
 export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps) {
-  const [step, setStep] = useState<StepKey>("setup");
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [environments, setEnvironments] = useState<Environment[]>([]);
-  const [concept, setConcept] = useState("");
-  const [videoStyle, setVideoStyle] = useState("");
-  const [duration, setDuration] = useState<number | null>(null);
-  const [template, setTemplate] = useState("");
-  const [scenes, setScenes] = useState<Scene[]>([]);
+  // Persisted state (survives navigation)
+  const {
+    step,
+    characters,
+    environments,
+    concept,
+    videoStyle,
+    duration,
+    template,
+    scenes,
+    updateState,
+    resetState,
+  } = useVideoBuilderState();
+
+  // Local UI state (doesn't need persistence)
   const [copiedId, setCopiedId] = useState<number | string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [expandedChar, setExpandedChar] = useState<number | string | null>(null);
   const [expandedEnv, setExpandedEnv] = useState<number | string | null>(null);
   const [generatingSceneId, setGeneratingSceneId] = useState<number | string | null>(null);
+
+  // Helper setters that update persisted state
+  const setStep = useCallback((s: StepKey) => updateState({ step: s }), [updateState]);
+  const setCharacters = useCallback((c: Character[] | ((prev: Character[]) => Character[])) => {
+    if (typeof c === 'function') {
+      updateState({ characters: c(characters) });
+    } else {
+      updateState({ characters: c });
+    }
+  }, [updateState, characters]);
+  const setEnvironments = useCallback((e: Environment[] | ((prev: Environment[]) => Environment[])) => {
+    if (typeof e === 'function') {
+      updateState({ environments: e(environments) });
+    } else {
+      updateState({ environments: e });
+    }
+  }, [updateState, environments]);
+  const setConcept = useCallback((c: string) => updateState({ concept: c }), [updateState]);
+  const setVideoStyle = useCallback((s: string) => updateState({ videoStyle: s }), [updateState]);
+  const setDuration = useCallback((d: number | null) => updateState({ duration: d }), [updateState]);
+  const setTemplate = useCallback((t: string) => updateState({ template: t }), [updateState]);
+  const setScenes = useCallback((s: Scene[] | ((prev: Scene[]) => Scene[])) => {
+    if (typeof s === 'function') {
+      updateState({ scenes: s(scenes) });
+    } else {
+      updateState({ scenes: s });
+    }
+  }, [updateState, scenes]);
 
   const { savedCharacters, saveCharacter } = useCharacterLibrary();
   const { savedEnvironments, saveEnvironment } = useEnvironmentLibrary();
@@ -408,6 +444,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
           currentStep={step}
           hasTemplate={!!template}
           onStepClick={setStep}
+          onReset={resetState}
         />
 
         {/* Step Content */}

@@ -1,5 +1,6 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export type StepKey = "setup" | "template" | "scenes";
 
@@ -18,9 +19,10 @@ interface ProgressStepsProps {
   currentStep: StepKey;
   hasTemplate: boolean;
   onStepClick: (step: StepKey) => void;
+  onReset?: () => void;
 }
 
-export function ProgressSteps({ currentStep, hasTemplate, onStepClick }: ProgressStepsProps) {
+export function ProgressSteps({ currentStep, hasTemplate, onStepClick, onReset }: ProgressStepsProps) {
   const canNavigate = (stepKey: StepKey): boolean => {
     if (stepKey === "setup") return true;
     if (stepKey === "template" && hasTemplate) return true;
@@ -59,6 +61,19 @@ export function ProgressSteps({ currentStep, hasTemplate, onStepClick }: Progres
           )}
         </div>
       ))}
+      
+      {/* Start New Button */}
+      {hasTemplate && onReset && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onReset}
+          className="ml-2 text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="w-4 h-4 mr-1" />
+          Start New
+        </Button>
+      )}
     </div>
   );
 }
