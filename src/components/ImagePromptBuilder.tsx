@@ -8,11 +8,13 @@ import { BrandSelector } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
+import { FreeLimitModal } from "./FreeLimitModal";
 import { IllustrationStyle, ILLUSTRATION_STYLES } from "@/data/illustration-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { generateImagePrompt } from "@/lib/image-prompt-generator";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 // Popular styles for quick apply
 const QUICK_STYLES = [
@@ -42,6 +44,16 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
+
+  // Helper to check if an error is a rate limit error
+  const isRateLimitError = (error: unknown): boolean => {
+    if (error instanceof Error) {
+      return error.message.includes("RATE_LIMIT") || error.message.includes("Daily limit");
+    }
+    return false;
+  };
 
   const handleImageUpload = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -168,7 +180,11 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       }
     } catch (error) {
       console.error("Error generating image:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+      if (isRateLimitError(error)) {
+        handleRateLimitError();
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to generate image");
+      }
     } finally {
       setIsGeneratingImage(false);
     }
@@ -218,7 +234,11 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       }
     } catch (error) {
       console.error("Error applying style:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to apply style");
+      if (isRateLimitError(error)) {
+        handleRateLimitError();
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to apply style");
+      }
     } finally {
       setIsApplyingStyle(false);
     }
@@ -276,13 +296,18 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       }
     } catch (error) {
       console.error("Error applying style:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to apply style");
+      if (isRateLimitError(error)) {
+        handleRateLimitError();
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to apply style");
+      }
     } finally {
       setIsApplyingStyle(false);
     }
   };
 
   return (
+    <>
     <div className="pb-8 md:pb-12">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-6">
@@ -598,5 +623,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
         </div>
       </div>
     </div>
+    <FreeLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
+    </>
   );
 }
