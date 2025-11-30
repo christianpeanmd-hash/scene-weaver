@@ -45,6 +45,7 @@ export interface Scene {
   selectedStyleIds?: string[];
   selectedStyleId?: string; // Deprecated, use selectedStyleIds
   styleTemplate?: string;
+  customEnvironment?: string; // Custom environment description for this scene
 }
 
 export interface Duration {

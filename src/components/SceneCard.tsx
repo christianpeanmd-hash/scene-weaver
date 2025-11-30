@@ -1,4 +1,5 @@
-import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play } from "lucide-react";
+import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
@@ -13,6 +14,8 @@ import { cn } from "@/lib/utils";
 interface SceneCardProps {
   scene: Scene;
   index: number;
+  totalScenes: number;
+  previousSceneDescription?: string;
   copied: boolean;
   isGenerating?: boolean;
   savedCharacters: EnhancedCharacter[];
@@ -33,6 +36,8 @@ interface SceneCardProps {
 export function SceneCard({
   scene,
   index,
+  totalScenes,
+  previousSceneDescription,
   copied,
   isGenerating = false,
   savedCharacters,
@@ -49,6 +54,7 @@ export function SceneCard({
   onCopy,
   onRemove,
 }: SceneCardProps) {
+  const [showCustomEnv, setShowCustomEnv] = useState(false);
   const selectedEnv = savedEnvironments.find(e => e.id === scene.selectedEnvironmentId);
   const { tier } = useSubscription();
   const videoGen = useVideoGeneration();
@@ -56,6 +62,23 @@ export function SceneCard({
 
   // Get current selected style IDs (support both old and new format)
   const selectedStyleIds = scene.selectedStyleIds || (scene.selectedStyleId ? [scene.selectedStyleId] : []);
+
+  // Scene label - first scene is "Opening Scene", then "Scene 2", "Scene 3", etc.
+  const getSceneLabel = () => {
+    if (index === 0) return "Opening Scene";
+    return `Scene ${index + 1}`;
+  };
+
+  // Transition hint based on position
+  const getTransitionHint = () => {
+    if (index === 0) {
+      return "This scene sets up your story. Establish the characters, setting, and hook.";
+    }
+    if (index === totalScenes - 1 && totalScenes > 1) {
+      return "Final scene - deliver the payoff, resolution, or call-to-action.";
+    }
+    return "Build on the previous scene. How does the story progress?";
+  };
 
   const handleGenerateVideo = async () => {
     if (!scene.content) return;
@@ -71,7 +94,6 @@ export function SceneCard({
   const handleSelectPreset = (preset: SceneStylePreset) => {
     const newIds = [...selectedStyleIds, preset.id];
     onUpdate("selectedStyleIds", newIds);
-    // Combine templates
     const allTemplates = newIds.map(id => {
       const p = SCENE_STYLE_PRESETS.find(sp => sp.id === id);
       return p?.template || savedSceneStyles.find(s => s.id === id)?.template;
@@ -82,7 +104,6 @@ export function SceneCard({
   const handleDeselectPreset = (presetId: string) => {
     const newIds = selectedStyleIds.filter(id => id !== presetId);
     onUpdate("selectedStyleIds", newIds);
-    // Recombine templates
     const allTemplates = newIds.map(id => {
       const p = SCENE_STYLE_PRESETS.find(sp => sp.id === id);
       return p?.template || savedSceneStyles.find(s => s.id === id)?.template;
@@ -123,11 +144,14 @@ export function SceneCard({
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden animate-slide-up">
+      {/* Header */}
       <div className="p-4 border-b border-border/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clapperboard className="w-4 h-4 text-primary" />
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-bold">
+            {index + 1}
+          </div>
           <span className="text-foreground font-medium">
-            {scene.title || `Scene ${index + 1}`}
+            {scene.title || getSceneLabel()}
           </span>
           {scene.generated && (
             <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-xs rounded-full font-medium">
@@ -152,7 +176,21 @@ export function SceneCard({
       </div>
 
       {!scene.generated ? (
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-4">
+          {/* Story Continuity Hint */}
+          <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
+            <Sparkles className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-amber-700 dark:text-amber-300">
+              <span className="font-medium">Story tip:</span> {getTransitionHint()}
+              {previousSceneDescription && (
+                <p className="mt-1 text-amber-600/80 dark:text-amber-400/80 italic">
+                  Previous: "{previousSceneDescription.slice(0, 60)}..."
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Scene Title */}
           <div>
             <label className="text-xs text-muted-foreground font-medium">
               Scene Title <span className="text-muted-foreground/60">(optional)</span>
@@ -166,6 +204,86 @@ export function SceneCard({
             />
           </div>
 
+          {/* Environment/Location Section - More Prominent */}
+          <div className="space-y-2 p-3 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50">
+            <label className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              <MapPin className="w-3.5 h-3.5" />
+              Location/Environment
+              <span className="text-emerald-600/60 dark:text-emerald-400/60 font-normal">
+                (change setting from master template)
+              </span>
+            </label>
+            
+            {/* Saved Environments */}
+            {savedEnvironments.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    onSelectEnvironment(undefined as any);
+                    setShowCustomEnv(false);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 border rounded-full text-xs transition-all",
+                    !scene.selectedEnvironmentId && !showCustomEnv
+                      ? "bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/50 dark:border-emerald-600 dark:text-emerald-300"
+                      : "bg-white dark:bg-slate-800 border-border text-foreground hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                  )}
+                >
+                  Same as template
+                </button>
+                {savedEnvironments.map((env) => (
+                  <button
+                    key={env.id}
+                    onClick={() => {
+                      onSelectEnvironment(env.id);
+                      setShowCustomEnv(false);
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 border rounded-full text-xs transition-all",
+                      scene.selectedEnvironmentId === env.id
+                        ? "bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/50 dark:border-emerald-600 dark:text-emerald-300"
+                        : "bg-white dark:bg-slate-800 border-border text-foreground hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    )}
+                  >
+                    {env.name}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowCustomEnv(!showCustomEnv)}
+                  className={cn(
+                    "px-3 py-1.5 border rounded-full text-xs transition-all flex items-center gap-1",
+                    showCustomEnv
+                      ? "bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/50 dark:border-emerald-600 dark:text-emerald-300"
+                      : "bg-white dark:bg-slate-800 border-dashed border-emerald-400 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                  )}
+                >
+                  + New location
+                  {showCustomEnv ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              </div>
+            )}
+
+            {/* Custom Environment Description */}
+            {(showCustomEnv || savedEnvironments.length === 0) && (
+              <div className="mt-2">
+                <textarea
+                  value={scene.customEnvironment || ""}
+                  onChange={(e) => onUpdate("customEnvironment" as keyof Scene, e.target.value)}
+                  placeholder="Describe the new location... e.g., 'A dimly lit jazz club with velvet curtains, neon signs, and smoky atmosphere'"
+                  rows={2}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs resize-none transition-all"
+                />
+              </div>
+            )}
+
+            {/* Selected environment preview */}
+            {selectedEnv && (
+              <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">
+                {selectedEnv.setting?.slice(0, 80)}...
+              </p>
+            )}
+          </div>
+
           {/* Character Picker */}
           <CharacterPicker
             savedCharacters={savedCharacters}
@@ -173,32 +291,6 @@ export function SceneCard({
             onSelect={onSelectCharacter}
             onDeselect={onDeselectCharacter}
           />
-
-          {/* Environment Picker */}
-          {savedEnvironments.length > 0 && (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
-                <MapPin className="w-3 h-3" />
-                Environment
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {savedEnvironments.map((env) => (
-                  <button
-                    key={env.id}
-                    onClick={() => onSelectEnvironment(env.id)}
-                    className={cn(
-                      "px-3 py-1.5 border rounded-full text-sm transition-all",
-                      scene.selectedEnvironmentId === env.id
-                        ? "bg-emerald-100 border-emerald-300 text-emerald-700"
-                        : "bg-white border-border text-foreground hover:border-emerald-300 hover:bg-emerald-50"
-                    )}
-                  >
-                    {env.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Scene Style Picker */}
           <SceneStylePicker
@@ -213,16 +305,23 @@ export function SceneCard({
             multiSelect={true}
           />
 
+          {/* What Happens - with transition prompting */}
           <div>
-            <label className="text-xs text-muted-foreground font-medium">What Happens</label>
+            <label className="text-xs text-muted-foreground font-medium">
+              What Happens in This Scene
+            </label>
             <textarea
               value={scene.description}
               onChange={(e) => onUpdate("description", e.target.value)}
-              placeholder="Describe the action, dialogue, and emotional arc..."
+              placeholder={index === 0 
+                ? "Describe the opening action, dialogue, and hook that grabs attention..."
+                : "Describe how this scene continues the story. What action, dialogue, or revelation happens?"
+              }
               rows={3}
               className="mt-1 w-full px-3 py-2 bg-slate-50 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm resize-none transition-all"
             />
           </div>
+
           <Button
             variant="soft"
             className="w-full"

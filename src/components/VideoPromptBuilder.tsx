@@ -317,10 +317,32 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
         role: c.enhancedRole || c.role,
       })) || characters;
 
-    // Get selected environment
-    const sceneEnvironment = scene.selectedEnvironmentId
-      ? savedEnvironments.find((e) => e.id === scene.selectedEnvironmentId)
-      : environments[0];
+    // Get selected environment or custom environment
+    let sceneEnvironments = environments;
+    
+    if (scene.customEnvironment?.trim()) {
+      // Use custom environment description
+      sceneEnvironments = [{
+        id: 'custom',
+        name: 'Custom Location',
+        setting: scene.customEnvironment,
+        lighting: '',
+        audio: '',
+        props: '',
+      }];
+    } else if (scene.selectedEnvironmentId) {
+      const selectedEnv = savedEnvironments.find((e) => e.id === scene.selectedEnvironmentId);
+      if (selectedEnv) {
+        sceneEnvironments = [{
+          id: selectedEnv.id,
+          name: selectedEnv.name,
+          setting: (selectedEnv as EnhancedEnvironment).enhancedSetting || selectedEnv.setting,
+          lighting: (selectedEnv as EnhancedEnvironment).enhancedLighting || selectedEnv.lighting,
+          audio: (selectedEnv as EnhancedEnvironment).enhancedAudio || selectedEnv.audio,
+          props: (selectedEnv as EnhancedEnvironment).enhancedProps || selectedEnv.props,
+        }];
+      }
+    }
 
     setGeneratingSceneId(id);
     try {
@@ -329,14 +351,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
         duration,
         videoStyle,
         characters: sceneCharacters.length > 0 ? sceneCharacters : characters,
-        environments: sceneEnvironment ? [{
-          id: sceneEnvironment.id,
-          name: sceneEnvironment.name,
-          setting: (sceneEnvironment as EnhancedEnvironment).enhancedSetting || sceneEnvironment.setting,
-          lighting: (sceneEnvironment as EnhancedEnvironment).enhancedLighting || sceneEnvironment.lighting,
-          audio: (sceneEnvironment as EnhancedEnvironment).enhancedAudio || sceneEnvironment.audio,
-          props: (sceneEnvironment as EnhancedEnvironment).enhancedProps || sceneEnvironment.props,
-        }] : environments,
+        environments: sceneEnvironments,
         sceneTitle: scene.title,
         sceneDescription: scene.description,
         styleTemplate: scene.styleTemplate,
