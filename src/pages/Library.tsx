@@ -1,0 +1,557 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Users, MapPin, Palette, Trash2, Edit2, Save, X, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MemoableLogo } from "@/components/MemoableLogo";
+import { useCharacterLibrary } from "@/hooks/useCharacterLibrary";
+import { useEnvironmentLibrary, EnhancedEnvironment } from "@/hooks/useEnvironmentLibrary";
+import { useSceneStyleLibrary, SceneStyle } from "@/hooks/useSceneStyleLibrary";
+import { EnhancedCharacter } from "@/types/prompt-builder";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+export default function Library() {
+  const { savedCharacters, saveCharacter, removeCharacter } = useCharacterLibrary();
+  const { savedEnvironments, saveEnvironment, removeEnvironment } = useEnvironmentLibrary();
+  const { savedStyles, saveStyle, removeStyle } = useSceneStyleLibrary();
+
+  const [editingCharacter, setEditingCharacter] = useState<EnhancedCharacter | null>(null);
+  const [editingEnvironment, setEditingEnvironment] = useState<EnhancedEnvironment | null>(null);
+  const [editingStyle, setEditingStyle] = useState<SceneStyle | null>(null);
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const handleSaveCharacter = () => {
+    if (editingCharacter) {
+      saveCharacter(editingCharacter);
+      setEditingCharacter(null);
+      toast.success("Character updated!");
+    }
+  };
+
+  const handleSaveEnvironment = () => {
+    if (editingEnvironment) {
+      saveEnvironment(editingEnvironment);
+      setEditingEnvironment(null);
+      toast.success("Environment updated!");
+    }
+  };
+
+  const handleSaveStyle = () => {
+    if (editingStyle) {
+      saveStyle({
+        name: editingStyle.name,
+        description: editingStyle.description,
+        template: editingStyle.template,
+      });
+      setEditingStyle(null);
+      toast.success("Scene style updated!");
+    }
+  };
+
+  const handleDeleteCharacter = (id: number, name: string) => {
+    if (confirm(`Delete "${name}" from your library?`)) {
+      removeCharacter(id);
+      toast.success("Character deleted");
+    }
+  };
+
+  const handleDeleteEnvironment = (id: number, name: string) => {
+    if (confirm(`Delete "${name}" from your library?`)) {
+      removeEnvironment(id);
+      toast.success("Environment deleted");
+    }
+  };
+
+  const handleDeleteStyle = (id: string, name: string) => {
+    if (confirm(`Delete "${name}" from your library?`)) {
+      removeStyle(id);
+      toast.success("Scene style deleted");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-teal-50/30 to-emerald-50/20">
+      {/* Header */}
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+            </Link>
+            <MemoableLogo size="sm" />
+          </div>
+          <h1 className="text-lg font-semibold text-foreground">Library</h1>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <Tabs defaultValue="characters" className="space-y-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
+            <TabsTrigger value="characters" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Characters</span>
+              <span className="sm:hidden">Chars</span>
+              {savedCharacters.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                  {savedCharacters.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="environments" className="gap-2">
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">Environments</span>
+              <span className="sm:hidden">Envs</span>
+              {savedEnvironments.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                  {savedEnvironments.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="styles" className="gap-2">
+              <Palette className="w-4 h-4" />
+              <span className="hidden sm:inline">Scene Styles</span>
+              <span className="sm:hidden">Styles</span>
+              {savedStyles.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                  {savedStyles.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Characters Tab */}
+          <TabsContent value="characters" className="space-y-4">
+            {savedCharacters.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="No characters saved"
+                description="Characters you create in the Video builder will appear here"
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {savedCharacters.map((char) => (
+                  <CharacterCard
+                    key={char.id}
+                    character={char}
+                    isEditing={editingCharacter?.id === char.id}
+                    editingData={editingCharacter?.id === char.id ? editingCharacter : null}
+                    onEdit={() => setEditingCharacter({ ...char })}
+                    onCancel={() => setEditingCharacter(null)}
+                    onSave={handleSaveCharacter}
+                    onDelete={() => handleDeleteCharacter(char.id, char.name)}
+                    onChange={(field, value) =>
+                      setEditingCharacter((prev) => prev ? { ...prev, [field]: value } : null)
+                    }
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Environments Tab */}
+          <TabsContent value="environments" className="space-y-4">
+            {savedEnvironments.length === 0 ? (
+              <EmptyState
+                icon={MapPin}
+                title="No environments saved"
+                description="Environments you create in the Video builder will appear here"
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {savedEnvironments.map((env) => (
+                  <EnvironmentCard
+                    key={env.id}
+                    environment={env}
+                    isEditing={editingEnvironment?.id === env.id}
+                    editingData={editingEnvironment?.id === env.id ? editingEnvironment : null}
+                    onEdit={() => setEditingEnvironment({ ...env })}
+                    onCancel={() => setEditingEnvironment(null)}
+                    onSave={handleSaveEnvironment}
+                    onDelete={() => handleDeleteEnvironment(env.id, env.name)}
+                    onChange={(field, value) =>
+                      setEditingEnvironment((prev) => prev ? { ...prev, [field]: value } : null)
+                    }
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Scene Styles Tab */}
+          <TabsContent value="styles" className="space-y-4">
+            {savedStyles.length === 0 ? (
+              <EmptyState
+                icon={Palette}
+                title="No scene styles saved"
+                description="Scene styles you save in the Video builder will appear here"
+              />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {savedStyles.map((style) => (
+                  <StyleCard
+                    key={style.id}
+                    style={style}
+                    isEditing={editingStyle?.id === style.id}
+                    editingData={editingStyle?.id === style.id ? editingStyle : null}
+                    onEdit={() => setEditingStyle({ ...style })}
+                    onCancel={() => setEditingStyle(null)}
+                    onSave={handleSaveStyle}
+                    onDelete={() => handleDeleteStyle(style.id, style.name)}
+                    onChange={(field, value) =>
+                      setEditingStyle((prev) => prev ? { ...prev, [field]: value } : null)
+                    }
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+}
+
+// Empty State Component
+function EmptyState({ icon: Icon, title, description }: { icon: typeof Users; title: string; description: string }) {
+  return (
+    <Card className="p-12 text-center">
+      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+        <Icon className="w-8 h-8 text-muted-foreground" />
+      </div>
+      <h3 className="font-medium text-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+      <Link to="/" className="inline-block mt-4">
+        <Button variant="outline" size="sm">
+          Go to Builder
+        </Button>
+      </Link>
+    </Card>
+  );
+}
+
+// Character Card Component
+function CharacterCard({
+  character,
+  isEditing,
+  editingData,
+  onEdit,
+  onCancel,
+  onSave,
+  onDelete,
+  onChange,
+  formatDate,
+}: {
+  character: EnhancedCharacter;
+  isEditing: boolean;
+  editingData: EnhancedCharacter | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onChange: (field: string, value: string) => void;
+  formatDate: (t: number) => string;
+}) {
+  const data = isEditing && editingData ? editingData : character;
+
+  return (
+    <Card className={cn("overflow-hidden transition-all", isEditing && "ring-2 ring-primary")}>
+      <div className="p-4 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-teal-50/50 to-emerald-50/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white font-bold">
+            {data.name.charAt(0).toUpperCase()}
+          </div>
+          {isEditing ? (
+            <input
+              value={data.name}
+              onChange={(e) => onChange("name", e.target.value)}
+              className="font-semibold bg-white border border-border rounded px-2 py-1 text-foreground"
+            />
+          ) : (
+            <h3 className="font-semibold text-foreground">{data.name}</h3>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {isEditing ? (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onCancel}>
+                <X className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onSave} className="text-emerald-600">
+                <Save className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onEdit}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onDelete} className="text-rose-500">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="p-4 space-y-3">
+        <Field
+          label="Look"
+          value={data.enhancedLook || data.look}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedLook", v)}
+        />
+        <Field
+          label="Demeanor"
+          value={data.enhancedDemeanor || data.demeanor}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedDemeanor", v)}
+        />
+        <Field
+          label="Role"
+          value={data.enhancedRole || data.role}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedRole", v)}
+        />
+        <div className="pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>Added {formatDate(character.createdAt)}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Environment Card Component
+function EnvironmentCard({
+  environment,
+  isEditing,
+  editingData,
+  onEdit,
+  onCancel,
+  onSave,
+  onDelete,
+  onChange,
+  formatDate,
+}: {
+  environment: EnhancedEnvironment;
+  isEditing: boolean;
+  editingData: EnhancedEnvironment | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onChange: (field: string, value: string) => void;
+  formatDate: (t: number) => string;
+}) {
+  const data = isEditing && editingData ? editingData : environment;
+
+  return (
+    <Card className={cn("overflow-hidden transition-all", isEditing && "ring-2 ring-primary")}>
+      <div className="p-4 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-orange-50/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white">
+            <MapPin className="w-5 h-5" />
+          </div>
+          {isEditing ? (
+            <input
+              value={data.name}
+              onChange={(e) => onChange("name", e.target.value)}
+              className="font-semibold bg-white border border-border rounded px-2 py-1 text-foreground"
+            />
+          ) : (
+            <h3 className="font-semibold text-foreground">{data.name}</h3>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {isEditing ? (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onCancel}>
+                <X className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onSave} className="text-emerald-600">
+                <Save className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onEdit}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onDelete} className="text-rose-500">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="p-4 space-y-3">
+        <Field
+          label="Setting"
+          value={data.enhancedSetting || data.setting}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedSetting", v)}
+        />
+        <Field
+          label="Lighting"
+          value={data.enhancedLighting || data.lighting}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedLighting", v)}
+        />
+        <Field
+          label="Audio"
+          value={data.enhancedAudio || data.audio}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedAudio", v)}
+        />
+        <Field
+          label="Props"
+          value={data.enhancedProps || data.props}
+          isEditing={isEditing}
+          onChange={(v) => onChange("enhancedProps", v)}
+        />
+        <div className="pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>Added {formatDate(environment.createdAt)}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Scene Style Card Component
+function StyleCard({
+  style,
+  isEditing,
+  editingData,
+  onEdit,
+  onCancel,
+  onSave,
+  onDelete,
+  onChange,
+  formatDate,
+}: {
+  style: SceneStyle;
+  isEditing: boolean;
+  editingData: SceneStyle | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onChange: (field: string, value: string) => void;
+  formatDate: (t: number) => string;
+}) {
+  const data = isEditing && editingData ? editingData : style;
+
+  return (
+    <Card className={cn("overflow-hidden transition-all", isEditing && "ring-2 ring-primary")}>
+      <div className="p-4 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-purple-50/50 to-pink-50/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
+            <Palette className="w-5 h-5" />
+          </div>
+          {isEditing ? (
+            <input
+              value={data.name}
+              onChange={(e) => onChange("name", e.target.value)}
+              className="font-semibold bg-white border border-border rounded px-2 py-1 text-foreground"
+            />
+          ) : (
+            <h3 className="font-semibold text-foreground">{data.name}</h3>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {isEditing ? (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onCancel}>
+                <X className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onSave} className="text-emerald-600">
+                <Save className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon-sm" onClick={onEdit}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={onDelete} className="text-rose-500">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="p-4 space-y-3">
+        <Field
+          label="Description"
+          value={data.description}
+          isEditing={isEditing}
+          onChange={(v) => onChange("description", v)}
+        />
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Template</label>
+          {isEditing ? (
+            <textarea
+              value={data.template}
+              onChange={(e) => onChange("template", e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 bg-slate-50 border border-border rounded-lg text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          ) : (
+            <p className="text-sm text-foreground bg-slate-50 p-3 rounded-lg max-h-24 overflow-y-auto">
+              {data.template}
+            </p>
+          )}
+        </div>
+        <div className="pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>Added {formatDate(style.createdAt)}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Reusable Field Component
+function Field({
+  label,
+  value,
+  isEditing,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  isEditing: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</label>
+      {isEditing ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={2}
+          className="w-full px-3 py-2 bg-slate-50 border border-border rounded-lg text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      ) : (
+        <p className="text-sm text-foreground">{value || <span className="text-muted-foreground italic">Not set</span>}</p>
+      )}
+    </div>
+  );
+}
