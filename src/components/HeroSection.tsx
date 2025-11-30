@@ -1,4 +1,4 @@
-import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt, BarChart3, Play } from "lucide-react";
+import { Sparkles, Video, Image, Wand2, ArrowRight, FileText, Library, LogIn, User, Crown, Zap, Settings, Receipt, BarChart3, Play, Film } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TechyMemoLogo } from "./MemoableLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -70,11 +70,18 @@ export function HeroSection({ activeBuilder, onSelectBuilder }: HeroSectionProps
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
+              to="/videos"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+            >
+              <Film className="w-4 h-4" />
+              <span className="hidden sm:inline">Videos</span>
+            </Link>
+            <Link
               to="/library"
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
             >
               <Library className="w-4 h-4" />
-              <span className="hidden sm:inline">My Library</span>
+              <span className="hidden sm:inline">Library</span>
             </Link>
             
             {user ? (

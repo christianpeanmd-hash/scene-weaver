@@ -35,6 +35,8 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [videoDuration, setVideoDuration] = useState<5 | 10>(5);
+  const [videoAspectRatio, setVideoAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('16:9');
   
   const { tier } = useSubscription();
   const videoGen = useVideoGeneration();
@@ -50,8 +52,8 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
       await videoGen.generateVideo({
         prompt: generatedPrompt,
         imageBase64: uploadedImage,
-        duration: 5,
-        aspectRatio: '16:9',
+        duration: videoDuration,
+        aspectRatio: videoAspectRatio,
       });
     } catch (error) {
       // Error already handled by hook
@@ -317,6 +319,61 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
               />
             </Card>
+
+            {/* Video Output Settings (for premium direct generation) */}
+            {isPremium && (
+              <Card className="p-5">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
+                  <Film className="w-4 h-4 text-purple-500" />
+                  Video Output Settings
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Duration */}
+                  <div>
+                    <label className="text-xs text-muted-foreground font-medium mb-2 block">Duration</label>
+                    <div className="flex gap-2">
+                      {[5, 10].map((dur) => (
+                        <button
+                          key={dur}
+                          onClick={() => setVideoDuration(dur as 5 | 10)}
+                          className={cn(
+                            "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all",
+                            videoDuration === dur
+                              ? "bg-purple-100 dark:bg-purple-950/50 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300"
+                              : "bg-background border-border hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                          )}
+                        >
+                          {dur}s
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Aspect Ratio */}
+                  <div>
+                    <label className="text-xs text-muted-foreground font-medium mb-2 block">Aspect Ratio</label>
+                    <div className="flex gap-2">
+                      {(['16:9', '9:16', '1:1'] as const).map((ratio) => (
+                        <button
+                          key={ratio}
+                          onClick={() => setVideoAspectRatio(ratio)}
+                          className={cn(
+                            "flex-1 py-2 px-2 rounded-lg border text-xs font-medium transition-all",
+                            videoAspectRatio === ratio
+                              ? "bg-purple-100 dark:bg-purple-950/50 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300"
+                              : "bg-background border-border hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                          )}
+                        >
+                          {ratio}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  These settings apply when generating video directly with Runway ML
+                </p>
+              </Card>
+            )}
 
             {/* Generate Button */}
             <Button
