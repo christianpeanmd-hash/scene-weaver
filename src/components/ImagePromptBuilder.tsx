@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StyleSelector } from "./StyleSelector";
-import { BrandSelector } from "./BrandSelector";
+import { BrandSelector, getBrandContextFromPreset } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
@@ -39,6 +39,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [sceneDescription, setSceneDescription] = useState(""); // What user wants to see
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [customBrandText, setCustomBrandText] = useState("");
+  const [selectedBrandPresetId, setSelectedBrandPresetId] = useState<string | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -145,9 +146,10 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   }, [handleImageUpload]);
 
   const getBrandContext = () => {
-    return selectedBrand 
-      ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
-      : customBrandText.trim() || undefined;
+    return getBrandContextFromPreset(selectedBrandPresetId)
+      || (selectedBrand 
+        ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
+        : customBrandText.trim() || undefined);
   };
 
   // Build a creative prompt that uses the photo as reference but allows creative freedom
@@ -485,6 +487,8 @@ Render in ${styleName} style: ${styleLook}`;
               onSelectBrand={setSelectedBrand}
               customBrandText={customBrandText}
               onCustomBrandChange={setCustomBrandText}
+              selectedPresetId={selectedBrandPresetId}
+              onSelectPreset={setSelectedBrandPresetId}
             />
 
             {/* Generate Button - Primary CTA */}
