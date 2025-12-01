@@ -10,6 +10,7 @@ interface AITool {
 
 const VIDEO_TOOLS: AITool[] = [
   { name: "Veo (Gemini)", url: "https://gemini.google.com", color: "bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30", textColor: "text-blue-600" },
+  { name: "Veo 3.1 (Flow)", url: "https://labs.google/fx/tools/video-fx", color: "bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30", textColor: "text-cyan-600" },
   { name: "Sora (ChatGPT)", url: "https://chatgpt.com", color: "bg-slate-500/10 hover:bg-slate-500/20 border-slate-500/30", textColor: "text-slate-600" },
   { name: "Runway", url: "https://runwayml.com", color: "bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30", textColor: "text-violet-600" },
   { name: "Kling", url: "https://klingai.com", color: "bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30", textColor: "text-orange-600" },
