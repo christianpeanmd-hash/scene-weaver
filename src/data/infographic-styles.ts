@@ -4,7 +4,7 @@ export interface InfographicStyle {
   description: string;
   promptTemplate: string;
   useCase: string;
-  category: "educational" | "data" | "process" | "marketing" | "social" | "custom";
+  category: "educational" | "data" | "process" | "marketing" | "social" | "research" | "custom";
 }
 
 export const INFOGRAPHIC_STYLES: InfographicStyle[] = [
@@ -180,6 +180,56 @@ export const INFOGRAPHIC_STYLES: InfographicStyle[] = [
     category: "data",
   },
   
+  // Research & Medical Journals
+  {
+    id: "vector-clean",
+    name: "Clean Vector Style",
+    description: "Crisp vector graphics with flat colors and precise geometric shapes",
+    promptTemplate: `Create a clean vector-style infographic about {topic}. Use flat colors, precise geometric shapes, and crisp lines. Include simplified iconography with consistent stroke weights. Use a limited color palette (3-4 colors max) with strong contrast. Text should be in clean sans-serif fonts. Layout should be grid-based with clear visual hierarchy. No gradients, shadows, or 3D effects—pure flat vector aesthetic.`,
+    useCase: "Professional presentations, publications, clean documentation",
+    category: "research",
+  },
+  {
+    id: "research-poster",
+    name: "Research Poster",
+    description: "Academic conference poster layout with abstract, methods, results, conclusions",
+    promptTemplate: `Create a research poster infographic for {topic}. Use a structured academic layout with clearly labeled sections: Abstract/Summary, Background, Methods, Key Results, and Conclusions. Include data visualizations (charts, graphs) in the results section. Use a professional color scheme (navy, teal, or burgundy accents on white). Include numbered references style at bottom. Use clean serif or sans-serif fonts. Maintain clear visual hierarchy with section headers.`,
+    useCase: "Academic conferences, research presentations, thesis summaries",
+    category: "research",
+  },
+  {
+    id: "jama-style",
+    name: "JAMA Journal Style",
+    description: "Classic medical journal aesthetic with structured data presentation",
+    promptTemplate: `Create an infographic in the style of JAMA (Journal of the American Medical Association) about {topic}. Use a clean, authoritative medical journal aesthetic with: navy blue and burgundy accent colors on white background, structured data tables, forest plots or odds ratio diagrams where relevant, numbered figure captions, clear statistical annotations, serif fonts for body text, and a formal academic tone. Include a methods summary box and key findings callout. Maintain the gravitas of peer-reviewed medical literature.`,
+    useCase: "Medical research, clinical findings, healthcare publications",
+    category: "research",
+  },
+  {
+    id: "nejm-style",
+    name: "NEJM Journal Style",
+    description: "New England Journal of Medicine aesthetic with clinical precision",
+    promptTemplate: `Create an infographic in the style of the New England Journal of Medicine (NEJM) about {topic}. Use the distinctive NEJM aesthetic: red and dark gray color palette on white, precise clinical diagrams, Kaplan-Meier survival curves or similar medical visualizations where appropriate, clean data tables with confidence intervals, anatomical illustrations if relevant, and authoritative serif typography. Include structured sections for Background, Study Design, Results, and Clinical Implications. Convey evidence-based medical rigor.`,
+    useCase: "Clinical trials, medical evidence, healthcare decision-making",
+    category: "research",
+  },
+  {
+    id: "lancet-style",
+    name: "Lancet Journal Style",
+    description: "British medical journal style with global health focus",
+    promptTemplate: `Create an infographic in the style of The Lancet medical journal about {topic}. Use the Lancet aesthetic: deep red accent color with dark charcoal text on white, sophisticated data visualizations, global health context where relevant, epidemiological charts and maps, clear hierarchical typography with elegant serif fonts, and structured sections. Include key statistics callouts, methodology notes, and implications for practice. Convey international medical authority and public health perspective.`,
+    useCase: "Global health, epidemiology, public health policy",
+    category: "research",
+  },
+  {
+    id: "scientific-vector",
+    name: "Scientific Vector Diagram",
+    description: "Technical scientific illustration with precise labeling",
+    promptTemplate: `Create a scientific vector diagram infographic about {topic}. Use precise technical illustration style with: clean vector linework, accurate proportions, detailed labeling with leader lines, numbered callouts, scale bars where appropriate, cross-sections or cutaway views if relevant, and a neutral color palette (blues, grays, subtle accents). Include a legend/key, figure caption, and source attribution. Style should feel like it belongs in a medical textbook or scientific publication.`,
+    useCase: "Anatomy, mechanisms of action, technical processes",
+    category: "research",
+  },
+  
   // Custom
   {
     id: "mega-infographic",
@@ -207,6 +257,7 @@ export const INFOGRAPHIC_CATEGORIES = [
   { id: "process", name: "Process & Timeline", icon: "🔄" },
   { id: "marketing", name: "Marketing", icon: "🎯" },
   { id: "social", name: "Social Media", icon: "📱" },
+  { id: "research", name: "Research & Medical", icon: "🔬" },
   { id: "custom", name: "Custom", icon: "✨" },
 ];
 
