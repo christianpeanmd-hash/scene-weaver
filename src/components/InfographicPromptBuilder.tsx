@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AIToolLinks } from "./AIToolLinks";
 import { InfographicStyleSelector } from "./InfographicStyleSelector";
-import { BrandSelector } from "./BrandSelector";
+import { BrandSelector, BRAND_STYLE_PRESETS, getBrandContextFromPreset } from "./BrandSelector";
 import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { FreeLimitModal } from "./FreeLimitModal";
 import { INFOGRAPHIC_STYLES, InfographicStyle } from "@/data/infographic-styles";
@@ -21,6 +21,7 @@ export function InfographicPromptBuilder() {
   const [topicDescription, setTopicDescription] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [customBrandText, setCustomBrandText] = useState("");
+  const [selectedBrandPresetId, setSelectedBrandPresetId] = useState<string | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -131,9 +132,11 @@ export function InfographicPromptBuilder() {
       return null;
     }
 
-    const brandContext = selectedBrand 
-      ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
-      : customBrandText.trim() || undefined;
+    // Get brand context from preset, saved brand, or custom text
+    const brandContext = getBrandContextFromPreset(selectedBrandPresetId)
+      || (selectedBrand 
+        ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
+        : customBrandText.trim() || undefined);
 
     const { data, error } = await supabase.functions.invoke('generate-image-prompt', {
       body: {
@@ -356,6 +359,8 @@ export function InfographicPromptBuilder() {
               onSelectBrand={setSelectedBrand}
               customBrandText={customBrandText}
               onCustomBrandChange={setCustomBrandText}
+              selectedPresetId={selectedBrandPresetId}
+              onSelectPreset={setSelectedBrandPresetId}
             />
 
             {/* Generate Buttons */}
