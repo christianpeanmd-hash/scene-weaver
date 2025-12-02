@@ -41,6 +41,7 @@ interface GenerateRequest {
   sceneTitle?: string;
   sceneDescription?: string;
   styleTemplate?: string;
+  previousSceneContent?: string;
 }
 
 // Rate limiting helper for authenticated users
@@ -380,6 +381,21 @@ const getScenePrompt = (req: GenerateRequest) => {
     ? `\n\n**SCENE STYLE TEMPLATE (follow this structure closely):**\n${req.styleTemplate}`
     : '';
 
+  // Include previous scene content for continuity
+  const previousSceneContext = req.previousSceneContent
+    ? `\n\n## PREVIOUS SCENE (for continuity reference):
+The following is the generated content from the previous scene in this video sequence. Use this to ensure continuity of:
+- Character appearances, positions, and emotional states at the end of that scene
+- Story progression and narrative flow
+- Any props, actions, or events that should carry forward
+- The visual/tonal consistency
+
+**Previous Scene Content:**
+${req.previousSceneContent.slice(0, 2000)}${req.previousSceneContent.length > 2000 ? '...[truncated]' : ''}
+
+IMPORTANT: The video generator has NO memory between scenes. You MUST explicitly describe any elements that need to match or continue from the previous scene. If a character was holding something, state it again. If they were in a specific position, describe it. The AI needs every visual detail restated.`
+    : '';
+
   return `Generate a COMPLETE scene template for this scene within the larger concept.
 
 **Overall Concept**: ${req.concept}
@@ -390,17 +406,19 @@ const getScenePrompt = (req: GenerateRequest) => {
 **Characters**:
 ${charDesc}
 **Environment**:
-${envDesc}${styleInstructions}
+${envDesc}${styleInstructions}${previousSceneContext}
 
 Generate the scene following ${req.styleTemplate ? 'the SCENE STYLE TEMPLATE above' : 'the standard detailed format'}. Include:
 - Scene title and logline
-- Character blocks (if using characters)
+- Character blocks (if using characters) - EXPLICITLY restate their appearance and current state
 - Environment block with detailed setting, lighting, audio atmosphere, and props
 - Video style line
 - Complete Scene Setup
 - Full Visual Breakdown with SPECIFIC actions for each time beat
 - Audio Breakdown with actual dialogue
 - Direction Notes
+
+${req.previousSceneContent ? 'CRITICAL: Since this is a continuation scene, start the Visual Breakdown by establishing the transition from the previous scene. Describe where characters are and what state they are in based on how the previous scene ended.' : ''}
 
 Every detail must be SPECIFIC and PRODUCTION-READY. No placeholders.`;
 };

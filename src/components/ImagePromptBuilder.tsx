@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Zap } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Zap, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -561,12 +561,62 @@ Render in ${styleName} style: ${styleLook}`;
                   <div className="space-y-4">
                     {/* Show generated image */}
                     {generatedImageUrl && (
-                      <div className="rounded-lg overflow-hidden border border-border">
+                      <div className="rounded-lg overflow-hidden border border-border relative group">
                         <img
                           src={generatedImageUrl}
                           alt="Generated"
                           className="w-full h-auto"
                         />
+                        {/* Image action buttons overlay */}
+                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="secondary"
+                            size="icon-sm"
+                            className="bg-background/90 backdrop-blur-sm shadow-md"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(generatedImageUrl);
+                                const blob = await response.blob();
+                                await navigator.clipboard.write([
+                                  new ClipboardItem({ [blob.type]: blob })
+                                ]);
+                                toast.success("Image copied to clipboard!");
+                              } catch (err) {
+                                // Fallback: copy URL if image copy fails
+                                await navigator.clipboard.writeText(generatedImageUrl);
+                                toast.success("Image URL copied!");
+                              }
+                            }}
+                            title="Copy image"
+                          >
+                            <Clipboard className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon-sm"
+                            className="bg-background/90 backdrop-blur-sm shadow-md"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(generatedImageUrl);
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `generated-image-${Date.now()}.png`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(url);
+                                toast.success("Image downloaded!");
+                              } catch (err) {
+                                toast.error("Failed to download image");
+                              }
+                            }}
+                            title="Download image"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                     
