@@ -1,17 +1,18 @@
 import { useState, useCallback, useEffect } from "react";
-import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard, ImagePlus } from "lucide-react";
+import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard, ImagePlus, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AIToolLinks } from "./AIToolLinks";
 import { InfographicStyleSelector } from "./InfographicStyleSelector";
-import { BrandSelector, BRAND_STYLE_PRESETS, getBrandContextFromPreset } from "./BrandSelector";
-import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
+import { BrandSelector, getBrandContextFromPreset } from "./BrandSelector";
 import { FreeLimitModal } from "./FreeLimitModal";
 import { INFOGRAPHIC_STYLES, InfographicStyle } from "@/data/infographic-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { cn } from "@/lib/utils";
 
 export function InfographicPromptBuilder() {
   const [uploadedDocument, setUploadedDocument] = useState<{ name: string; content: string } | null>(null);
@@ -28,10 +29,12 @@ export function InfographicPromptBuilder() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showStyleOptions, setShowStyleOptions] = useState(false);
+  const [showBrandOptions, setShowBrandOptions] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   
   const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
 
-  // Handle image upload
   const handleImageUpload = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
       return false;
@@ -47,7 +50,6 @@ export function InfographicPromptBuilder() {
   }, []);
 
   const handleDocumentUpload = useCallback(async (file: File) => {
-    // Check if it's an image first
     if (file.type.startsWith("image/")) {
       handleImageUpload(file);
       return;
@@ -65,19 +67,16 @@ export function InfographicPromptBuilder() {
       return;
     }
 
-    // For now, we'll extract text from text files directly
     if (file.type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
       const text = await file.text();
       setUploadedDocument({ name: file.name, content: text });
       toast.success("Document uploaded!");
     } else {
-      // For PDFs/docs, store the file name and a placeholder
       setUploadedDocument({ name: file.name, content: `[Content from: ${file.name}]` });
       toast.success("Document uploaded! Describe what it contains in the topic field.");
     }
   }, [handleImageUpload]);
 
-  // Handle paste from clipboard
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -94,7 +93,6 @@ export function InfographicPromptBuilder() {
     }
   }, [handleImageUpload]);
 
-  // Listen for paste events
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
@@ -123,7 +121,7 @@ export function InfographicPromptBuilder() {
 
   const generatePrompt = async (): Promise<string | null> => {
     if (!selectedStyle && !customStyleText.trim()) {
-      toast.error("Please select an infographic style or describe a custom style");
+      toast.error("Please select an infographic style");
       return null;
     }
 
@@ -132,7 +130,6 @@ export function InfographicPromptBuilder() {
       return null;
     }
 
-    // Get brand context from preset, saved brand, or custom text
     const brandContext = getBrandContextFromPreset(selectedBrandPresetId)
       || (selectedBrand 
         ? `Brand: ${selectedBrand.name}. ${selectedBrand.description}${selectedBrand.colors?.length ? ` Colors: ${selectedBrand.colors.join(', ')}.` : ''}${selectedBrand.fonts ? ` Typography: ${selectedBrand.fonts}.` : ''}`
@@ -164,7 +161,8 @@ export function InfographicPromptBuilder() {
       const prompt = await generatePrompt();
       if (prompt) {
         setGeneratedPrompt(prompt);
-        toast.success("Infographic prompt generated!");
+        setShowPrompt(true);
+        toast.success("Prompt generated!");
       }
     } catch (error) {
       console.error("Error generating prompt:", error);
@@ -178,7 +176,6 @@ export function InfographicPromptBuilder() {
     setIsGeneratingImage(true);
     setGeneratedImageUrl(null);
     try {
-      // First generate the prompt if we don't have one
       let prompt = generatedPrompt;
       if (!prompt) {
         prompt = await generatePrompt() || "";
@@ -192,7 +189,6 @@ export function InfographicPromptBuilder() {
         return;
       }
 
-      // Now generate the image
       const { data, error } = await supabase.functions.invoke("generate-ai-image", {
         body: { prompt, type: "infographic" },
       });
@@ -215,8 +211,33 @@ export function InfographicPromptBuilder() {
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedPrompt);
     setCopied(true);
-    toast.success("Copied to clipboard!");
+    toast.success("Copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyImage = async () => {
+    if (!generatedImageUrl) return;
+    try {
+      const response = await fetch(generatedImageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      toast.success("Image copied!");
+    } catch {
+      toast.error("Failed to copy image");
+    }
+  };
+
+  const handleDownloadImage = () => {
+    if (!generatedImageUrl) return;
+    const link = document.createElement("a");
+    link.href = generatedImageUrl;
+    link.download = `infographic-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Downloaded!");
   };
 
   const clearDocument = () => {
@@ -228,292 +249,236 @@ export function InfographicPromptBuilder() {
     setUploadedImage(null);
   };
 
+  const canGenerate = (selectedStyle || customStyleText.trim()) && (topicDescription.trim() || uploadedDocument);
+
   return (
     <>
-    <div className="pb-8 md:pb-12">
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Left Column - Upload & Style */}
-          <div className="space-y-5">
-            {/* Image Upload (for reference images) */}
-            {uploadedImage ? (
-              <Card className="overflow-hidden">
-                <div className="p-4 border-b border-border/50">
-                  <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Image className="w-4 h-4 text-amber-500" />
-                    Reference Image
-                  </label>
+      <div className="pb-8 md:pb-12">
+        <div className="max-w-2xl mx-auto px-4">
+          {/* Generated Output - Front and Center */}
+          {generatedImageUrl && (
+            <Card className="mb-6 overflow-hidden">
+              <div className="relative group">
+                <img
+                  src={generatedImageUrl}
+                  alt="Generated infographic"
+                  className="w-full rounded-t-lg"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleCopyImage}
+                    className="bg-white/90 hover:bg-white"
+                  >
+                    <Copy className="w-4 h-4 mr-1.5" />
+                    Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleDownloadImage}
+                    className="bg-white/90 hover:bg-white"
+                  >
+                    <Download className="w-4 h-4 mr-1.5" />
+                    Download
+                  </Button>
                 </div>
-                <div className="p-4 bg-muted/30">
-                  <div className="relative">
-                    <img
-                      src={uploadedImage}
-                      alt="Reference"
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <button
-                      onClick={clearImage}
-                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            ) : null}
-
-            {/* Document Upload */}
-            <Card className="overflow-hidden">
-              <div className="p-4 border-b border-border/50">
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Upload className="w-4 h-4 text-amber-500" />
-                  Source Document or Image
-                  <span className="text-muted-foreground text-xs font-normal">optional</span>
-                </label>
               </div>
               
-              {!uploadedDocument ? (
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  className={`p-8 transition-all ${
-                    isDragging 
-                      ? "bg-amber-50 dark:bg-amber-950/20 border-2 border-dashed border-amber-300" 
-                      : "bg-muted/30"
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
-                      <FileText className="w-8 h-8 text-amber-500" />
+              {generatedPrompt && (
+                <Collapsible open={showPrompt} onOpenChange={setShowPrompt}>
+                  <CollapsibleTrigger className="w-full p-3 flex items-center justify-between text-sm text-muted-foreground hover:bg-muted/50 transition-colors border-t border-border/50">
+                    <span>View prompt</span>
+                    {showPrompt ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="p-3 pt-0 space-y-2">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{generatedPrompt}</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={handleCopy}>
+                          {copied ? <Check className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                          {copied ? "Copied" : "Copy prompt"}
+                        </Button>
+                        <AIToolLinks type="image" />
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Drop a document, image, or paste from clipboard
-                    </p>
-                    <label className="cursor-pointer">
-                      <span className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted/50 transition-colors">
-                        Browse Files
-                      </span>
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx,.txt,.md,image/*"
-                        onChange={handleFileInput}
-                        className="hidden"
-                      />
-                    </label>
-                    <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
-                      <Clipboard className="w-3 h-3" />
-                      <span>Ctrl/Cmd+V to paste screenshots</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 bg-muted/30">
-                  <div className="relative flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
-                    <FileText className="w-8 h-8 text-amber-500" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">{uploadedDocument.name}</p>
-                      <p className="text-xs text-muted-foreground">Document uploaded</p>
-                    </div>
-                    <button
-                      onClick={clearDocument}
-                      className="p-1.5 hover:bg-muted rounded-full transition-colors"
-                    >
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </div>
-                </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </Card>
+          )}
 
-            {/* Topic Description */}
-            <Card className="p-5">
-              <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                Topic / Focus
-                {!uploadedDocument && <span className="text-rose-500 text-xs">required</span>}
-              </label>
+          {/* Generating State */}
+          {isGeneratingImage && !generatedImageUrl && (
+            <Card className="mb-6 p-12 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 border-3 border-primary/30 border-t-primary rounded-full animate-spin mb-4" />
+              <p className="text-muted-foreground">Creating your infographic...</p>
+            </Card>
+          )}
+
+          {/* Input Section */}
+          <Card className="overflow-hidden">
+            {/* Inline Upload Zone */}
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={cn(
+                "p-4 border-b border-border/50 transition-all",
+                isDragging && "bg-primary/5 ring-2 ring-primary/20 ring-inset"
+              )}
+            >
+              {uploadedDocument || uploadedImage ? (
+                <div className="flex items-center gap-3">
+                  {uploadedImage && (
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={uploadedImage}
+                        alt="Reference"
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={clearImage}
+                        className="absolute -top-1.5 -right-1.5 p-1 bg-background border border-border rounded-full hover:bg-muted transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  {uploadedDocument && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg flex-1 min-w-0">
+                      <FileText className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                      <span className="text-sm font-medium truncate">{uploadedDocument.name}</span>
+                      <button
+                        onClick={clearDocument}
+                        className="p-1 hover:bg-muted rounded-full transition-colors ml-auto"
+                      >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted rounded-lg cursor-pointer transition-colors border border-dashed border-border hover:border-primary/50">
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Upload PDF, Word, or image</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt,.md,image/*"
+                      onChange={handleFileInput}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-xs text-muted-foreground">or paste (⌘V)</span>
+                </div>
+              )}
+            </div>
+
+            {/* Topic Input */}
+            <div className="p-4 border-b border-border/50">
               <textarea
                 value={topicDescription}
                 onChange={(e) => setTopicDescription(e.target.value)}
                 placeholder={uploadedDocument 
-                  ? "Refine the focus... e.g., key takeaways, specific section, main argument" 
-                  : "What should the infographic explain? e.g., How transformer LLMs work, The water cycle, 5 steps to better sleep"
+                  ? "What should the infographic focus on? e.g., 'key findings' or 'the main process flow'"
+                  : "What should the infographic explain? e.g., 'How transformer LLMs work' or '5 steps to better sleep'"
                 }
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all resize-none"
+                rows={2}
+                className="w-full bg-transparent text-foreground placeholder-muted-foreground focus:outline-none resize-none text-sm"
               />
-            </Card>
+            </div>
 
-            {/* Style Selector */}
-            <InfographicStyleSelector
-              selectedStyle={selectedStyle}
-              onSelectStyle={setSelectedStyle}
-              customStyleText={customStyleText}
-              onCustomStyleChange={setCustomStyleText}
-            />
+            {/* Style Selection - Compact */}
+            <Collapsible open={showStyleOptions} onOpenChange={setShowStyleOptions}>
+              <CollapsibleTrigger className="w-full p-3 flex items-center justify-between text-sm hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span className="font-medium">
+                    {selectedStyle ? selectedStyle.name : customStyleText ? "Custom style" : "Select style"}
+                  </span>
+                </div>
+                {showStyleOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 border-t border-border/50">
+                  <InfographicStyleSelector
+                    selectedStyle={selectedStyle}
+                    onSelectStyle={setSelectedStyle}
+                    customStyleText={customStyleText}
+                    onCustomStyleChange={setCustomStyleText}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Brand Selector */}
-            <BrandSelector
-              selectedBrand={selectedBrand}
-              onSelectBrand={setSelectedBrand}
-              customBrandText={customBrandText}
-              onCustomBrandChange={setCustomBrandText}
-              selectedPresetId={selectedBrandPresetId}
-              onSelectPreset={setSelectedBrandPresetId}
-            />
+            {/* Brand Selection - Compact */}
+            <Collapsible open={showBrandOptions} onOpenChange={setShowBrandOptions}>
+              <CollapsibleTrigger className="w-full p-3 flex items-center justify-between text-sm hover:bg-muted/30 transition-colors border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <Image className="w-4 h-4 text-amber-500" />
+                  <span className="font-medium">
+                    {selectedBrand?.name || selectedBrandPresetId || customBrandText ? "Brand selected" : "Brand (optional)"}
+                  </span>
+                </div>
+                {showBrandOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 border-t border-border/50">
+                  <BrandSelector
+                    selectedBrand={selectedBrand}
+                    onSelectBrand={setSelectedBrand}
+                    customBrandText={customBrandText}
+                    onCustomBrandChange={setCustomBrandText}
+                    selectedPresetId={selectedBrandPresetId}
+                    onSelectPreset={setSelectedBrandPresetId}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Generate Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="p-4 flex gap-2 border-t border-border/50 bg-muted/30">
               <Button
-                variant="hero"
-                size="xl"
-                className="flex-1 min-w-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
-                onClick={handleGenerate}
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin-slow" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-5 h-5" />
-                    Generate Prompt
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="hero"
-                size="xl"
-                className="flex-1 min-w-0 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-                disabled={(!uploadedDocument && !topicDescription.trim()) || (!selectedStyle && !customStyleText.trim()) || isGenerating || isGeneratingImage}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                size="lg"
+                disabled={!canGenerate || isGenerating || isGeneratingImage}
                 onClick={handleGenerateImageDirectly}
               >
                 {isGeneratingImage ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin-slow" />
-                    Generating...
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                    Creating...
                   </>
                 ) : (
                   <>
-                    <ImagePlus className="w-5 h-5" />
-                    Generate Image
+                    <ImagePlus className="w-4 h-4 mr-2" />
+                    Generate Infographic
                   </>
                 )}
               </Button>
-            </div>
-          </div>
-
-          {/* Right Column - Result */}
-          <div className="space-y-5">
-            {/* Generated Prompt/Image */}
-            <Card className="h-full flex flex-col">
-              <div className="p-4 border-b border-border/50 flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  Generated Prompt / Image
-                </label>
-                {generatedPrompt && (
-                  <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
-                    {copied ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex-1 p-4 bg-muted/30">
-                {generatedImageUrl ? (
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <img
-                        src={generatedImageUrl}
-                        alt="Generated infographic"
-                        className="w-full rounded-lg border border-border"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
-                        onClick={() => setGeneratedImageUrl(null)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    {generatedPrompt && (
-                      <details className="text-sm">
-                        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                          View prompt used
-                        </summary>
-                        <pre className="mt-2 text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-3 rounded-lg border border-border max-h-32 overflow-y-auto">
-                          {generatedPrompt}
-                        </pre>
-                      </details>
-                    )}
-                    
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-2">Use prompt in other tools:</p>
-                      <AIToolLinks type="infographic" />
-                    </div>
-                  </div>
-                ) : generatedPrompt ? (
-                  <div className="space-y-4">
-                    <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
-                      {generatedPrompt}
-                    </pre>
-                    
-                    {/* Generate Image Directly */}
-                    <GeneratedImageDisplay prompt={generatedPrompt} type="infographic" />
-                    
-                    {/* Or Use External Tools */}
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-2">Or copy prompt to use in:</p>
-                      <AIToolLinks type="infographic" />
-                    </div>
-                  </div>
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={!canGenerate || isGenerating || isGeneratingImage}
+                onClick={handleGenerate}
+              >
+                {isGenerating ? (
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                 ) : (
-                  <div className="h-full flex items-center justify-center text-center">
-                    <div>
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                        <FileText className="w-8 h-8 text-slate-400" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Your infographic prompt or image will appear here
-                      </p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">
-                        Select a style and click Generate
-                      </p>
-                    </div>
-                  </div>
+                  <Wand2 className="w-4 h-4" />
                 )}
-              </div>
-            </Card>
-
-            {/* Style Info */}
-            {selectedStyle && (
-              <Card className="p-4 animate-fade-in">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{selectedStyle.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedStyle.description}</p>
-                    <p className="text-xs text-amber-600 mt-2">Best for: {selectedStyle.useCase}</p>
-                  </div>
-                </div>
-              </Card>
-            )}
-          </div>
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
-    </div>
-    <FreeLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
+
+      <FreeLimitModal
+        open={showLimitModal}
+        onOpenChange={setShowLimitModal}
+      />
     </>
   );
 }

@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Zap, Download } from "lucide-react";
+import { Image, Sparkles, Upload, Copy, Check, X, Wand2, Clipboard, ImagePlus, Zap, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { StyleSelector } from "./StyleSelector";
 import { BrandSelector, getBrandContextFromPreset } from "./BrandSelector";
 import { AIToolLinks } from "./AIToolLinks";
-import { GeneratedImageDisplay } from "./GeneratedImageDisplay";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
 import { GeneratedImagesGallery } from "./GeneratedImagesGallery";
 import { FreeLimitModal } from "./FreeLimitModal";
@@ -36,7 +36,7 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<IllustrationStyle | null>(null);
   const [customStyleText, setCustomStyleText] = useState("");
-  const [sceneDescription, setSceneDescription] = useState(""); // What user wants to see
+  const [sceneDescription, setSceneDescription] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [customBrandText, setCustomBrandText] = useState("");
   const [selectedBrandPresetId, setSelectedBrandPresetId] = useState<string | null>(null);
@@ -48,11 +48,13 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [pendingQuickApplyStyle, setPendingQuickApplyStyle] = useState<string | null>(null);
+  const [showStyleOptions, setShowStyleOptions] = useState(false);
+  const [showBrandOptions, setShowBrandOptions] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   
   const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
   const { images: galleryImages, isLoading: galleryLoading, addImage: addToGallery, deleteImage: deleteFromGallery } = useGeneratedImagesGallery();
 
-  // Helper to check if an error is a rate limit error
   const isRateLimitError = (error: unknown): boolean => {
     if (error instanceof Error) {
       return error.message.includes("RATE_LIMIT") || error.message.includes("Daily limit");
@@ -76,7 +78,6 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     reader.readAsDataURL(file);
   }, []);
 
-  // Handle paste from clipboard
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -93,13 +94,11 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     }
   }, [handleImageUpload]);
 
-  // Listen for paste events
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  // Check for quick apply from Library page on mount
   useEffect(() => {
     const quickApplyImage = sessionStorage.getItem("quickApplyImage");
     const quickApplyStyle = sessionStorage.getItem("quickApplyStyle");
@@ -115,7 +114,6 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
       }
     }
     
-    // Load prompt for editing
     if (editPrompt) {
       setCustomStyleText(editPrompt);
       setGeneratedPrompt(editPrompt);
@@ -152,7 +150,6 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
         : customBrandText.trim() || undefined);
   };
 
-  // Build a creative prompt that uses the photo as reference but allows creative freedom
   const buildCreativePrompt = (style: IllustrationStyle | null, customStyle: string | undefined) => {
     const styleName = style?.name || "custom style";
     const styleLook = style?.look || customStyle || "";
@@ -161,16 +158,13 @@ export function ImagePromptBuilder({ onSwitchToVideo }: ImagePromptBuilderProps)
     let prompt = "";
     
     if (uploadedImage) {
-      // Photo uploaded - use person as reference but allow creative scene
       if (sceneDescription.trim()) {
-        // User described what they want - create that scene with the person
         prompt = `Using the person from this photo as your subject reference, create: ${sceneDescription.trim()}. 
 
 Render in ${styleName} style: ${styleLook}
 
 Keep the person recognizable but feel free to change their pose, expression, clothing, and setting to match the described scene. The goal is a creative, styled image of this person in the new scenario.`;
       } else {
-        // No scene description - stylize the person in an interesting way
         prompt = `Transform this person into a ${styleName} artwork. 
 
 Style: ${styleLook}
@@ -178,7 +172,6 @@ Style: ${styleLook}
 Create an artistic, visually striking image. You can adjust the pose, setting, and background to best showcase the style while keeping the person recognizable.`;
       }
     } else {
-      // No photo - pure generation from description
       prompt = `Create an image: ${sceneDescription.trim() || "a compelling visual"}
 
 Render in ${styleName} style: ${styleLook}`;
@@ -211,6 +204,7 @@ Render in ${styleName} style: ${styleLook}`;
         brandContext: getBrandContext(),
       });
       setGeneratedPrompt(prompt);
+      setShowPrompt(true);
       toast.success("Prompt generated!");
     } catch (error) {
       console.error("Error generating prompt:", error);
@@ -220,7 +214,6 @@ Render in ${styleName} style: ${styleLook}`;
     }
   };
 
-  // Main image generation function - simpler, more creative
   const handleGenerateImage = async (styleOverride?: IllustrationStyle) => {
     const styleToUse = styleOverride || selectedStyle;
     const customToUse = styleOverride ? undefined : customStyleText.trim();
@@ -242,7 +235,6 @@ Render in ${styleName} style: ${styleLook}`;
       const prompt = buildCreativePrompt(styleToUse, customToUse);
       setGeneratedPrompt(prompt);
       
-      // Generate the image
       const { data, error } = await supabase.functions.invoke("generate-ai-image", {
         body: { 
           prompt, 
@@ -254,7 +246,6 @@ Render in ${styleName} style: ${styleLook}`;
       if (error) throw error;
       if (data?.imageUrl) {
         setGeneratedImageUrl(data.imageUrl);
-        // Auto-save to gallery
         const thumbnail = uploadedImage?.substring(0, 500);
         addToGallery(data.imageUrl, prompt, styleToUse?.name || customToUse || "Custom", thumbnail);
         toast.success("Image created!");
@@ -294,13 +285,37 @@ Render in ${styleName} style: ${styleLook}`;
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyImage = async () => {
+    if (!generatedImageUrl) return;
+    try {
+      const response = await fetch(generatedImageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      toast.success("Image copied to clipboard!");
+    } catch {
+      toast.error("Failed to copy image");
+    }
+  };
+
+  const handleDownloadImage = () => {
+    if (!generatedImageUrl) return;
+    const link = document.createElement("a");
+    link.href = generatedImageUrl;
+    link.download = `generated-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Image downloaded!");
+  };
+
   const clearImage = () => {
     setUploadedImage(null);
     setGeneratedPrompt("");
     setGeneratedImageUrl(null);
   };
 
-  // Trigger pending quick apply from Library navigation
   useEffect(() => {
     if (pendingQuickApplyStyle && uploadedImage) {
       handleQuickApply(pendingQuickApplyStyle);
@@ -312,380 +327,267 @@ Render in ${styleName} style: ${styleLook}`;
 
   return (
     <>
-    <div className="pb-8 md:pb-12">
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Left Column - Simple Flow */}
-          <div className="space-y-5">
-            {/* Step 1: Photo Upload */}
-            <Card className="overflow-hidden">
-              <div className="p-4 border-b border-border/50">
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Upload className="w-4 h-4 text-primary" />
-                  1. Your Photo
-                  <span className="text-muted-foreground text-xs font-normal">optional</span>
-                </label>
-              </div>
-              
-              {/* Favorite Photos - shown first for quick access */}
-              <div className="p-3 bg-gradient-to-r from-rose-50/50 to-pink-50/50 dark:from-rose-950/20 dark:to-pink-950/20 border-b border-border/50">
-                <FavoritePhotosPicker
-                  currentImage={uploadedImage}
-                  onSelectPhoto={(img) => {
-                    setUploadedImage(img);
-                    toast.success("Photo selected!");
-                  }}
+      <div className="pb-8 md:pb-12">
+        <div className="max-w-2xl mx-auto px-4">
+          {/* Generated Output - Front and Center */}
+          {generatedImageUrl && (
+            <Card className="mb-6 overflow-hidden">
+              <div className="relative group">
+                <img
+                  src={generatedImageUrl}
+                  alt="Generated"
+                  className="w-full rounded-t-lg"
                 />
+                {/* Hover actions */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleCopyImage}
+                    className="bg-white/90 hover:bg-white"
+                  >
+                    <Copy className="w-4 h-4 mr-1.5" />
+                    Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleDownloadImage}
+                    className="bg-white/90 hover:bg-white"
+                  >
+                    <Download className="w-4 h-4 mr-1.5" />
+                    Download
+                  </Button>
+                </div>
               </div>
               
-              {!uploadedImage ? (
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  className={`p-6 transition-all ${
-                    isDragging 
-                      ? "bg-purple-50 dark:bg-purple-950/20 border-2 border-dashed border-purple-300" 
-                      : "bg-muted/50"
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
-                      <Image className="w-7 h-7 text-purple-500" />
+              {/* Prompt preview */}
+              {generatedPrompt && (
+                <Collapsible open={showPrompt} onOpenChange={setShowPrompt}>
+                  <CollapsibleTrigger className="w-full p-3 flex items-center justify-between text-sm text-muted-foreground hover:bg-muted/50 transition-colors border-t border-border/50">
+                    <span>View prompt</span>
+                    {showPrompt ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="p-3 pt-0 space-y-2">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{generatedPrompt}</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={handleCopy}>
+                          {copied ? <Check className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                          {copied ? "Copied" : "Copy prompt"}
+                        </Button>
+                        <AIToolLinks type="image" />
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Drag & drop, paste, or
-                    </p>
-                    <label className="cursor-pointer">
-                      <span className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted/50 transition-colors">
-                        Browse Files
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileInput}
-                        className="hidden"
-                      />
-                    </label>
-                    <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
-                      <Clipboard className="w-3 h-3" />
-                      <span>Ctrl/Cmd+V to paste</span>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </Card>
+          )}
+
+          {/* Generating State */}
+          {isGeneratingImage && !generatedImageUrl && (
+            <Card className="mb-6 p-12 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 border-3 border-primary/30 border-t-primary rounded-full animate-spin mb-4" />
+              <p className="text-muted-foreground">Creating your image...</p>
+            </Card>
+          )}
+
+          {/* Input Section */}
+          <Card className="overflow-hidden">
+            {/* Inline Upload Zone + Saved Photos */}
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={cn(
+                "p-4 border-b border-border/50 transition-all",
+                isDragging && "bg-primary/5 ring-2 ring-primary/20 ring-inset"
+              )}
+            >
+              {uploadedImage ? (
+                <div className="flex items-start gap-3">
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={uploadedImage}
+                      alt="Your photo"
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={clearImage}
+                      className="absolute -top-1.5 -right-1.5 p-1 bg-background border border-border rounded-full hover:bg-muted transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground mb-2">Photo ready</p>
+                    {/* Quick styles */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {QUICK_STYLES.slice(0, 4).map((styleId) => {
+                        const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
+                        if (!style) return null;
+                        const isApplying = applyingStyleId === styleId;
+                        return (
+                          <button
+                            key={styleId}
+                            onClick={() => handleQuickApply(styleId)}
+                            disabled={isGenerating || isGeneratingImage}
+                            className={cn(
+                              "px-2 py-1 text-xs rounded-full border transition-all flex items-center gap-1",
+                              isApplying
+                                ? "bg-primary/20 border-primary text-primary"
+                                : "bg-muted/50 border-border hover:border-primary/50 text-foreground"
+                            )}
+                          >
+                            {isApplying && <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />}
+                            {style.name.split(' ')[0]}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-muted/30">
-                  <div className="relative">
-                    <img
-                      src={uploadedImage}
-                      alt="Uploaded"
-                      className="w-full h-40 object-cover rounded-lg"
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted rounded-lg cursor-pointer transition-colors border border-dashed border-border hover:border-primary/50">
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Upload photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileInput}
+                      className="hidden"
                     />
-                    <button
-                      onClick={clearImage}
-                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
+                  </label>
+                  <span className="text-xs text-muted-foreground">or paste (⌘V)</span>
+                  <FavoritePhotosPicker
+                    currentImage={uploadedImage}
+                    onSelectPhoto={(img) => {
+                      setUploadedImage(img);
+                      toast.success("Photo selected!");
+                    }}
+                  />
                 </div>
               )}
-              
-              {/* Quick Apply Styles - only show when image is uploaded */}
-              {uploadedImage && (
-                <div className="p-3 border-t border-border/50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-xs font-medium text-muted-foreground">One-tap styles</span>
-                    {applyingStyleId && (
-                      <span className="text-[10px] text-purple-500 animate-pulse">creating...</span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {QUICK_STYLES.map((styleId) => {
-                      const style = ILLUSTRATION_STYLES.find(s => s.id === styleId);
-                      if (!style) return null;
-                      const isThisApplying = applyingStyleId === styleId;
-                      return (
-                        <button
-                          key={styleId}
-                          onClick={() => handleQuickApply(styleId)}
-                          disabled={isGenerating || isGeneratingImage}
-                          className={cn(
-                            "px-2.5 py-1 text-xs rounded-full border transition-all flex items-center gap-1",
-                            isThisApplying
-                              ? "bg-purple-200 dark:bg-purple-800/50 border-purple-500 text-purple-800 dark:text-purple-200"
-                              : selectedStyle?.id === styleId
-                                ? "bg-purple-100 dark:bg-purple-900/30 border-purple-400 text-purple-700 dark:text-purple-300"
-                                : "bg-card border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-foreground"
-                          )}
-                        >
-                          {isThisApplying && (
-                            <div className="w-3 h-3 border-2 border-purple-400 border-t-purple-700 rounded-full animate-spin" />
-                          )}
-                          {style.name.split(' ')[0]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              
-              {/* Generated Images Gallery */}
-              <GeneratedImagesGallery
-                images={galleryImages}
-                isLoading={galleryLoading}
-                onDelete={deleteFromGallery}
-                onSelect={(url) => {
-                  setGeneratedImageUrl(url);
-                  toast.success("Image loaded from gallery!");
-                }}
-              />
-            </Card>
+            </div>
 
-            {/* Step 2: Describe what you want */}
-            <Card className="p-5">
-              <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                2. Describe what you want
-                {!uploadedImage && <span className="text-rose-500 text-xs">required</span>}
-              </label>
-              <p className="text-xs text-muted-foreground mb-3">
-                {uploadedImage 
-                  ? "Describe a scene, scenario, or look for this person"
-                  : "Describe the image you want to create"
-                }
-              </p>
+            {/* Description Input */}
+            <div className="p-4 border-b border-border/50">
               <textarea
                 value={sceneDescription}
                 onChange={(e) => setSceneDescription(e.target.value)}
                 placeholder={uploadedImage 
-                  ? "e.g., as a superhero flying over a city, professional headshot in a modern office, portrait in a cozy coffee shop..."
-                  : "e.g., a wise owl wearing glasses reading a book, a sunset over mountains..."
+                  ? "Describe the scene... e.g., 'as a superhero flying over a city' or leave blank to just stylize"
+                  : "Describe what you want to create..."
                 }
-                rows={3}
-                className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
-              />
-            </Card>
-
-            {/* Step 3: Pick a Style */}
-            <div>
-              <div className="flex items-center gap-2 mb-3 px-1">
-                <span className="text-sm font-medium text-foreground">3. Pick a Style</span>
-              </div>
-              <StyleSelector
-                selectedStyle={selectedStyle}
-                onSelectStyle={setSelectedStyle}
-                customStyleText={customStyleText}
-                onCustomStyleChange={setCustomStyleText}
+                rows={2}
+                className="w-full bg-transparent text-foreground placeholder-muted-foreground focus:outline-none resize-none text-sm"
               />
             </div>
 
-            {/* Optional: Brand */}
-            <BrandSelector
-              selectedBrand={selectedBrand}
-              onSelectBrand={setSelectedBrand}
-              customBrandText={customBrandText}
-              onCustomBrandChange={setCustomBrandText}
-              selectedPresetId={selectedBrandPresetId}
-              onSelectPreset={setSelectedBrandPresetId}
-            />
+            {/* Style Selection - Compact */}
+            <Collapsible open={showStyleOptions} onOpenChange={setShowStyleOptions}>
+              <CollapsibleTrigger className="w-full p-3 flex items-center justify-between text-sm hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="font-medium">
+                    {selectedStyle ? selectedStyle.name : customStyleText ? "Custom style" : "Select style"}
+                  </span>
+                </div>
+                {showStyleOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 border-t border-border/50">
+                  <StyleSelector
+                    selectedStyle={selectedStyle}
+                    onSelectStyle={setSelectedStyle}
+                    customStyleText={customStyleText}
+                    onCustomStyleChange={setCustomStyleText}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Generate Button - Primary CTA */}
-            <div className="space-y-3">
+            {/* Brand Selection - Compact */}
+            <Collapsible open={showBrandOptions} onOpenChange={setShowBrandOptions}>
+              <CollapsibleTrigger className="w-full p-3 flex items-center justify-between text-sm hover:bg-muted/30 transition-colors border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <Image className="w-4 h-4 text-primary" />
+                  <span className="font-medium">
+                    {selectedBrand?.name || selectedBrandPresetId || customBrandText ? "Brand selected" : "Brand (optional)"}
+                  </span>
+                </div>
+                {showBrandOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 border-t border-border/50">
+                  <BrandSelector
+                    selectedBrand={selectedBrand}
+                    onSelectBrand={setSelectedBrand}
+                    customBrandText={customBrandText}
+                    onCustomBrandChange={setCustomBrandText}
+                    selectedPresetId={selectedBrandPresetId}
+                    onSelectPreset={setSelectedBrandPresetId}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Generate Button */}
+            <div className="p-4 flex gap-2 border-t border-border/50 bg-muted/30">
               <Button
-                variant="hero"
+                className="flex-1"
                 size="lg"
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 disabled={!canGenerate || isGenerating || isGeneratingImage}
                 onClick={() => handleGenerateImage()}
               >
                 {isGeneratingImage ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Creating Image...
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                    Creating...
                   </>
                 ) : (
                   <>
-                    <ImagePlus className="w-4 h-4" />
+                    <ImagePlus className="w-4 h-4 mr-2" />
                     Generate Image
                   </>
                 )}
               </Button>
-              
-              {/* Secondary: Generate Prompt Only */}
               <Button
                 variant="outline"
-                size="sm"
-                className="w-full text-muted-foreground"
+                size="lg"
                 disabled={!canGenerate || isGenerating || isGeneratingImage}
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
-                    Generating...
-                  </>
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                 ) : (
-                  <>
-                    <Wand2 className="w-3 h-3" />
-                    Just get the prompt
-                  </>
+                  <Wand2 className="w-4 h-4" />
                 )}
               </Button>
             </div>
-          </div>
+          </Card>
 
-          {/* Right Column - Result */}
-          <div className="space-y-5">
-            {/* Generated Image / Prompt */}
-            <Card className="h-full flex flex-col">
-              <div className="p-4 border-b border-border/50 flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
-                  Result
-                </label>
-                {generatedPrompt && (
-                  <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
-                    {copied ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex-1 p-4 bg-muted/30">
-                {generatedPrompt || generatedImageUrl ? (
-                  <div className="space-y-4">
-                    {/* Show generated image */}
-                    {generatedImageUrl && (
-                      <div className="rounded-lg overflow-hidden border border-border relative group">
-                        <img
-                          src={generatedImageUrl}
-                          alt="Generated"
-                          className="w-full h-auto"
-                        />
-                        {/* Image action buttons overlay */}
-                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="secondary"
-                            size="icon-sm"
-                            className="bg-background/90 backdrop-blur-sm shadow-md"
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(generatedImageUrl);
-                                const blob = await response.blob();
-                                await navigator.clipboard.write([
-                                  new ClipboardItem({ [blob.type]: blob })
-                                ]);
-                                toast.success("Image copied to clipboard!");
-                              } catch (err) {
-                                // Fallback: copy URL if image copy fails
-                                await navigator.clipboard.writeText(generatedImageUrl);
-                                toast.success("Image URL copied!");
-                              }
-                            }}
-                            title="Copy image"
-                          >
-                            <Clipboard className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="icon-sm"
-                            className="bg-background/90 backdrop-blur-sm shadow-md"
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(generatedImageUrl);
-                                const blob = await response.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `generated-image-${Date.now()}.png`;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                window.URL.revokeObjectURL(url);
-                                toast.success("Image downloaded!");
-                              } catch (err) {
-                                toast.error("Failed to download image");
-                              }
-                            }}
-                            title="Download image"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Show prompt (collapsible when image exists) */}
-                    {generatedPrompt && (
-                      <details className={generatedImageUrl ? "text-sm" : ""} open={!generatedImageUrl}>
-                        <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground mb-2">
-                          {generatedImageUrl ? "View prompt" : "Generated Prompt"}
-                        </summary>
-                        <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-card p-4 rounded-lg border border-border max-h-48 overflow-y-auto">
-                          {generatedPrompt}
-                        </pre>
-                      </details>
-                    )}
-                    
-                    {/* Generate Image from prompt if we only have prompt */}
-                    {!generatedImageUrl && generatedPrompt && (
-                      <GeneratedImageDisplay prompt={generatedPrompt} type="image" />
-                    )}
-                    
-                    {/* External tools */}
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Use prompt in other tools:
-                      </p>
-                      <AIToolLinks type="image" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-center py-12">
-                    <div>
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center">
-                        <ImagePlus className="w-8 h-8 text-purple-400" />
-                      </div>
-                      <p className="text-sm font-medium text-foreground mb-1">
-                        Your image will appear here
-                      </p>
-                      <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
-                        {uploadedImage 
-                          ? "Pick a style and hit Generate, or describe a scene first"
-                          : "Upload a photo or describe what you want, then pick a style"
-                        }
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Style Preview */}
-            {selectedStyle && (
-              <Card className="p-4 animate-fade-in">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0">
-                    <Image className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{selectedStyle.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedStyle.look}</p>
-                    <p className="text-xs text-purple-600 mt-2">Best for: {selectedStyle.useCase}</p>
-                  </div>
-                </div>
-              </Card>
-            )}
+          {/* Gallery - Below the main interface */}
+          <div className="mt-6">
+            <GeneratedImagesGallery
+              images={galleryImages}
+              isLoading={galleryLoading}
+              onDelete={deleteFromGallery}
+              onSelect={(url) => {
+                setGeneratedImageUrl(url);
+                toast.success("Image loaded from gallery!");
+              }}
+            />
           </div>
         </div>
       </div>
-    </div>
-    <FreeLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
+
+      <FreeLimitModal
+        open={showLimitModal}
+        onOpenChange={setShowLimitModal}
+      />
     </>
   );
 }
