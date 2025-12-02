@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import { Play, Upload, Copy, Check, X, Wand2, Clipboard, Sparkles, Image, Film, Crown, Download, Loader2, ChevronDown } from "lucide-react";
+import { Play, Upload, Copy, Check, X, Wand2, Clipboard, Sparkles, Image, Film, Crown, Download, Loader2, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AIToolLinks } from "./AIToolLinks";
 import { FavoritePhotosPicker } from "./FavoritePhotosPicker";
 import { FreeLimitModal } from "./FreeLimitModal";
-import { GeneratedImagesGallery } from "./GeneratedImagesGallery";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
@@ -275,10 +275,20 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
                   <Film className="w-4 h-4 text-purple-500" />
                   Generated Video
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleDownloadVideo}>
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={handleDownloadVideo}>
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => videoGen.reset()}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <div className="p-4">
                 <video
@@ -289,6 +299,14 @@ export function AnimatePhotoBuilder({ onSwitchToVideo }: AnimatePhotoBuilderProp
                   muted
                   className="w-full rounded-lg"
                 />
+              </div>
+              <div className="px-4 pb-4">
+                <Link 
+                  to="/videos" 
+                  className="text-xs text-purple-500 hover:text-purple-600 font-medium"
+                >
+                  View all your videos →
+                </Link>
               </div>
             </div>
           )}

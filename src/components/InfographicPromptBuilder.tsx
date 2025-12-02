@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard, ImagePlus, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { FileText, Sparkles, Upload, Copy, Check, X, Wand2, Image, Clipboard, ImagePlus, ChevronDown, ChevronUp, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,10 +8,12 @@ import { AIToolLinks } from "./AIToolLinks";
 import { InfographicStyleSelector } from "./InfographicStyleSelector";
 import { BrandSelector, getBrandContextFromPreset } from "./BrandSelector";
 import { FreeLimitModal } from "./FreeLimitModal";
+import { GeneratedImagesGallery } from "./GeneratedImagesGallery";
 import { INFOGRAPHIC_STYLES, InfographicStyle } from "@/data/infographic-styles";
 import { Brand } from "@/hooks/useBrandLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useGeneratedImagesGallery } from "@/hooks/useGeneratedImagesGallery";
 import { cn } from "@/lib/utils";
 
 export function InfographicPromptBuilder() {
@@ -34,6 +36,7 @@ export function InfographicPromptBuilder() {
   const [showPrompt, setShowPrompt] = useState(false);
   
   const { showLimitModal, setShowLimitModal, handleRateLimitError } = useUsageLimit();
+  const { images: galleryImages, isLoading: galleryLoading, addImage: addToGallery, deleteImage: deleteFromGallery } = useGeneratedImagesGallery();
 
   const handleImageUpload = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -198,6 +201,7 @@ export function InfographicPromptBuilder() {
 
       if (data?.imageUrl) {
         setGeneratedImageUrl(data.imageUrl);
+        addToGallery(data.imageUrl, prompt, selectedStyle?.name || "Custom Infographic");
         toast.success("Infographic generated!");
       }
     } catch (error) {
@@ -282,6 +286,14 @@ export function InfographicPromptBuilder() {
                   >
                     <Download className="w-4 h-4 mr-1.5" />
                     Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setGeneratedImageUrl(null)}
+                    className="bg-white/90 hover:bg-white text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -472,6 +484,19 @@ export function InfographicPromptBuilder() {
               </Button>
             </div>
           </Card>
+
+          {/* Past Generations Gallery */}
+          {galleryImages.length > 0 && (
+            <GeneratedImagesGallery
+              images={galleryImages}
+              isLoading={galleryLoading}
+              onDelete={deleteFromGallery}
+              onSelect={(url) => {
+                setGeneratedImageUrl(url);
+                toast.success("Image loaded from gallery!");
+              }}
+            />
+          )}
         </div>
       </div>
 
