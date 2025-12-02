@@ -13,6 +13,7 @@ interface GenerateSceneParams extends GenerateTemplateParams {
   sceneTitle: string;
   sceneDescription: string;
   styleTemplate?: string;
+  previousSceneContent?: string;
 }
 
 // Custom error class for rate limit errors
@@ -63,6 +64,7 @@ export async function generateAIScene(params: GenerateSceneParams): Promise<stri
       sceneTitle: params.sceneTitle,
       sceneDescription: params.sceneDescription,
       styleTemplate: params.styleTemplate,
+      previousSceneContent: params.previousSceneContent,
     },
   });
 

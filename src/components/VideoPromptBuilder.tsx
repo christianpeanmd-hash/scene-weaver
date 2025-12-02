@@ -341,6 +341,13 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
     const scene = scenes.find((s) => s.id === id);
     if (!scene || !scene.description.trim()) return;
 
+    // Get scene index to find previous scene for continuity
+    const sceneIndex = scenes.findIndex((s) => s.id === id);
+    const previousScene = sceneIndex > 0 ? scenes[sceneIndex - 1] : null;
+    const previousSceneContent = previousScene?.generated && previousScene?.content 
+      ? previousScene.content 
+      : undefined;
+
     // Get selected characters from library for this scene
     const sceneCharacters = scene.selectedCharacterIds
       ?.map((charId) => savedCharacters.find((c) => c.id === charId))
@@ -391,6 +398,7 @@ export function VideoPromptBuilder({ onSwitchToImage }: VideoPromptBuilderProps)
         sceneTitle: scene.title,
         sceneDescription: scene.description,
         styleTemplate: scene.styleTemplate,
+        previousSceneContent,
       });
 
       setScenes(
