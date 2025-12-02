@@ -1,7 +1,8 @@
-import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play, ChevronDown, ChevronUp, Sparkles, Crown } from "lucide-react";
+import { Clapperboard, Copy, Check, Trash2, Wand2, MapPin, Film, Loader2, Download, Play, ChevronDown, ChevronUp, Sparkles, Crown, Link2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Scene, EnhancedCharacter, EnhancedEnvironment } from "@/types/prompt-builder";
 import { CharacterPicker } from "./CharacterPicker";
 import { SceneStylePicker } from "./SceneStylePicker";
@@ -16,6 +17,7 @@ interface SceneCardProps {
   index: number;
   totalScenes: number;
   previousSceneDescription?: string;
+  previousSceneContent?: string;
   copied: boolean;
   isGenerating?: boolean;
   savedCharacters: EnhancedCharacter[];
@@ -38,6 +40,7 @@ export function SceneCard({
   index,
   totalScenes,
   previousSceneDescription,
+  previousSceneContent,
   copied,
   isGenerating = false,
   savedCharacters,
@@ -56,6 +59,7 @@ export function SceneCard({
 }: SceneCardProps) {
   const [showCustomEnv, setShowCustomEnv] = useState(false);
   const [autoGenerateVideo, setAutoGenerateVideo] = useState(false);
+  const [continueFromPrevious, setContinueFromPrevious] = useState(false);
   const selectedEnv = savedEnvironments.find(e => e.id === scene.selectedEnvironmentId);
   const { tier } = useSubscription();
   const videoGen = useVideoGeneration();
@@ -100,6 +104,58 @@ export function SceneCard({
       return "Final scene - deliver the payoff, resolution, or call-to-action.";
     }
     return "Build on the previous scene. How does the story progress?";
+  };
+
+  // Extract ending state summary from previous scene content
+  const extractPreviousSceneContext = () => {
+    if (!previousSceneContent) return null;
+    
+    // Try to find the last time beat in the Visual Breakdown
+    const visualBreakdownMatch = previousSceneContent.match(/Visual Breakdown[\s\S]*?\|([^|]*\|[^|]*)\s*(?=---|\n\n####|$)/i);
+    const lastActionMatch = previousSceneContent.match(/\|\s*\*\*[\d–\-\s]+s?\*\*\s*\|([^|]+)\|/g);
+    
+    let lastAction = "";
+    if (lastActionMatch && lastActionMatch.length > 0) {
+      const lastRow = lastActionMatch[lastActionMatch.length - 1];
+      const actionContent = lastRow.match(/\|\s*\*\*[\d–\-\s]+s?\*\*\s*\|([^|]+)\|/);
+      if (actionContent) {
+        lastAction = actionContent[1].trim();
+      }
+    }
+    
+    // Try to extract dialogue
+    const dialogueMatch = previousSceneContent.match(/Dialogue[\s\S]*?"([^"]+)"/g);
+    let lastDialogue = "";
+    if (dialogueMatch && dialogueMatch.length > 0) {
+      const lastLine = dialogueMatch[dialogueMatch.length - 1];
+      const quote = lastLine.match(/"([^"]+)"/);
+      if (quote) lastDialogue = quote[1];
+    }
+    
+    // Build context summary
+    const parts = [];
+    if (lastAction) {
+      parts.push(`Previous scene ended with: ${lastAction.slice(0, 150)}${lastAction.length > 150 ? '...' : ''}`);
+    }
+    if (lastDialogue) {
+      parts.push(`Last line: "${lastDialogue.slice(0, 80)}${lastDialogue.length > 80 ? '...' : ''}"`);
+    }
+    
+    return parts.length > 0 ? parts.join('\n') : null;
+  };
+
+  // Handle continue from previous toggle
+  const handleContinueToggle = (checked: boolean) => {
+    setContinueFromPrevious(checked);
+    if (checked && previousSceneContent) {
+      const context = extractPreviousSceneContext();
+      if (context && !scene.description.includes(context)) {
+        const prefix = `[Continuing from previous scene]\n${context}\n\n`;
+        if (!scene.description.startsWith('[Continuing')) {
+          onUpdate("description", prefix + scene.description);
+        }
+      }
+    }
   };
 
   const handleGenerateVideo = async () => {
@@ -329,9 +385,28 @@ export function SceneCard({
 
           {/* What Happens - with transition prompting */}
           <div>
-            <label className="text-xs text-muted-foreground font-medium">
-              What Happens in This Scene
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-muted-foreground font-medium">
+                What Happens in This Scene
+              </label>
+              {index > 0 && previousSceneContent && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id={`continue-${scene.id}`}
+                    checked={continueFromPrevious}
+                    onCheckedChange={handleContinueToggle}
+                    className="h-3.5 w-3.5"
+                  />
+                  <label 
+                    htmlFor={`continue-${scene.id}`}
+                    className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1 hover:text-foreground transition-colors"
+                  >
+                    <Link2 className="w-3 h-3" />
+                    Continue from previous
+                  </label>
+                </div>
+              )}
+            </div>
             <textarea
               value={scene.description}
               onChange={(e) => onUpdate("description", e.target.value)}

@@ -207,6 +207,7 @@ export function ScenesStep({
                 index={index}
                 totalScenes={scenes.length}
                 previousSceneDescription={index > 0 ? scenes[index - 1]?.description : undefined}
+                previousSceneContent={index > 0 && scenes[index - 1]?.generated ? scenes[index - 1]?.content : undefined}
                 copied={copiedId === scene.id}
                 isGenerating={generatingSceneId === scene.id}
                 savedCharacters={savedCharacters}
